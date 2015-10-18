@@ -1,0 +1,3 @@
+public class DeclaredVars{
+    public static int size = 0; // number of declared BDD vars until now
+}
