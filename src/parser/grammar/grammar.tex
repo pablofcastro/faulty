@@ -1,0 +1,105 @@
+\section{Grammar}
+
+The language Faulty is a simple guarded language:
+
+\setlength{\grammarparsep}{20pt plus 1pt minus 1pt} % increase separation between rules
+\setlength{\grammarindent}{12em} % increase separation between LHS/RHS 
+
+\begin{grammar}
+
+
+<specification> ::= <channel_list> ' ; ' <process_list>  <main_program> ';'
+
+<channel_list> ::= <chan_decl> 
+\alt <channel_list>  `;' <chan_decl>
+
+<chan_decl> ::=  CHANNEL ID`[' INT_CONST_`]' OF <type>
+
+
+<process_list> ::=  <process> 
+\alt  <process_list> `;' <process>
+
+
+<process>  ::= PROCESS ID USES  <vbles_decl> ` \{ ' <decl_list> ';' <initial_cond> ';' <norm_cond> ';'   <branch_list> ';' `\}'
+
+<initial_cond> ::= INIT `:' <expr>
+
+<norm_cond> ::= NORMATIVE `:' <expr>
+
+<decl_list> ::= <decl> 
+\alt <decl_list>  `;' <decl>
+
+<decl> ::=  <vbles_decl> `:' <type> 
+                
+<vbles_decl> ::=  ID 
+\alt <vbles_decl>  `,' ID
+
+<type> ::= INT | BOOL
+
+<branch_list> ::=  <branch> 
+\alt  <branch_list> `;' <branch>
+
+<branch>  ::=  <expr> `->' <assig_list>
+
+<assig_list> ::=  <assig>
+\alt <assig_list>  `,' <assig>
+
+<assig> ::= <location> `=' <expr>
+            
+<location> ::=   ID            
+                        | ID `.' PUT `(' expr `)'
+
+
+<expr> ::= <disjuntion>
+
+<disjuntion> ::= <conjuntion>
+\alt <disjuntion>  `||' <conjuntion>
+
+<conjuntion> ::= <comparation>
+\alt <conjuntion>  `&&' <comparation>
+
+<comparation> ::= <relation>
+\alt <relation>  `==' <relation>
+
+<relation> ::= <addition>
+\alt <addition>  `<' <addition>
+\alt <addition>  `>' <addition>
+
+<addition> ::= <term>
+\alt <addition>  `+' <term>
+\alt <addition>  `-' <term>
+
+<term> ::= <factor>
+\alt <term>  `*' <factor>
+\alt <term>  `/' <factor>
+
+<factor> ::= <primary>
+\alt `!' <factor>
+\alt `-' <factor>
+
+<primary> ::= INT_CONST
+\alt TRUE
+\alt FALSE
+\alt ID
+\alt `(' <expr> `)'
+
+
+<main_program> ::= MAIN `('  `)'  `\{'  <body_main> `\}' 
+
+<body_main> ::= <process_decl> <process_inv> `;'
+
+
+<process_decl> ::= <proc> 
+\alt <process_decl>  `;' <proc>
+
+<proc> ::=  <vbles_decl> `:' <type_proc> 
+              
+<type_proc> ::= ID
+
+<process_inv> ::= <inv> 
+\alt <process_inv>  `;' <inv>
+
+
+<inv> ::= RUN ID`(' `)'
+
+\end{grammar}

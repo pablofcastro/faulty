@@ -14,7 +14,7 @@ public class ConsIntExp implements IntExp{
      * @param	i	the integer
      */
     public ConsIntExp(int i){
-        bits = new BDD[Program.intSize];
+    	bits = new BDD[Program.intSize];
         int j = Program.intSize-1;
         while(j >= 0){
             if (i % 2 == 0){          	
@@ -72,5 +72,14 @@ public class ConsIntExp implements IntExp{
     public LinkedList<Channel> getChannels(){
     	LinkedList<Channel> result = new LinkedList<Channel>();
     	return result;
+    }
+    
+    /**
+     * The duplicate of a Constant is itself
+     * @param instName
+     * @return	a reference to this
+     */
+    public ConsIntExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner){
+    	return this;
     }
 }

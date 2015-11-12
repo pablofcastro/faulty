@@ -1,103 +1,93 @@
-
+package parserProgram;
 
 import java_cup.runtime.*;
 import net.sf.javabdd.*;
 import faulty.*;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.Iterator;
-import java.util.Collection;
+import faulty.auxiliar.*;
+import java.util.*;
 
 parser code {:
-	    public static void main(String args[]) throws Exception {
-		SymbolFactory sf = new DefaultSymbolFactory();
-		if (args.length==0) new parserFaulty(new scannerFaulty(System.in,sf),sf).parse();
-		else new parserFaulty(new scannerFaulty(new java.io.FileInputStream(args[0]),sf),sf).parse();
-	     
-	     /*  InputStream is=null;
-        is = new ByteArrayInputStream(texto.getBytes("UTF-8"));
-        LexerModelo lexerModelo = new LexerModelo(is);
-        ParserModelo parserModelo = new ParserModelo (lexerModelo);
-        parserModelo.parse();
-        resultadoAnalisisModelo = parserModelo.obtenerResultado(); */
-        
-    }
 	
     public void syntax_error(Symbol s){
-        System.out.println("Syntax Error - line: " +  s.left +  " - value:" + (String)s.value);
+        System.err.println("\n\nSyntax Error - line: " +  (s.left+1) +  " - value:" + s.value);
+        
     }
 
 
     public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception {    
-         System.out.println("Unrecovered Syntax error line: " +  s.left +  " - value:" + (String)s.value);
+         System.err.println("\n\nUnrecovered Syntax error line: " +  (s.left+1) +  " - value:" + s.value);
     }
                                  	
 :}
 
 
 
-terminal Symbol PLUS;
-terminal Symbol MINUS;
-terminal Symbol ASTERISK;
-terminal Symbol POINT;
-terminal Symbol SLASH;
-terminal Symbol LPARENT;
-terminal Symbol RPARENT;
-terminal Symbol LBRACE;
-terminal Symbol RBRACE;
-terminal Symbol LBRACKET;
-terminal Symbol RBRACKET;
-terminal Symbol SEMICOLON;
-terminal Symbol COLON;
-terminal Symbol RIGHTARROW;
-terminal Symbol EQUAL;
-terminal Symbol DOUBLE_EQUAL;
-terminal Symbol COMMA;
-terminal Symbol OR;
-terminal Symbol AND;
-terminal Symbol GT;
-terminal Symbol LT;
-terminal Symbol EXCLAMATION;
-terminal Symbol INT;
-terminal Symbol BOOL;
-terminal Symbol INIT;
-terminal Symbol NORMATIVE;
-terminal Symbol PROCESS;
-terminal Symbol OF;
-terminal Symbol USES;
-terminal Symbol RUN;
-terminal Symbol MAIN;
-terminal Symbol CHANNEL;
-terminal Symbol PUT;
-terminal Symbol GET;
+terminal PLUS;
+terminal MINUS;
+terminal ASTERISK;
+terminal POINT;
+terminal SLASH;
+terminal LPARENT;
+terminal RPARENT;
+terminal LBRACE;
+terminal RBRACE;
+terminal LBRACKET;
+terminal RBRACKET;
+terminal SEMICOLON;
+terminal COLON;
+terminal RIGHTARROW;
+terminal EQUAL;
+terminal DOUBLE_EQUAL;
+terminal COMMA;
+terminal OR;
+terminal AND;
+terminal GT;
+terminal LT;
+terminal EXCLAMATION;
+terminal INT;
+terminal BOOL;
+terminal INIT;
+terminal NORMATIVE;
+terminal PROCESS;
+terminal OF;
+terminal USES;
+terminal RUN;
+terminal MAIN;
+terminal CHANNEL;
+terminal PUT;
+terminal GET;
+terminal GLOBAL;
   
 
-terminal Symbol INTEGER,TRUE,FALSE,ID;         
+terminal Integer INTEGER;
+terminal TRUE,FALSE;
+terminal String ID;         
                 
                 
 
 
-non terminal Expression primary, expr, disjunction, conjunction, relation, comparison, addition, term, factor;
-non terminal Code assignation;
-non terminal LinkedList<Code> assigList;
-non terminal Branch branch;
-non terminal LinkedList<Branch> branchList;
-non terminal BDD initialCond, normCond;
+non terminal AuxiliarExpression primary, expr, disjunction, conjunction, relation, comparison, addition, term, factor;
+non terminal AuxiliarCode assignation;
+non terminal LinkedList<AuxiliarCode> assigList;
+non terminal AuxiliarBranch branch;
+non terminal LinkedList<AuxiliarBranch> branchList;
+non terminal AuxiliarExpression initialCond, normCond;
 non terminal LinkedList<AuxiliarVar> declList;
 non terminal LinkedList<AuxiliarVar> decl;
 non terminal LinkedList<String> varDecls;
 non terminal AuxiliarProcess process, bodyProcess;
 non terminal AuxiliarProcessCollection processList;
 non terminal AuxiliarChannelCollection channelList;
+non terminal LinkedList<AuxiliarVar> globalDecl;
+non terminal AuxiliarGlobalVarCollection globalVarList;
 non terminal AuxiliarChannel chanDecl;
-non terminal Program specification;
+non terminal AuxiliarProgram specification;
 non terminal LinkedList<String> processInvk;
 non terminal String invk;
 non terminal LinkedList<AuxiliarProcessDecl> proc, processDecl;
 non terminal AuxiliarMain program, body;
- non terminal String type;
+non terminal Type type;
+non terminal AuxiliarProgram mainSpecification;
 
 precedence left GT,LT,DOUBLE_EQUAL,AND,OR;
 precedence left PLUS, MINUS;
@@ -106,130 +96,107 @@ precedence left LPARENT, RPARENT;
 precedence left EXCLAMATION;
 
 
-start with specification;
+start with mainSpecification;
 
-specification ::=  channelList:cList SEMICOLON processList:pList program:main  {:  /*Verify type of variables in Main declaration*/
-                                                                                   if (!main.isCorrectDeclProcess(pList)){
-                                                                                       System.err.println("In Main program, type of variable not found. (check Process names).");
-                                                                                       System.exit(0);
-                                                                                   }
+mainSpecification ::= specification:prog {: RESULT = prog;
+                                         :}
+                    ;
 
-                                                                                   LinkedList<String> invkProcess = main.getProcessInvk();
-                                                                                   int totalVarInt = 0;
-                                                                                   int totalVarBool = 0;
-                                                                                   AuxiliarProcess auxProc=null;
-                                                                                   LinkedList<Process> listInvkP = new LinkedList<Process>();
-                                                                                   Process proc;
-                                                                                  
-                                                                                   
-                                                                                   /* ---  calculate the total number of variables of the Invoked Process ---*/
-                                                                                   for (int i = 0; i < invkProcess.size(); i++){
-                                                                                       auxProc = pList.getProcess(invkProcess.get(i)); //return the auxiliar process 
-                                                                                       if (auxProc!=null) {
-                                                                                          totalVarInt += auxProc.getNumVarInt();
-                                                                                          totalVarBool += auxProc.getNumVarBool();
-                                                                                          proc = new Process(auxProc.getName(),auxProc.getNumVar(),auxProc.getNumChannelsUsed(),auxProc.getNumBranches(),i);
-                                                                                          listInvkP.add(proc);
-                                                                                         
-                                                                                       }
-                                                                                       else{
-                                                                                           System.err.println("Process Name not found.");
-                                                                                           System.exit(0);
-                                                                                           
-                                                                                       }
-                                                                                   }
-                                                                                   
-                                                                                   Program prog = new Program(4,totalVarInt, totalVarBool,cList.getNumBoolChannels(), cList.getNumIntChannels(), cList.getMaxLengthChannels() );
-                                                                                   
-                                                                                   /* --- Adding the Declarated BoolChannels ---*/
-                                                                                   LinkedList<BoolChannel> cbList = cList.getBoolChannels();
-                                                                                   for (int i = 0; i < cbList.size() ; i++){
-                                                                                      prog.addBoolChannel(cbList.get(i));
-                                                                                   }
-                                                                               
-                                                                                   /* --- Adding the Declarated IntChannels ---*/
-                                                                                   LinkedList<IntChannel> ciList = cList.getIntChannels();
-                                                                                   for (int i = 0; i < ciList.size() ; i++){
-                                                                                       prog.addIntChannel(ciList.get(i));
-                                                                                   }
-                                                                                   
-                                                                                   /* ---  add the Invoked Process to the program ---*/
-                                                                                   for (int i = 0; i < listInvkP.size(); i++){
-                                                                                          prog.addProcess(listInvkP.get(i));
-                                                                                   }
-                                                                                   
-                                                                                   
+specification ::=  globalVarList:vList SEMICOLON channelList:cList SEMICOLON processList:pList program:main  {: AuxiliarProgram prog = new AuxiliarProgram(vList,cList,pList, main);
+                                                                                                                RESULT = prog;
+                                                                                                             :}
+                  | globalVarList:vList SEMICOLON  processList:pList program:main  {: AuxiliarProgram prog = new AuxiliarProgram(vList,pList, main);
+                                                                                      RESULT = prog;
+                                                                                   :}
+                  | channelList:cList SEMICOLON processList:pList program:main  {: AuxiliarProgram prog = new AuxiliarProgram(cList,pList, main);
                                                                                    RESULT = prog;
                                                                                 :}
                                                                                 
-                |  processList:pList program:main  {: /*Verify type of variables in Main declaration*/
-                                                      if (!main.isCorrectDeclProcess(pList)){
-                                                         System.err.println("In Main program, type of variable not found. (check Process names).");
-                                                         System.exit(0);
-                                                      }
-
-                                                      LinkedList<String> invkProcess = main.getProcessInvk();
-                                                      int totalVarInt = 0;
-                                                      int totalVarBool = 0;
-                                                      AuxiliarProcess auxProc=null;
-                                                      Process proc;
-                                                      LinkedList<Process> listInvkP = new LinkedList<Process>();
-                                                                                  
-                                                                                   
-                                                      /* ---  calculate the total number of variables of the Invoked Process ---*/
-                                                      for (int i = 0; i < invkProcess.size(); i++){
-                                                          auxProc = pList.getProcess(invkProcess.get(i)); //return the auxiliar process 
-                                                          if (auxProc!=null) {
-                                                             totalVarInt += auxProc.getNumVarInt();
-                                                             totalVarBool += auxProc.getNumVarBool();
-                                                             proc = new Process(auxProc.getName(),auxProc.getNumVar(),auxProc.getNumChannelsUsed(),auxProc.getNumBranches(),i);
-                                                            listInvkP.add(proc);
+                  |  processList:pList program:main  {:  AuxiliarProgram prog = new AuxiliarProgram(pList, main);
+                                                         RESULT = prog;
+                                                     :}
+               ;
+ 
+ globalVarList ::=  globalDecl:listD {:  
+                                         AuxiliarGlobalVarCollection list = new AuxiliarGlobalVarCollection();
+                                         AuxiliarVar var;
+                                         for (int i = 0; i < listD.size(); i++){
+                                            var = listD.get(i);
+                                            if(var.getType().isINT()){
+                                                list.addGlobalIntVar(var);
+                                            }
+                                            else{
+                                                list.addGlobalBoolVar(var);
+                                            }
+                                         }
+                                         RESULT = list; 
+                                     :}  
+                | globalVarList:list SEMICOLON globalDecl:listD  {: AuxiliarVar var;
+                                                                    for (int i = 0; i < listD.size(); i++){
+                                                                       var = listD.get(i);
+                                                                       if(var.getType().isINT()){
+                                                                           list.addGlobalIntVar(var);
+                                                                       }
+                                                                       else{
+                                                                           list.addGlobalBoolVar(var);
+                                                                       }
+                                                                    }
+                                                                    RESULT = list;
+                                                                  :}
+            
+            ;
+    
+                
+globalDecl ::= GLOBAL varDecls:listNames COLON type:t {:  LinkedList<AuxiliarVar> list = new LinkedList<AuxiliarVar>();
+                                                          AuxiliarVar v;
+                                             
+                                                          if ( t.isINT() ){
+                                                             for (int i = 0; i < listNames.size(); i++){
+                                                                 v = new AuxiliarVar(listNames.get(i), Type.INT);
+                                                                 list.add(v);
+                                                             }
                                                           }
                                                           else{
-                                                              System.err.println("Process Name not found.");
-                                                              System.exit(0);
+                                                 
+                                                              for (int i = 0; i < listNames.size(); i++){
+                                                                  v = new AuxiliarVar(listNames.get(i), Type.BOOL);
+                                                                  list.add(v);
+                                                              }
                                                           }
-                                                       }
-                                                                                   
-                                                       Program prog = new Program(4,totalVarInt, totalVarBool,0, 0,0 );
-                                                                                                                                                                 
-                                                       /* ---  add the Invoked Process to the program ---*/
-                                                       for (int i = 0; i < listInvkP.size(); i++){
-                                                          prog.addProcess(listInvkP.get(i));
-                                                       }
-                                                       RESULT = prog;
-                
-                                                   :}
-               ;
+        	                                              RESULT = list;
+                                                      :}
+       ;
 
-channelList ::= chanDecl:c {: 
-                                  AuxiliarChannelCollection list = new AuxiliarChannelCollection();
+
+
+channelList ::= chanDecl:c {:     AuxiliarChannelCollection list = new AuxiliarChannelCollection();
                                   if(c.getType().isBOOLEAN()){
-                                      list.addBoolChannel((BoolChannel)c.getChannel());
+                                      list.addBoolChannel(c);
                                   }
                                   else{
-                                        list.addIntChannel((IntChannel)c.getChannel());
+                                        list.addIntChannel(c);
                                       
                                   }
                                  
                                   RESULT = list; 
                            :}
-              | channelList:list SEMICOLON chanDecl:c  {: if(c.getType().isBOOLEAN()){
-                                                             list.addBoolChannel((BoolChannel)c.getChannel());
+              | channelList:list SEMICOLON chanDecl:c  {: 
+                                                          if(c.getType().isBOOLEAN()){
+                                                             list.addBoolChannel(c);
                                                           }
                                                           else{
-                                                              list.addIntChannel((IntChannel)c.getChannel());
+                                                              list.addIntChannel(c);
                                                           }
                                                           RESULT = list; 
                                                        :}
               ;
               
-chanDecl ::= CHANNEL ID:name LBRACKET INTEGER:size RBRACKET OF type:t  {:  System.out.println("Canal " + (String)name.value + "size= " + (Integer)size.value + "tipo = " + t );
+chanDecl ::= CHANNEL ID:name LBRACKET INTEGER:size RBRACKET OF type:t  {:  
                                                                            if (t.equals("INT")){
-                                                                               RESULT = new AuxiliarChannel( new IntChannel((String)name.value, (Integer)size.value), Type.INT);
+                                                                               RESULT = new AuxiliarChannel( name, size , Type.INT);
                                                                            }
                                                                            else{
-                                                                               RESULT = new AuxiliarChannel( new BoolChannel((String)name.value, (Integer)size.value), Type.BOOL);
+                                                                               RESULT = new AuxiliarChannel( name, size, Type.BOOL);
                                                                                
                                                                            }
                                                                         :}
@@ -245,11 +212,11 @@ processList  ::= process:p  {:
                                             :}
               ;
 
-process ::= PROCESS ID:name USES varDecls:listC bodyProcess:proc {: proc.setName((String)name.value);
+process ::= PROCESS ID:name USES varDecls:listC bodyProcess:proc {: proc.setName(name);
                                                                     proc.setChannelIds(listC);
                                                                     RESULT = proc;  
                                                                   :}
-           | PROCESS ID:name bodyProcess:proc {: proc.setName((String)name.value);
+           | PROCESS ID:name bodyProcess:proc {: proc.setName(name);
                                                  RESULT = proc;
                                               :}
            ;
@@ -258,12 +225,17 @@ bodyProcess::= LBRACE declList:listD  SEMICOLON initialCond:init SEMICOLON normC
                                                                                                                                          RESULT = proc;
                                                                                                                                           
                                                                                                                                       :}
+          
+             | LBRACE initialCond:init SEMICOLON normCond:norm SEMICOLON  branchList:listB SEMICOLON RBRACE {: AuxiliarProcess proc = new AuxiliarProcess(init,norm,listB);
+                                                                                                                                         RESULT = proc;
+                                                                                                                                          
+                                                                                                                                      :}
           ;                
 
-initialCond ::= INIT COLON expr:e {: RESULT = e.getBDD();  :} 
+initialCond ::= INIT COLON expr:e {: RESULT = e;  :} 
               ;
 
-normCond ::= NORMATIVE COLON expr:e {: RESULT = e.getBDD();  :}
+normCond ::= NORMATIVE COLON expr:e {: RESULT = e; :}
            ;
 
 
@@ -286,17 +258,17 @@ declList ::= decl:listD {:
 decl ::= varDecls:listNames COLON type:t {:  LinkedList<AuxiliarVar> list = new LinkedList<AuxiliarVar>();
                                              AuxiliarVar v;
                                              
-                                             if ( t.equals("INT") ){
+                                             if ( t.isINT() ){
                                                 
                                                  for (int i = 0; i < listNames.size(); i++){
-                                                    v = new AuxiliarVar(new VarInt(listNames.get(i)), Type.INT);
+                                                    v = new AuxiliarVar(listNames.get(i), Type.INT);
                                                     list.add(v);
                                                   }
                                               }
                                               else{
                                                  
                                                  for (int i = 0; i < listNames.size(); i++){
-                                                     v = new AuxiliarVar(new VarBool(listNames.get(i)), Type.BOOL);
+                                                     v = new AuxiliarVar(listNames.get(i), Type.BOOL);
                                                     list.add(v);
                                                  }
                                               }
@@ -308,22 +280,21 @@ decl ::= varDecls:listNames COLON type:t {:  LinkedList<AuxiliarVar> list = new 
 
 
 varDecls ::= ID:i  {:  LinkedList<String> list = new LinkedList<String>();
-                       System.out.println("------> nombre vble : "+ i.value);
-                       list.add((String)(i.value));
+                       list.add(i);
                        RESULT = list; 
                   :}      
-            | varDecls:list COMMA ID:i {: list.add((String)(i.value));
+            | varDecls:list COMMA ID:i {: list.add(i);
                                           RESULT = list;
                                        :}
             ; 
 
 
-type ::=   INT    {: RESULT = new String("INT"); :}
-         | BOOL   {: RESULT = new String("BOOL"); :}
+type ::=   INT    {: RESULT = Type.INT; :}
+         | BOOL   {: RESULT = Type.BOOL; :}
          ;
             
             
-branchList ::= branch:b  {:  LinkedList<Branch> list = new LinkedList<Branch>();
+branchList ::= branch:b  {:  LinkedList<AuxiliarBranch> list = new LinkedList<AuxiliarBranch>();
                              list.add(b);
                              RESULT = list; 
                          :}      
@@ -332,13 +303,13 @@ branchList ::= branch:b  {:  LinkedList<Branch> list = new LinkedList<Branch>();
                                                     :}
                ; 
 
-branch ::= expr:e  RIGHTARROW assigList:list {:   ListAssign l = new ListAssign(list);
-                                                  Branch b = new Branch((BoolExp)e,l,false,null);
+branch ::= expr:e  RIGHTARROW assigList:list {:   //ListAssign l = new ListAssign(list);
+                                                  AuxiliarBranch b = new AuxiliarBranch(e,list,false);
                                                   RESULT = b;
                                              :}
         ;   
 
-assigList ::=  assignation:assign {: LinkedList<Code> list = new LinkedList<Code>();
+assigList ::=  assignation:assign {: LinkedList<AuxiliarCode> list = new LinkedList<AuxiliarCode>();
                                      list.add(assign);
                                      RESULT = list; 
                                   :}
@@ -348,142 +319,99 @@ assigList ::=  assignation:assign {: LinkedList<Code> list = new LinkedList<Code
              ; 
             
                               
-assignation ::= ID:i EQUAL expr:value {:   System.out.println("una asignacion");
-                                           System.out.println("tipo expresion : " + value.getClass().getName() );
-                                           System.out.println("contiene BOOL : " + value.getClass().getName().contains("Bool") );
-                                           Var var;
-                                           if(value.getClass().getName().contains("Bool")){
-                                               var = new VarBool((String)i.value);
-                                           }
-                                           else{
-                                               var = new VarInt((String)i.value);
-                                           }
-                                        
-                                           RESULT = new VarAssign(var,value);
+assignation ::= ID:i EQUAL expr:value {:   
+                                           AuxiliarVar var = new AuxiliarVar(i);
+                                           RESULT = new AuxiliarVarAssign(var,value);
                                       :}
-              | ID:i POINT PUT LPARENT expr:value RPARENT  {: 
-                                                              if(value.getClass().getName().contains("Bool")){
-                                                                  RESULT = new BoolChanAssign(new BoolChannel((String)i.value,1) , (BoolExp)value);
-                                                              }
-                                                              else{
-                                                                  RESULT = new IntChanAssign(new IntChannel((String)i.value,1) ,(IntExp)value);
-                                                              } 
-                                                           :}
+              | ID:nameCh POINT PUT LPARENT expr:value RPARENT  {: RESULT = new AuxiliarChanAssign(nameCh, value); :}
               ;                             
  
                                             
-expr ::= disjunction :val {:  
-                            RESULT = val;
-                          :}
+expr ::= disjunction :val {:  RESULT = val; :}
        ;
 
-disjunction ::= conjunction:val {:  
-                                   RESULT = val;
-                                :}
-              | disjunction:op1 OR conjunction:op2 {: OrBoolExp expr = new OrBoolExp((BoolExp)op1,(BoolExp)op2); 
+disjunction ::= conjunction:val {: RESULT = val; :}
+              | disjunction:op1 OR conjunction:op2 {: AuxiliarOrBoolExp expr = new AuxiliarOrBoolExp(op1,op2); 
                                                       RESULT = expr;
                                                    :} 
               ;         
                 
-conjunction  ::= comparison:val {:  
-                                    RESULT = val;
-                                :}
-              | conjunction:op1 AND comparison:op2 {: AndBoolExp expr = new AndBoolExp((BoolExp)op1,(BoolExp)op2); 
+conjunction  ::= comparison:val {:  RESULT = val; :}
+              | conjunction:op1 AND comparison:op2 {: AuxiliarAndBoolExp expr = new AuxiliarAndBoolExp(op1,op2); 
                                                       RESULT = expr;
                                                    :}
               ;                 
 
-comparison ::= relation:val {: RESULT = val;
-                            :}
-              | relation:op1 DOUBLE_EQUAL relation:op2  {: EqBoolExp expr = new EqBoolExp((IntExp)op1,(IntExp)op2); 
+comparison ::= relation:val {:  RESULT = val; :}
+              | relation:op1 DOUBLE_EQUAL relation:op2  {: AuxiliarEqBoolExp expr = new AuxiliarEqBoolExp(op1,op2); 
                                                            RESULT = expr;
                                                         :}
               ;
                       
-relation    ::= addition:val {: RESULT = val;
-                             :} 
-              | addition:op1 LT addition:op2 {: LessBoolExp expr = new LessBoolExp((IntExp)op1,(IntExp)op2); 
+relation    ::= addition:val {:  RESULT = val; :}
+              | addition:op1 LT addition:op2 {: AuxiliarLessBoolExp expr = new AuxiliarLessBoolExp(op1,op2); 
                                                 RESULT = expr;
                                              :}
-              | addition:op1 GT addition:op2 {: GreaterBoolExp expr = new GreaterBoolExp((IntExp)op1,(IntExp)op2); 
+              | addition:op1 GT addition:op2 {: AuxiliarGreaterBoolExp expr = new AuxiliarGreaterBoolExp(op1,op2); 
                                                 RESULT = expr;
                                              :}
               ; 
                 
-addition        ::= term:val {: RESULT = val;
-                             :}
-              | addition:op1 PLUS term:op2 {: SumIntExp expr = new SumIntExp((IntExp)op1,(IntExp)op2); 
+addition        ::= term:val{:  RESULT = val; :}
+              | addition:op1 PLUS term:op2 {: AuxiliarSumIntExp expr = new AuxiliarSumIntExp(op1,op2); 
                                               RESULT = expr;
                                            :}
-              | addition:op1 MINUS term:op2 {: NegIntExp expr = new NegIntExp((IntExp)op1,(IntExp)op2); 
+              | addition:op1 MINUS term:op2 {: AuxiliarNegIntExp expr = new AuxiliarNegIntExp(op1,op2); 
                                                RESULT = expr;
                                             :}
               ;
             
-term    ::= factor:val  {:  System.out.println("factor: "  );
-                            RESULT = val; 
+term    ::= factor:val  {:  RESULT = val; 
                         :}
 
-          | term:op1 ASTERISK factor:op2 {: MultIntExp expr = new MultIntExp((IntExp)op1,(IntExp)op2); 
+          | term:op1 ASTERISK factor:op2 {: AuxiliarMultIntExp expr = new AuxiliarMultIntExp(op1,op2); 
                                             RESULT = expr;
                                          :}
-          | term:op1 SLASH factor:op2 {: DivIntExp expr = new DivIntExp((IntExp)op1,(IntExp)op2); 
+          | term:op1 SLASH factor:op2 {: AuxiliarDivIntExp expr = new AuxiliarDivIntExp(op1,op2); 
                                          RESULT = expr;
                                        :}
           ;
                 
-factor  ::= primary:op {: System.out.println("valor PRIMARY: "  );
-                          op.getBDD().printDot();
-                          RESULT = op;
+factor  ::= primary:op {: RESULT = op;
                        :}
-          | EXCLAMATION factor:value {: NegBoolExp expr = new NegBoolExp((BoolExp)value); 
+          | EXCLAMATION factor:value {: AuxiliarNegBoolExp expr = new AuxiliarNegBoolExp(value); 
                                         RESULT = expr;
                                      :}
           
-          | MINUS factor:value  {: ConsIntExp zero = new ConsIntExp(new Integer(0));
-                                   NegIntExp expr = new NegIntExp(zero,(IntExp)value); 
+          | MINUS factor:value  {: AuxiliarConsIntExp zero = new AuxiliarConsIntExp(new Integer(0));
+                                   AuxiliarNegIntExp expr = new AuxiliarNegIntExp(zero,value); 
                                    RESULT = expr;
                                 :}
           ;            
                         
-primary ::= INTEGER:v  {:  System.out.println("valor INTEGER: ");
-                           ConsIntExp value = new ConsIntExp((Integer)v.value);
+primary ::= INTEGER:v  {:  AuxiliarConsIntExp value = new AuxiliarConsIntExp(v);
                            RESULT = value;
                        :}
-          | TRUE {:    System.out.println("valor TRUE: ");
-                       ConsBoolExp value = new ConsBoolExp(true);
+          | TRUE {:    AuxiliarConsBoolExp value = new AuxiliarConsBoolExp(true);
                        RESULT = value;
                    :}
-          | FALSE {:  System.out.println("valor FALSE: ");
-                        ConsBoolExp value = new ConsBoolExp(false);//(Boolean)v.value
-                        RESULT = value;
-                    :}     
+          | FALSE {:  AuxiliarConsBoolExp value = new AuxiliarConsBoolExp(false);
+                      RESULT = value;
+                  :}     
           | ID:id {: 
-                    VarInt value = new VarInt((String)(id.value));
+                    AuxiliarVar value = new AuxiliarVar(id);
                     RESULT= value; 
                   :}
-          | ID:id POINT GET LPARENT RPARENT {: /* TODO: Reemplazar aqui por busqueda de la vble declarada 
-                                                        y crear algo del tipo BoolChanAccess o IntChanAccess */
-                                              System.out.println("valor GET: ");
-                                              VarInt value = new VarInt((String)id.value);
-                                              RESULT = value; 
-                                              
-                                              
+          | ID:id POINT GET LPARENT RPARENT {: 
+                                              AuxiliarChanAccess chanAcc = new AuxiliarChanAccess(id);
+                                              RESULT = chanAcc; 
                                             :} 
           | LPARENT expr:ex RPARENT {: 
-                                       System.out.println("valor (EXP): ");
                                        RESULT = ex;
                                     :}
           ;
 
-program ::= MAIN LPARENT RPARENT LBRACE body:m RBRACE {:   if (!m.isCorrectInvk()){
-                                                               System.err.println("In Main program, variable not found.");
-                                                               System.exit(0);
-                                                           }
-
-                                                           RESULT= m;
-
-                                                      :}
+program ::= MAIN LPARENT RPARENT LBRACE body:m RBRACE {: RESULT= m; :}
         ;
 
 body ::= processDecl:declList SEMICOLON processInvk:invkList SEMICOLON {:  AuxiliarMain main = new AuxiliarMain(declList,invkList); 
@@ -508,7 +436,7 @@ processDecl ::= proc:lp {:  LinkedList<AuxiliarProcessDecl> listProcess = new Li
 proc ::= varDecls:listNames COLON ID:type {:  LinkedList<AuxiliarProcessDecl> listProcess = new LinkedList<AuxiliarProcessDecl>();
                                               AuxiliarProcessDecl p;
                                               for (int i = 0; i < listNames.size(); i++){
-                                                    p= new AuxiliarProcessDecl( listNames.get(i) , (String)(type.value));
+                                                    p= new AuxiliarProcessDecl( listNames.get(i) , type);
                                                     listProcess.add(p);
                                                    
                                                }
@@ -518,11 +446,10 @@ proc ::= varDecls:listNames COLON ID:type {:  LinkedList<AuxiliarProcessDecl> li
        ;
       
 
-processInvk ::= invk:nameProc {: System.out.println("invocacion proceso"); 
+processInvk ::= invk:nameProc {:  
                                  LinkedList<String> listInvk = new LinkedList<String>();
                                  listInvk.add(nameProc);
                                  RESULT = listInvk;
-                        
                               :}
               |   processInvk:listInvk SEMICOLON invk:nameProc {: listInvk.add(nameProc);
                                                                   RESULT = listInvk;
@@ -530,9 +457,9 @@ processInvk ::= invk:nameProc {: System.out.println("invocacion proceso");
                                                                :}
               ;
 
-invk ::= RUN ID:id LPARENT RPARENT {: System.out.println("termino de parsear RUN ID ()");
-                                   RESULT = (String)(id.value);
-                                :} ;
+invk ::= RUN ID:id LPARENT RPARENT {: 
+                                      RESULT = id;
+                                   :} ;
  
 
         

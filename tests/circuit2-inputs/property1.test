@@ -1,0 +1,3 @@
+//( c1.x & c1.y & global.z ) -> ( A( global.z U (!c1.x & !c1.y & !global.z) ));
+
+A( c1.z W (!c1.x & !c1.y) );
