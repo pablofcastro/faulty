@@ -54,8 +54,7 @@ public class MainMC {
         }
         catch(Exception e){
             System.out.println("Faulty Model checker fail: " + e.getMessage() );
-           
-           
+            
         }
         System.out.println("\n\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
     }
@@ -70,8 +69,7 @@ public class MainMC {
        PrettyPrintVisitor printVisitor = new PrettyPrintVisitor();
  	   prop.accept(printVisitor);
  	   return printVisitor.getPrettyFormula(); 
-    	
-    }
+ 	}
    
  	
 }

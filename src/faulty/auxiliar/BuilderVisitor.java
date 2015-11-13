@@ -3,8 +3,8 @@ package faulty.auxiliar;
 import mc.*;
 import net.sf.javabdd.BDD;
 import faulty.*;
-
 import java.util.*;
+
 
 public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	
@@ -217,10 +217,9 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	public void visit(AuxiliarChannel a){
 	    
 	    Channel chan;
-	   
+	    Type chT = a.getType();
 	    if (this.isDeclaration) { //needs to add this channel to the program
-	    	Type chT = a.getType();
-	    	if( chT.isINT() ){
+            if( chT.isINT() ){
 		        chan = new IntChannel(a.getName(),a.getSize(),this.model);
 		        this.type= Type.INT;
 		    }
@@ -231,6 +230,12 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	    }
 	    else{//channel is used in an expression 
 	    	 chan = searchChannel(a.getName(), this.process);
+	    	 if( chT.isINT() ){
+	    		 this.type= Type.INT;
+			 }
+			 else{
+			     this.type = Type.BOOL;
+			 }
 	    }
 	    this.channel = chan;
 	}
@@ -261,7 +266,8 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	public void visit(AuxiliarChanAssign a){
 		AuxiliarExpression auxExpr= a.exp;
 		AuxiliarChannel auxChan = a.chanName;
-		Type channelT = auxChan.getType();
+		Type channelT = this.getType(); 
+		
 		this.isDeclaration=false;
 		auxChan.accept(this);
 		Channel ch = this.getChannel();
@@ -272,6 +278,7 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		Type exprT = this.getType();
 		this.expr =null;
 		
+
 		if(channelT.isBOOLEAN() && exprT.isBOOLEAN()){
 		    this.code = new BoolChanAssign((BoolChannel)ch,(BoolExp)expr);
 	    }
@@ -561,7 +568,6 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
     	LinkedList<String> listProcessIntances = main.getProcessInvk();
     	AuxiliarProcess proc;
     	for(int i=0; i < listProcessIntances.size();i++ ){
-    		System.out.println("Process Instance: " +listProcessIntances.get(i));
     		proc= processCollection.getProcess(main.getProcessType(listProcessIntances.get(i))); //search the declarated process object 
     		if(proc!=null){
     			numberIntVars += proc.getNumVarInt();

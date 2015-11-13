@@ -29,7 +29,7 @@ public class IntChanAssign implements Code{
      * @return	the BDD respresenting the assignation
      */
     public BDD getBDD(){
-        BDD result = chan.BDDPut(exp.getBits());
+    	BDD result = chan.BDDPut(exp.getBits());
         return result;
     }
     

@@ -306,8 +306,8 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 	
 	public void visit(AuxiliarChanAssign a){
 		
-		AuxiliarChannel var = a.chanName;
-		var.accept(this);
+		AuxiliarChannel channel = a.chanName;
+		channel.accept(this);
 		Type chT = this.getType();
 		
 		AuxiliarExpression expr = a.exp;
@@ -315,11 +315,10 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		Type exprT = this.getType();
 		
 		if( (chT.isBOOLEAN() && exprT.isBOOLEAN()) || (chT.isINT() && exprT.isINT() ) ){
-		    type = chT;
+			type = chT;
 		}
 	    else{
-	    	
-		    type = Type.ERROR;
+	    	type = Type.ERROR;
 		    listError.add(new Error("ErrorType: PUT operation, channel :" + a.chanName.getName() ));
 		}
 	}

@@ -1,5 +1,6 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
 
 
@@ -21,6 +22,7 @@ public class ListAssign implements Code{
      */
     public BDD getBDD(){
        BDD result = Program.myFactory.one();
+       
        for (int i = 0; i < assigns.size(); i++){
     	   result = result.and(assigns.get(i).getBDD());
        }
@@ -33,6 +35,7 @@ public class ListAssign implements Code{
      */
     public LinkedList<Channel> getChannels(){
     	LinkedList<Channel> result = new LinkedList<Channel>();
+    	    	
     	for (int i=0; i < assigns.size(); i++){
     		result.addAll(assigns.get(i).getChannels());
     	}

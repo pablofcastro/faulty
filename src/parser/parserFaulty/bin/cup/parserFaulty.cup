@@ -7,20 +7,15 @@ import faulty.auxiliar.*;
 import java.util.*;
 
 parser code {:
-	 /*   public static void main(String args[]) throws Exception {
-		SymbolFactory sf = new DefaultSymbolFactory();
-		if (args.length==0) new parserFaulty(new scannerFaulty(System.in,sf),sf).parse();
-		else new parserFaulty(new scannerFaulty(new java.io.FileInputStream(args[0]),sf),sf).parse();
-	     
-        }*/
 	
     public void syntax_error(Symbol s){
-        System.out.println("Syntax Error - line: " +  s.left +  " - value:" + (String)s.value);
+        System.err.println("\n\nSyntax Error - line: " +  (s.left+1) +  " - value:" + s.value);
+        
     }
 
 
     public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception {    
-         System.out.println("Unrecovered Syntax error line: " +  s.left +  " - value:" + (String)(s.value));
+         System.err.println("\n\nUnrecovered Syntax error line: " +  (s.left+1) +  " - value:" + s.value);
     }
                                  	
 :}
@@ -103,38 +98,16 @@ precedence left EXCLAMATION;
 
 start with mainSpecification;
 
-mainSpecification ::= specification:prog {: /* TypeCheckerVisitor typeV = new TypeCheckerVisitor();
-                                             prog.accept(typeV);
-                                             Type result = typeV.getType();
-                                             System.out.println("end type visitor");
-                                             if(result == Type.ERROR){
-                                                 LinkedList<faulty.auxiliar.Error> errorList = typeV.getErrorList();
-                                                 for(int i=0; i<errorList.size(); i++){
-                                                     System.out.println(errorList.get(i).getErrorMsg());
-                                                 }
-                                             }
-                                             else{
-                                                 BuilderVisitor builder = new BuilderVisitor(typeV.getSymbolTable());
-                                                 prog.accept(builder);
-                                                 Program faultyProg = builder.getProgram();
-                                                 if(faultyProg !=null){
-                                                   System.out.println(" :)");
-                                                 }else{
-                                                   System.out.println(" :( ");
-                                                 }
-                                              
-                                             }*/
-                                             
-                                             RESULT = prog;
+mainSpecification ::= specification:prog {: RESULT = prog;
                                          :}
                     ;
 
 specification ::=  globalVarList:vList SEMICOLON channelList:cList SEMICOLON processList:pList program:main  {: AuxiliarProgram prog = new AuxiliarProgram(vList,cList,pList, main);
-                                                                                  RESULT = prog;
-                                                                                :}
+                                                                                                                RESULT = prog;
+                                                                                                             :}
                   | globalVarList:vList SEMICOLON  processList:pList program:main  {: AuxiliarProgram prog = new AuxiliarProgram(vList,pList, main);
-                                                                                  RESULT = prog;
-                                                                                :}
+                                                                                      RESULT = prog;
+                                                                                   :}
                   | channelList:cList SEMICOLON processList:pList program:main  {: AuxiliarProgram prog = new AuxiliarProgram(cList,pList, main);
                                                                                    RESULT = prog;
                                                                                 :}
@@ -434,7 +407,6 @@ primary ::= INTEGER:v  {:  AuxiliarConsIntExp value = new AuxiliarConsIntExp(v);
                                               RESULT = chanAcc; 
                                             :} 
           | LPARENT expr:ex RPARENT {: 
-                                       
                                        RESULT = ex;
                                     :}
           ;
@@ -478,7 +450,6 @@ processInvk ::= invk:nameProc {:
                                  LinkedList<String> listInvk = new LinkedList<String>();
                                  listInvk.add(nameProc);
                                  RESULT = listInvk;
-                        
                               :}
               |   processInvk:listInvk SEMICOLON invk:nameProc {: listInvk.add(nameProc);
                                                                   RESULT = listInvk;
