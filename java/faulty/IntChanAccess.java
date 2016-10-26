@@ -1,6 +1,8 @@
 package faulty;
 import java.util.LinkedList;
+
 import net.sf.javabdd.*;
+
 import java.util.*;
 
 /**
@@ -65,5 +67,41 @@ public class IntChanAccess implements IntExp{
     public IntChanAccess duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner){
     	return this;    	
     }
+    
+    /**
+     * Another duplicate to take into account process parameters
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param owner
+     * @return
+     */
+    public IntChanAccess duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner){
+    	return this;    	
+    }
+    
+    /**
+     * 
+     * @param instName
+     * @param dups
+     * @param owner
+     * @return
+     */
+    public IntChanAccess duplicate(String instName, HashMap<Var, Var> dups, Process owner){
+    	return this;    	
+    }
+    
+    @Override
+    public String toString(){
+        
+        String channelInfo = new String(" ");
+    	
+    	String  chanString= chan.getName(); 
+    	channelInfo= channelInfo.concat(chanString).concat(".get( ) ");
+        
+     	return channelInfo;
+    }
+
+
     
 }

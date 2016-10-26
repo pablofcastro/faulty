@@ -1,0 +1,6 @@
+These are some of the examples translated to NuSMV, they are useful to compare the running time of the tool
+againt NuSMV.
+
+FaultyPhils: Example of the Faulty Phils.
+Muller: Example of the Muller Circuit.
+MemoryCell: Example of the Memory Cell with redindant bits.

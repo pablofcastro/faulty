@@ -1,0 +1,14 @@
+This is a model of the Muller C-element. The circuit has two boolean inputs and one boolean output; the output (z) becomes true when the two inputs (x and y) are true, and it becomes false when the two inputs are false. The idea is that the output remains in its state until the two inputs change their states. This can be generalized to several inputs, composing various circuits of this kind. An intuitive description of the circuit is given in [AroraGouda93]. (i) Input x (resp. y) changes only if x = z (resp., y = z), (ii) Output z becomes true only if x & y holds, and becomes false only if ! x & ! y holds; (iii) Starting from a state where x & y, eventually a state is reached where z is set to the same value that both x and y have. Ideally, both x and y change simultaneously. Faults may delay changing either x or y.} This circuit is analyzed also in [Lamport94], and, as noted by the author, the complexity of the circuit increases exponentially when  more inputs are added.
+
+
+	One of the ways of implementing this electronic device is by using a majority circuit with three inputs . In this case that the output of the circuir (z) feeds back a new input. For codifying circuits with more inputs, we can put together different processes representing three inputs circuits and employ  shared memory for communicating them. 
+
+	In folders MullerXX (for XX = 2,4,6,8,10,12,14,16,32) you can find the faulty source code for Muller circuits of different sizes. In NuSMV
+you can find the same model encoded in the NuSMV language.
+
+
+References:
+
+[AroraGouda93] Arora, A., Gouda, M.: Closure and convergence: A foundation of fault-tolerant computing. IEEE Transactions on Software Engineering 19(11) (1993)
+
+[Lamport94] Leslie Lamport, Stephan Merz: Specifying and Verifying Fault-Tolerant Systems. FTRTFT 1994: 41-76

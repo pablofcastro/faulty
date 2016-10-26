@@ -1,0 +1,29 @@
+
+
+Process Memory {
+        w: BOOL; // the last value written
+	r: BOOL; // the value we can read from the memory
+        c0: BOOL; // the first bit
+        c1: BOOL; // the second bit
+        c2: BOOL; // the third bit
+	c3: BOOL; // fourth but
+	c4: BOOL; // fith bit
+  
+    
+       	Initial: w && c0 && c1 && c2 && c3 && c4 && r;
+       	Normative: (c0==c1) && (c1==c2) && (c0==c2) && (c0==c3) && (c0==c4);
+	
+	true -> w=!w, c0=!c0, c1=!c1, c2=!c2, c3=!c3, c4=!c4, r=(!c0&&!c1&&!c2)||(!c0&&!c2&&!c3)||(!c0&&!c3&&!c4)||(!c0&&!c1&&!c3)||(!c0&&!c1&&!c4)||(!c1&&!c3&&!c4)||(!c1&&!c2&&!c4)||(!c2&&!c3&&!c4)||(c1&&!c2&&!c3)||(!c0&&!c2&&!c4);// memory change accordingly
+	true -> c0=!c0, r=(!c0&&c1 &&c2)||(!c0&&c2&&c3)||(!c0&&c3&&c4)||(!c0&&c1&&c3)||(!c0&&c1&&c4)||(c1&&c3&&c4)||(c1&&c2&&c4)||(c2&&c3&&c4)||(c1&&c2&&c3)||(c0&&c2&&c4); // a bit is changed, its a fault
+	true -> c1=!c1, r=(c0&&!c1 &&c2)||(c0&&c2&&c3)||(c0&&c3&&c4)||(c0&&!c1&&c3)||(c0&&!c1&&c4)||(!c1&&c3&&c4)||(!c1&&c2&&c4)||(c2&&c3&&c4)||(c1&&c2&&c3)||(c0&&c2&&c4); // similar to above
+	true -> c2=!c2, r=(c0&&c1 &&!c2)||(c0&&!c2&&c3)||(c0&&c3&&c4)||(c0&&c1&&c3)||(c0&&c1&&c4)||(c1&&c3&&c4)||(c1&&!c2&&c4)||(!c2&&c3&&c4)||(c1&&!c2&&c3)||(c0&&!c2&&c4); // similar to above
+        true -> c3=!c3, r=(c0&&c1 &&c2)||(c0&&c2&&!c3)||(c0&&!c3&&c4)||(c0&&c1&&!c3)||(c0&&c1&&c4)||(c1&&!c3&&c4)||(c1&&c2&&c4)||(c2&&!c3&&c4)||(c1&&c2&&!c3)||(c0&&c2&&c4);
+	true -> c4=!c4, r=(c0&&c1 &&c2)||(c0&&c2&&c3)||(c0&&c3&&!c4)||(c0&&c1&&c3)||(c0&&c1&&!c4)||(c1&&c3&&!c4)||(c1&&c2&&!c4)||(c2&&c3&&!c4)||(c1&&c2&&c3)||(c0&&c2&&!c4);
+       
+}
+
+Main(){
+	m1: Memory;
+	run m1();
+}
+

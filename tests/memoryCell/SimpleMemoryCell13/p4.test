@@ -1,0 +1,2 @@
+O(m1.r U P(false U true) ~> ((m1.r & m1.w) | (!m1.r & !m1.w)) U P(false U true));
+

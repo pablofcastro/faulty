@@ -5,7 +5,9 @@ public class AuxiliarVar extends AuxiliarExpression {
 
 	String name;
 	Type type;
+    String enumName;
 	boolean isDeclaration;
+    private AuxiliarEnumType enumType;
 
 		
 	/**
@@ -15,8 +17,22 @@ public class AuxiliarVar extends AuxiliarExpression {
 	 */
 	public AuxiliarVar(String name, Type t){
 		this.name = name;
-		this.type = t;
+        Type tVar;
+        if(t.isEnumerated()){
+            this.enumName = new String(t.getStringValue());
+            tVar= Type.ENUMERATED;
+            tVar.setStringValue(t.getStringValue());
+            this.type = tVar;
+    //System.out.println("in AuxiliarVar ---->  declaration " + this.name + " type "+ this.type.toString() + " enum " + this.type.getStringValue()+ " -- enumName: " + this.enumName);
+            
+        }
+        else{
+            this.enumName = null;
+            this.type = t;
+
+        }
 		this.isDeclaration=true;
+        this.enumType=null;
 	}
 	
 	/**
@@ -27,6 +43,8 @@ public class AuxiliarVar extends AuxiliarExpression {
 		this.name = name;
 		this.type = Type.UNDEFINED;
 		this.isDeclaration=false;
+        this.enumType=null;
+        this.enumName = null;
 
 
 	}
@@ -40,6 +58,23 @@ public class AuxiliarVar extends AuxiliarExpression {
 		return this.type;
 	}
 	
+    /**
+	 *
+	 * @return Return the enumerated type of the variable.
+	 */
+	public AuxiliarEnumType getEnumType(){
+		
+		return this.enumType;
+	}
+           
+    /**
+     *
+     * @return Return the enumerated name of the variable.
+     */
+    public String getEnumName(){
+        return enumName;
+    }
+
 	public boolean isDeclaration(){
     	return this.isDeclaration;
     }
@@ -60,10 +95,30 @@ public class AuxiliarVar extends AuxiliarExpression {
 	 * @return Set the type of the variable.
 	 */
 	public void setType(Type t){
-		
-		this.type = t;
+		Type tVar;
+        if(t.isEnumerated()){
+            //this.enumName = new String(t.getStringValue());
+            
+            tVar= Type.ENUMERATED;
+            tVar.setStringValue(t.getStringValue());
+            this.type = tVar;
+            
+        }else{
+            this.type = t;
+        }
 	}
 	
+    
+    
+    /**
+	 *
+	 * Set the enumerated Type of the variable.
+	 */
+	public void setEnumType(AuxiliarEnumType t){
+		
+		this.enumType = t;
+	}
+    
 	/**
 	 * 
 	 * @return Set the name of the variable.
@@ -72,6 +127,26 @@ public class AuxiliarVar extends AuxiliarExpression {
 		
 		this.name = n;
 	}
+    
+    /**
+	 *
+	 * Set the enumerated name of the variable.
+	 */
+    public void setEnumName(String n){
+		
+		this.enumName = n;
+	}
+    
+    
+    public String toStringComplete(){
+        
+    	String varInfo = new String("AuxiliarVar:   ");
+    	varInfo = varInfo.concat("name: "+this.name + " - ");
+    	varInfo = varInfo.concat("type: "+this.type.toString()+ " - ");
+    	varInfo = varInfo.concat("isDeclaration: " +this.isDeclaration +"\n");
+    	return varInfo;
+    }
+
     
     @Override
 	public void accept(AuxiliarFaultyVisitor v){

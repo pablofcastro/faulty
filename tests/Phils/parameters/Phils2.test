@@ -1,0 +1,24 @@
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+
+Process Philosopher(forkL:BOOL,forkR:BOOL){
+   thinking, hungry, eating, hasL, hasR: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && forkL && forkR;
+   Normative: true; 
+
+   thinking -> hungry = true, thinking = false;
+   thinking -> hungry = false, thinking = true;
+   hungry && forkL && !hasL  -> forkL = false, hasL = true;
+   hungry && hasL && forkR -> forkR = false, hasR = true;
+   hungry && hasL && hasR -> eating = true, hungry = false;
+   eating -> forkL = true, forkR = true, eating = false, thinking = true;        
+}
+
+
+Main(){
+ phil1:Philosopher;
+ phil2:Philosopher;
+
+ run phil1(fork0, fork1);
+ run phil2(fork1, fork0);
+}

@@ -1,0 +1,79 @@
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+Global fork2 : BOOL;
+Global fork3 : BOOL;
+Global fork4 : BOOL;
+Global fork5 : BOOL;
+Global fork6 : BOOL;
+Global fork7 : BOOL;
+Global fork8 : BOOL;
+Global fork9 : BOOL;
+Global fork10 : BOOL;
+Global fork11 : BOOL;
+Global fork12 : BOOL;
+Global fork13 : BOOL;
+Global fork14 : BOOL;
+Global fork15 : BOOL;
+Global fork16 : BOOL;
+Global fork17 : BOOL;
+Global fork18 : BOOL;
+Global fork19 : BOOL;
+
+Process Philosopher(forkL:BOOL,forkR:BOOL){
+   thinking, hungry, eating, hasL, hasR: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && forkL && forkR;
+   Normative: true; 
+
+   thinking -> hungry = true, thinking = false;
+   thinking -> hungry = false, thinking = true;
+   hungry && forkL && !hasL  -> forkL = false, hasL = true;
+   hungry && hasL && forkR -> forkR = false, hasR = true;
+   hungry && hasL && hasR -> eating = true, hungry = false;
+   eating -> forkL = true, forkR = true, eating = false, thinking = true;        
+}
+
+Main(){
+ phil0: Philosopher;
+ phil1: Philosopher;
+ phil2: Philosopher;
+ phil3: Philosopher;
+ phil4: Philosopher;
+ phil5: Philosopher;
+ phil6: Philosopher;
+ phil7: Philosopher;
+ phil8: Philosopher;
+ phil9: Philosopher;
+ phil10: Philosopher;
+ phil11: Philosopher;
+ phil12: Philosopher;
+ phil13: Philosopher;
+ phil14: Philosopher;
+ phil15: Philosopher;
+ phil16: Philosopher;
+ phil17: Philosopher;
+ phil18: Philosopher;
+ phil19: Philosopher;
+ 
+ 
+ run phil0(fork0, fork1);
+ run phil1(fork1, fork2);
+ run phil2(fork2, fork3);
+ run phil3(fork3, fork4);
+ run phil4(fork4, fork5);
+ run phil5(fork5, fork6);
+ run phil6(fork6, fork7);
+ run phil7(fork7, fork8);
+ run phil8(fork8, fork9);
+ run phil9(fork9, fork10);
+ run phil0(fork10, fork11);
+ run phil1(fork11, fork12);
+ run phil2(fork12, fork13);
+ run phil3(fork13, fork14);
+ run phil4(fork14, fork15);
+ run phil5(fork15, fork16);
+ run phil6(fork16, fork17);
+ run phil7(fork17, fork18);
+ run phil8(fork18, fork19);
+ run phil9(fork19, fork0);
+
+}

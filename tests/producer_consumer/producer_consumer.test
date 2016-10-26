@@ -1,0 +1,29 @@
+
+Channel B[2] of BOOL; // Represents the Buffer to store the produced information.-
+
+Process Producer uses B{
+        make:BOOL;
+	Initial: make;
+	Normative: true;
+              true -> B.put(true), make=!make;
+}
+
+Process Consumer uses B{
+       used:BOOL;
+       value:BOOL;
+       Initial: !used;
+	Normative: true;
+		true -> value=B.get(), used=!used;
+            // B.get()  -> used=!used;  
+
+}
+
+
+Main(){
+	c1: Consumer;
+	p1: Producer;
+        run c1();
+	run p1();
+}
+
+

@@ -1,0 +1,146 @@
+MODULE Circuit(x,y,z)
+ASSIGN
+   init(x) := TRUE;
+   init(y) := TRUE;
+   init(z) := TRUE;
+   
+
+   next(x) :=
+	case
+	   (x=z)&(x=y) : {x, !x};
+	   (x=z)&!(y=z)   : !x;
+	   TRUE        : x;	
+        esac;
+   next(y) :=
+	case
+          (y=z)&(y=x) : {y, !y};
+          (y=z)&!(x=z) : !y;
+          TRUE : y;
+	esac;
+   next(z) :=
+       case
+        TRUE : z = (next(x)&next(y) | next(x)&z | next(y)&z);
+       esac;
+
+DEFINE
+   n := x=y;	
+
+MODULE Join(z1, z2, z3)
+
+ASSIGN
+   init(z3) := TRUE;
+
+   next(z3) := ((z1 & z2) | (z2 & z3) | (z1 & z3) );
+ 
+        
+
+MODULE main
+VAR 
+  i1 : boolean;
+  i2 : boolean;
+  i3 : boolean;
+  i4 : boolean;
+  i5 : boolean;
+  i6 : boolean;
+  i7 : boolean;
+  i8 : boolean;
+  i9 : boolean;
+  i10 : boolean;
+  i11 : boolean;
+  i12 : boolean;
+  i13 : boolean; 
+  i14 : boolean;
+  i15 : boolean;
+  i16 : boolean;
+  i17 : boolean;
+  i18 : boolean; 
+  i19 : boolean; 
+  i20 : boolean;
+  i21 : boolean;
+  i22 : boolean;
+  i23 : boolean;
+  i24 : boolean;
+  i25 : boolean;
+  i26 : boolean;
+  i27 : boolean;
+  i28 : boolean;
+  i29 : boolean;
+  i30 : boolean;
+  i31 : boolean;
+  i32 : boolean;
+
+  o1 : boolean;
+  o2 : boolean;
+  o3 : boolean;
+  o4 : boolean;
+  o5 : boolean;
+  o6 : boolean; 
+  o7 : boolean;
+  o8 : boolean;
+  o9 : boolean;
+  o10 : boolean;
+  o11 : boolean;
+  o12 : boolean;
+  o13 : boolean; 
+  o14 : boolean; 
+  o15 : boolean;
+  o16 : boolean;
+  o17 : boolean;
+  o18 : boolean;
+  o19 : boolean; 
+  o20 : boolean;
+  o21 : boolean;
+  o22 : boolean;
+  o23 : boolean;
+  o24 : boolean;
+  o25 : boolean;
+  o26 : boolean; 
+  o27 : boolean;
+  o28 : boolean;
+  o29 : boolean;
+  o30 : boolean;
+  o31 : boolean;
+ 
+  c1 : process Circuit(i1,i2,o1);
+  c2 : process Circuit(i3,i4,o2);
+  c3 : process Circuit(i5,i6,o3);
+  c4 : process Circuit(i7,i8,o4);
+  c5 : process Circuit(i9,i10,o5);
+  c6 : process Circuit(i11,i12, o6);
+  c7 : process Circuit(i13,i14,o7);
+  c8 : process Circuit(i15, i16, o8);
+  c9 : process Circuit(i17,i18, o9);
+  c10 : process Circuit(i19,i20, o10);
+  c11 : process Circuit(i21, i22, o11);
+  c12 : process Circuit(i23, i24, o12); 
+  c13 : process Circuit(i25, i26, o13);
+  c14 : process Circuit(i27, i28, o14);
+  c15 : process Circuit(i29, i30, o15);
+  c16 : process Circuit(i31, i32, o16);
+
+  j1 : process Join(o1, o2, o17);
+  j2 : process Join(o3, o4, o18);
+  j3 : process Join(o5, o6, o19);
+  j4 : process Join(o7, o8, o20);
+  j5 : process Join(o9, o10,o21);
+  j6 : process Join(o11,o12,o22);
+  j7 : process Join(o13, o14, o23);
+  j8 : process Join(o15, o16, o24);
+
+  
+  j9 : process Join(o17, o18, o25);
+  j10 : process Join(o19, o20, o26);
+  j11 : process Join(o21, o22, o27);
+  j12 : process Join(o23, o24, o28);
+
+  
+  j13 : process Join(o25, o26, o29);
+  j14 : process Join(o27, o28, o30);
+
+ 
+  j15 : process Join(o29, o30, o31);
+
+
+SPEC
+-- P2
+ AG(!c1.n -> AF(c1.n))  

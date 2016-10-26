@@ -2,31 +2,45 @@ package formula;
 
 import java.util.LinkedList;
 import faulty.auxiliar.*;
-
+import faulty.*;
 
 public class TypeCheckerVisitor implements FormulaVisitor  {
 	
 	 private LinkedList<String> boolVarsNames;
 	 private LinkedList<String> intVarsNames;
-	 private Type type;
+	 private LinkedList<String> enumVarsNames;
+     private Type type;
 	 private LinkedList<faulty.auxiliar.Error> listError;
+     private SymbolsTable sTable;
+     private Program model;
+     private EnumType enumTypeExpr;
+     private Boolean isVariable; //0: isVariable , 1: isConstant
+     private String varName;
+    
 	 
 	 
 	 /**
 	  * Basic constructor
 	  */
-	public TypeCheckerVisitor(SymbolsTable sTable){
+	public TypeCheckerVisitor(SymbolsTable table, Program mod){
 		type = Type.UNDEFINED;
 	    listError = new LinkedList<faulty.auxiliar.Error>();
-	    boolVarsNames = this.obtainBoolVarNames(sTable);
-	    intVarsNames = this.obtainIntVarNames(sTable);
+	    boolVarsNames = this.obtainBoolVarNames(table);
+	    intVarsNames = this.obtainIntVarNames(table);
+        enumVarsNames = this.obtainEnumVarNames(table);
+        this.sTable = table;
+        this.model = mod;
+        this.enumTypeExpr =null;
+        this.isVariable = false;
+        this.varName = null;
+        
 	}
 
 	@Override
 	public void visit(Variable v) {
 		String varName = v.getName();
 		
-		int i=0;
+        int i=0;
 		boolean foundB =false;
 		this.type = Type.ERROR;
 		
@@ -34,8 +48,10 @@ public class TypeCheckerVisitor implements FormulaVisitor  {
 		while(i<boolVarsNames.size() && !foundB){
 			if( boolVarsNames.get(i).equals(varName)){
 				foundB =true;
-				//this.type = faulty.auxiliar.Type.BOOL;
 				this.type = Type.BOOL;
+                this.varName = varName;
+                this.isVariable=true;
+
 			}
 			i++;
 		}
@@ -49,19 +65,77 @@ public class TypeCheckerVisitor implements FormulaVisitor  {
 				if( intVarsNames.get(j).equals(varName)){
 					foundI =true;
 					//this.type = faulty.auxiliar.Type.BOOL;
+                    // this.varName = varName;
+                    // this.isVariable=true;
+
 					this.type = Type.ERROR;
 					listError.add(new faulty.auxiliar.Error("ERROR Formula:  Var: " + intVarsNames.get(j) + " of type INT - (Formula does not support INT types).-" ));
 				}
 				j++;
 			}			
 		}
-		
-		if(!foundB && !foundI){
-			this.type = Type.ERROR;
-			listError.add(new faulty.auxiliar.Error("ERROR Formula:  Var: " + varName + " not found in the model.-" ));
-		
+        
+        boolean foundE =false;
+        if(!foundB && !foundI){ //Search the variable in the enumerated var names list.
+            int k=0;
+			//System.out.println(" visiting variable Enumerated = " + varName + " size = " + enumVarsNames.size());
+            
+			while(k<enumVarsNames.size() && !foundE){
+                if( enumVarsNames.get(k).equals(varName)){
+                    foundE =true;
+					this.type = Type.ENUMERATED;
+                    this.enumTypeExpr = obtainEnumTypeVar(varName);//this.model.getEnum();
+                    this.varName = new String(varName);
+                    this.isVariable=true;
+                   
+				}
+				k++;
+			}
 		}
 		
+		if(!foundB && !foundI && !foundE){
+            
+            if(this.isVariable){ //means that previously a variable was visited, search the constant in the previous type.
+                if(enumTypeExpr!=null){ //comparison of type "var== enumConst"
+                    int idCons = enumTypeExpr.getConsId(varName);
+                    if(idCons!= -1){ //means that varName is a constant of the last typeEnum involved in the expression.
+                        this.isVariable=false;
+                        this.varName = new String(varName);
+                        this.type= Type.ENUMERATED;
+                        
+                    }else{
+                        this.type = Type.ERROR;
+                        listError.add(new faulty.auxiliar.Error("ERROR Formula:  Constant: " + varName + " not found in the type of expression.-" ));
+                        
+                    }
+                }
+            }else{ // First component is a Constant ( ie: "idle == proc1.state" ) or comparison of two constants(ie: "idle == idle" )
+                   // By default the constant type will be the first EnumType that includes it.
+                
+                LinkedList<EnumType> listETypes =this.model.getEnumTypeList();
+                boolean foundC =false;
+                int k=0;
+                //System.out.println(" Searching constant Enumerated = " + varName + " size = " + listETypes.size());
+                
+                while(k<listETypes.size() && !foundC){
+                    int idCons = listETypes.get(k).getConsId(varName);
+                    if(idCons!= -1){ //means that varName is a constant of the last typeEnum involved in the expression.
+                        this.isVariable=false;
+                        this.varName = varName;
+                        this.enumTypeExpr =  listETypes.get(k);
+                        foundC=true;
+                        this.type= Type.ENUMERATED;
+                    }
+                    k++;
+                }
+                
+                if (!foundC){
+			        this.type = Type.ERROR;
+                    listError.add(new faulty.auxiliar.Error("ERROR Formula:  Constant: " + varName + " not found in the EnumTypes list of the model.-"));
+                }
+        
+            }
+        }
 	}
     
 	@Override
@@ -82,6 +156,77 @@ public class TypeCheckerVisitor implements FormulaVisitor  {
 		visitBinaryOp(f1,f2);
 		
 	}
+    
+    
+    @Override
+	public void visit(EqComparison i) {
+		FormulaElement f1 = i.getExpr1();
+		FormulaElement f2 = i.getExpr2();
+        
+        f1.accept(this);
+		Type t1 =  this.getType();
+        String var1 = this.varName;
+        EnumType Texpr1 = this.enumTypeExpr;
+        boolean isVariableExpr1 = this.isVariable;
+       // System.out.println(" ANTES Type expr1  = " + Texpr1.getName());
+        
+        f2.accept(this);
+		Type t2 =  this.getType();
+        String var2 = this.varName;
+        EnumType Texpr2 = this.enumTypeExpr;
+		boolean isVariableExpr2 = this.isVariable;
+        
+        if(t2.isEnumerated() && t1.isEnumerated() ){
+           
+            if(Texpr1!=null && Texpr2!=null && Texpr1.getName().equals(Texpr2.getName())){
+                if(var1!=null && var2!=null){
+		            i.setEnumNameComparison(Texpr1.getName());
+                    i.setNameExpr1(var1);
+                    i.setNameExpr2(var2);
+                    i.setIsVarExpr1(isVariableExpr1);
+                    i.setIsVarExpr2(isVariableExpr2);
+                    i.setTypeEnum(true);
+                    this.type= Type.ENUMERATED;
+                }
+            }else{//  two differents enumerated types 
+                    this.type = Type.ERROR;
+                    listError.add(new faulty.auxiliar.Error("ERROR Formula: == operator: Expected the same types for Comparation.-" ));
+            }
+            
+        
+            if(t1==Type.ERROR || t2==Type.ERROR){
+			    this.type= Type.ERROR;
+		    }
+		
+	   }
+       else{ // BOOL or INT
+           if(t1.isBOOLEAN() && t2.isBOOLEAN() ){
+               i.setNameExpr1(var1);
+               i.setNameExpr2(var2);
+               i.setIsVarExpr1(isVariableExpr1);
+               i.setIsVarExpr2(isVariableExpr2);
+               i.setTypeBool(true);
+               this.type= Type.BOOL;
+           
+           }else{
+               if(t1.isINT() && t2.isINT() ){
+                   i.setNameExpr1(var1);
+                   i.setNameExpr2(var2);
+                   i.setIsVarExpr1(isVariableExpr1);
+                   i.setIsVarExpr2(isVariableExpr2);
+                   i.setTypeInt(true);
+                   this.type= Type.INT;
+                   
+               }else{//ERROR
+                   this.type = Type.ERROR;
+                   listError.add(new faulty.auxiliar.Error("ERROR Formula: == operator: Expected the same types for Comparation.-" ));
+               }
+           
+           }
+       }
+        
+    }
+    
     
 	@Override
 	public void visit(Conjunction c) {
@@ -139,16 +284,46 @@ public class TypeCheckerVisitor implements FormulaVisitor  {
 		visitQuaternaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
 		
 	}
+    
+     
+     @Override
+     public void visit(OXW o){
+         visitTernaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3());
+     }
+     
+     @Override
+     public void visit(OUW o){
+         visitQuaternaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     @Override
+     public void visit(OWX o){
+         visitTernaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3());
+     }
+     
+     @Override
+     public void visit(OWU o){
+         visitQuaternaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     @Override
+     public void visit(OWW o){
+         visitQuaternaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     } 
+     
+     
 	
+    @Override
 	public void visit(OX o) {
 		visitUnaryOp(o.getExpr1());
 	}
 	
+    @Override
 	public void visit(OU o) {
 		visitBinaryOp(o.getExpr1(),o.getExpr2());
 		
 	}
-    
+    @Override
 	public void visit(OW o) {
 		visitBinaryOp(o.getExpr1(),o.getExpr2());
 	}
@@ -176,6 +351,36 @@ public class TypeCheckerVisitor implements FormulaVisitor  {
 		
 	}
     
+    
+    
+     @Override
+     public void visit(PXW o){
+         visitTernaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3());
+     }
+     
+     @Override
+     public void visit(PUW o){
+         visitQuaternaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     @Override
+     public void visit(PWX o){
+         visitTernaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3());
+     }
+     
+     @Override
+     public void visit(PWU o){
+         visitQuaternaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     @Override
+     public void visit(PWW o){
+         visitQuaternaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     
+	
+    
 	public void visit(PX p){
 		visitUnaryOp(p.getExpr1());		}
 	
@@ -186,44 +391,100 @@ public class TypeCheckerVisitor implements FormulaVisitor  {
 	public void visit(PW p){
 		visitBinaryOp(p.getExpr1(),p.getExpr2());	}
 	
-	@Override
-	public void visit(Recovery r) {
+/*	@Override
+	public void visit(Recovery r) { // CREO Q ESTA HABRA Q ELIMINARLA
 		visitBinaryOp(r.getExpr1(),r.getExpr2());
+	}*/
+    
+    @Override
+	public void visit(RXX p) {
+		visitBinaryOp(p.getExpr1(),p.getExpr2());
 	}
+    
+	@Override
+	public void visit(RXU p) {
+		visitTernaryOp(p.getExpr1(),p.getExpr2(), p.getExpr3());
+	}
+    
+	@Override
+	public void visit(RUX p) {
+		visitTernaryOp(p.getExpr1(),p.getExpr2(), p.getExpr3());
+	}
+    
+	@Override
+	public void visit(RUU p) {
+		visitQuaternaryOp(p.getExpr1(),p.getExpr2(), p.getExpr3(), p.getExpr4());
+	}
+    
+    @Override
+    public void visit(RXW o){
+       visitTernaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3());
+    }
+     
+    @Override
+    public void visit(RUW o){
+       visitQuaternaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+    }
+     
+    @Override 
+    public void visit(RWX o){
+        visitTernaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3());
+    }
+     
+    @Override
+    public void visit(RWU o){
+        visitQuaternaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+    }
+     
+    @Override
+    public void visit(RWW o){
+        visitQuaternaryOp(o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+    }
+     
+     
 	
+    @Override
 	public void visit(RX r) {
 		visitUnaryOp(r.getExpr1());
 	}
 	
+    @Override
 	public void visit(RU r) {
 		visitBinaryOp(r.getExpr1(),r.getExpr2());
 		
 	}
 	
+    @Override
 	public void visit(RW r) {
 		visitBinaryOp(r.getExpr1(),r.getExpr2());
 	}
     
+    @Override
 	public void visit(AX a) {
 		visitUnaryOp(a.getExpr1());
 	}
 	
+    @Override
 	public void visit(AW a) {
 		visitBinaryOp(a.getExpr1(),a.getExpr2());
 	}
 	
+    @Override
 	public void visit(AU a) {
 		visitBinaryOp(a.getExpr1(),a.getExpr2());
 	}
 	
+    @Override
 	public void visit(EX e) {
 		visitUnaryOp(e.getExpr1());
 	}
 	
+    @Override
 	public void visit(EW e) {
 		visitBinaryOp(e.getExpr1(),e.getExpr2());
     }
 	
+    @Override
 	public void visit(EU e) {
 		visitBinaryOp(e.getExpr1(),e.getExpr2());
 	}
@@ -326,6 +587,47 @@ public class TypeCheckerVisitor implements FormulaVisitor  {
 		return varNames;
 		
 	}
+    
+    /**
+	 * Creates a list with all the names of enumerated variables of the model.
+	 */
+	private LinkedList<String> obtainEnumVarNames(SymbolsTable symbolsTable){
+		
+		LinkedList<String> varNames =new LinkedList<String>();
+		
+		TableLevel mainLevel = symbolsTable.getLevelSymbols(0);
+		LinkedList<String> processVar = mainLevel.getEnumVarNamesProcesses();
+		LinkedList<String> globalVar = mainLevel.getEnumVarNames();
+		
+		//  Add the prefix "global." for each global variable of the main level.
+		for(int i=0; i<globalVar.size();i++){
+ 		    String nameG = new String ( "global." + globalVar.get(i));
+ 		    varNames.add(nameG);
+		}
+		
+		for(int i=0; i<processVar.size();i++){
+ 		    varNames.add(processVar.get(i));
+		}
+        
+		return varNames;
+		
+	}
+    
+    /**
+	 * Return the enumerated type of the var
+	 * @return Enumtype
+	 */
+    
+    private EnumType obtainEnumTypeVar(String varName){
+        
+        VarEnum var = this.model.getVarEnum(varName);
+        if(var!=null){
+            return var.getEnumType();
+        }else{
+            return null;
+        }
+    }
+    
 	
 	/**
 	 * Return the type involved in the object.
@@ -353,7 +655,7 @@ public class TypeCheckerVisitor implements FormulaVisitor  {
 		
 		f1.accept(this);
 		Type t1 =  this.getType();
-		f2.accept(this);
+        f2.accept(this);
 		Type t2 =  this.getType();
 		
 		if(t1==Type.ERROR || t2==Type.ERROR){

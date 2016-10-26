@@ -1,6 +1,8 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
+
 import mc.*;
 
 /**
@@ -108,10 +110,60 @@ public class MultIntExp implements IntExp{
     	return multResult.getBits();
     }
     
-    
+    /**
+     * It duplicates the expression
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param owner
+     * @return
+     */
     public MultIntExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner){
     	MultIntExp result = new MultIntExp((IntExp) exp1.duplicate(instName, boolMap, intMap, owner), (IntExp) exp2.duplicate(instName, boolMap, intMap, owner), model);
     	return result;
     	
     }
+    
+    /**
+     * Another duplicate to take into account process parameters
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param boolPars
+     * @param intPars
+     * @param owner
+     * @return
+     */
+    public MultIntExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner){
+    	MultIntExp result = new MultIntExp((IntExp) exp1.duplicate(instName, boolMap, intMap, boolPars, intPars, owner), (IntExp) exp2.duplicate(instName, boolMap, intMap, boolPars, intPars,  owner), model);
+    	return result;
+    	
+    }
+    
+    /**
+     * 
+     * @param instName
+     * @param dups
+     * @param owner
+     * @return
+     */
+    public MultIntExp duplicate(String instName, HashMap<Var, Var> dups, Process owner){
+    	MultIntExp result = new MultIntExp((IntExp) exp1.duplicate(instName, dups, owner), (IntExp) exp2.duplicate(instName, dups,  owner), model);
+    	return result;
+    	
+    }
+    
+    @Override
+    public String toString(){
+        
+        String multInfo = new String(" ");
+    	
+    	String  exp1String= exp1.toString(); 
+    	String  exp2String= exp2.toString(); 
+    	
+    	multInfo= multInfo.concat(exp1String).concat(" * ").concat(exp2String);
+        
+     	return multInfo;
+    }
+    
 }// end class

@@ -1,0 +1,1 @@
+Process SimpleProtocol{       send:BOOL;       delivered:BOOL;        Initial: !send && !delivered;       Normative: true;           (send==false && delivered==false)-> send=true, delivered = true;}Main(){	p1: SimpleProtocol;	run p1();}

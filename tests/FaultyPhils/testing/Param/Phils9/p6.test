@@ -1,0 +1,4 @@
+//Property P6 in the paper
+//E(true U phil1.s0 & phil1.s1);
+R( !(phil1.s0 & phil1.s1) & !(phil3.s0 & phil3.s1) & !(phil2.s0 & phil2.s1) W false  ~> false U E( true U (phil2.s0 & !phil2.s1) | (phil1.s0 & !phil1.s1) | (phil3.s0 & !phil3.s1)));
+//R( !(phil1.s0 & phil1.s1) & !(phil3.s0 & phil3.s1) & !(phil2.s0 & phil2.s1) W false  ~> false U false );

@@ -1,0 +1,21 @@
+
+//x( c2.x3 U c1.x1 );
+//( O( global.z0 W (!c1.x0 & !c1.x1) ) ) & ( O( global.z1 W (!c2.x2 & !c2.x3) ) ) ;
+
+//E((c1.x0 & c1.x1) W false);
+
+//!(E(global.z0 U (c1.x0)));
+
+//O(global.z0 U !c1.x0 & !c1.x1);
+
+//A(X global.z0);
+
+//global.z2;
+
+//O( global.z0 U (!c1.x0 & !c1.x1) );
+
+//E(X !c1.x0 & !c1.x1 & !c2.x2 & !c2.x3);
+
+//O( global.z1 W (!c2.x2 & !c2.x3) );
+
+R(false U E(true U ( (c1.x0 & c1.x1 & global.z0) | (!c1.x0 & !c1.x1 & !global.z0))));

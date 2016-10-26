@@ -1,0 +1,116 @@
+-- An implementation of the (faulty) dinner philosophers,
+
+MODULE EvenPhil(lfork, rfork)
+VAR
+	state : {thinking, hungry, eating, crash};
+        hasR : boolean;
+        hasL: boolean;
+  
+        
+INIT
+  state=thinking & !hasR & !hasL; 
+
+ASSIGN
+     next(state) := case
+                    state = thinking & !hasL & !hasR  : {thinking, hungry, crash};
+                    state = hungry & hasL & hasR: {eating, crash};
+                    state = eating : {thinking, crash};
+		    state = crash : crash;	
+		    TRUE : state;
+                   esac;
+
+     next(lfork) := case 
+                     state = hungry & lfork : !lfork;
+                     state = eating : TRUE;
+                     TRUE : lfork;
+                    esac;
+
+     next(rfork) := case 
+                    state = hungry & hasL & rfork : FALSE;
+                    state = eating : TRUE;
+                    TRUE : rfork;
+                   esac; 
+    
+     next(hasL) := case
+                   state = hungry & lfork : TRUE;
+                   state = eating : FALSE;
+                   TRUE : hasL;
+                   esac;
+
+     next(hasR) := case
+                   state=hungry & hasL & rfork : TRUE;
+                   state=eating : FALSE;
+                   TRUE : hasR;
+                  esac;
+
+DEFINE
+    n := !(state = crash);
+
+MODULE OddPhil(lfork, rfork)
+VAR
+	state : {thinking, hungry, eating, crash};
+        hasR : boolean;
+        hasL: boolean;
+INIT
+    state=thinking & !hasR & !hasL; 
+
+ASSIGN
+
+     init(state) := thinking;
+     init(hasR) := FALSE;
+     init(hasL) := FALSE;
+     next(state) := case
+                    state = thinking & !hasL & !hasR : {thinking, hungry, crash};
+                    state = hungry & hasL & hasR: {eating, crash};
+                    state = eating : {thinking, crash};
+                    state = crash : crash;
+		    TRUE : state;
+                   esac;
+
+     next(rfork) := case 
+                     state = hungry & rfork : !rfork;
+                     state = eating : TRUE;
+                     TRUE : rfork;
+                    esac;
+     next(lfork) := case 
+                    state = hungry & hasR & lfork : FALSE;
+                    state = eating : TRUE;
+                    TRUE : lfork;
+                   esac; 
+    
+     next(hasR) := case
+                   state = hungry & rfork : TRUE;
+                   state = eating : FALSE;
+                   TRUE : hasR;
+                   esac;
+     next(hasL) := case
+                   state=hungry & hasR & lfork : TRUE;
+                   state=eating : FALSE;
+                   TRUE : hasL;
+                  esac;
+
+DEFINE
+      n := ! (state=crash);
+
+
+MODULE main
+VAR
+  fork0 : boolean;
+  fork1 : boolean;
+  phil1:process EvenPhil(fork1,fork0);
+  phil2:process OddPhil(fork0,fork1);
+
+INIT
+ fork0 & fork1;
+
+DEFINE
+  norm = !(phil1.state = crash) & !(phil2.state = crash) 
+
+SPEC
+-- Property: P(true U phil1.eating)
+  EG(E[phil1.n & phil2.n U (phil1.state = eating) & EG(phil1.n&phil2.n)])
+-- Property: R(EFphi2.state = eating | G(!phi1.crash & !phi3.crash))
+-- No sense for two phils
+-- !EF(!norm & EG(!phi1.crash & !phi3.crash & phi2.state = eating))  
+
+

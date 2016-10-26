@@ -1,0 +1,389 @@
+
+Global z0:BOOL;
+Global z1:BOOL;
+Global z2:BOOL;
+Global z3:BOOL;
+Global z4:BOOL;
+Global z5:BOOL;
+Global z6:BOOL;
+Global z7:BOOL;
+Global z8:BOOL;
+Global z9:BOOL;
+Global z10:BOOL;
+Global z11:BOOL;
+Global z12:BOOL;
+Global z13:BOOL;
+Global z14:BOOL;
+Global z15:BOOL;
+Global z16:BOOL;
+Global z17:BOOL;
+Global z18:BOOL;
+Global z19:BOOL;
+Global z20:BOOL;
+Global z21:BOOL;
+Global z22:BOOL;
+Global z23:BOOL;
+Global z24:BOOL;
+Global z25:BOOL;
+Global z26:BOOL;
+Global z27:BOOL;
+Global z28:BOOL;
+Global z29:BOOL;
+Global z30:BOOL;
+
+
+
+
+Process Circuit1{
+	x0,x1: BOOL;
+	Initial: x0 && x1 && z0;
+	Normative: x0==x1;
+		x0==z0 && x1==z0 -> x0=!x0, x1=!x1, z0=(!x0 && !x1 || !x0&&z0 || !x1&&z0);
+		x0==z0 && x1==z0 -> x0=!x0, z0=(!x0 && x1 || !x0&&z0 || x1&&z0);
+                x0==z0 && x1==z0 -> x1=!x1, z0=(x0 && !x1 || x0&&z0 || !x1&&z0);
+	   	!(x0==z0) && x1==z0 -> x1=!x1, z0=(x0 && !x1 || x0&&z0 || !x1&&z0);
+                 x0==z0 && !(x1==z0) -> x0=!x0, z0=(!x0 && x1 || !x0&&z0 || x1&&z0);
+}
+
+
+Process Circuit2{
+	x2,x3: BOOL;
+	Initial: x2 && x3 && z1;
+	Normative: x2==x3;
+		x2==z1 && x3==z1 -> x2=!x2, x3=!x3, z1=(!x2 && !x3 || !x2&&z1 || !x3&&z1);
+		x2==z1 && x3==z1 -> x2=!x2, z1=(!x2 && x3 || !x2&&z1 || x3&&z1);
+                x2==z1 && x3==z1 -> x3=!x3, z1=(x2 && !x3 || x2&&z1 || !x3&&z1);
+	   	!(x2==z1) && x3==z1 -> x3=!x3, z1=(x2 && !x3 || x2&&z1 || !x3&&z1);
+                x2==z1 && !(x3==z1) -> x2=!x2, z1=(!x2 && x3 || !x2&&z1 || x3&&z1);
+}
+
+Process Circuit3{
+	x4,x5: BOOL;
+	Initial: x4 && x5 && z2;
+	Normative: x4==x5;
+		x4==z2 && x5==z2 -> x4=!x4, x5=!x5, z2=(!x4 && !x5 || !x4&&z2 || !x5&&z2);
+		x4==z2 && x5==z2 -> x4=!x4, z2=(!x4 && x5 || !x4&&z2 || x5&&z2);
+                x4==z2 && x5==z2 -> x5=!x5, z2=(x4 && !x5 || x4&&z2 || !x5&&z2);
+	   	!(x4==z2) && x5==z2 -> x5=!x5, z2=(x4 && !x5 || x4&&z2 || !x5&&z2);
+                x4==z2 && !(x5==z2) -> x4=!x4, z2=(!x4 && x5 || !x4&&z2 || x5&&z2);
+}
+
+
+Process Circuit4{
+	x6,x7: BOOL;
+	Initial: x6 && x7 && z3;
+	Normative: x6==x7;
+		x6==z3 && x7==z3 -> x6=!x6, x7=!x7, z3=(!x6 && !x7 || !x6&&z3 || !x7&&z3);
+		x6==z3 && x7==z3 -> x6=!x6, z3=(!x6 && x7 || !x6&&z3 || x7&&z3);
+                x6==z3 && x7==z3 -> x7=!x7, z3=(x6 && !x7 || x6&&z3 || !x7&&z3);
+	   	!(x6==z3) && x7==z3 -> x7=!x7, z3=(x6 && !x7 || x6&&z3 || !x7&&z3);
+                x6==z3 && !(x7==z3) -> x6=!x6, z3=(!x6 && x7 || !x6&&z3 || x7&&z3);
+}
+
+
+Process Circuit5{
+	x8,x9: BOOL;
+	Initial: x8 && x9 && z4;
+	Normative: x8==x9;
+		x8==z4 && x9==z4 -> x8=!x8, x9=!x9, z4=(!x8 && !x9 || !x8&&z4 || !x9&&z4);
+		x8==z4 && x9==z4 -> x8=!x8, z4=(!x8 && x9 || !x8&&z4 || x9&&z4);
+                x8==z4 && x9==z4 -> x9=!x9, z4=(x8 && !x9 || x8&&z4 || !x9&&z4);
+	   	!(x8==z4) && x9==z4 -> x9=!x9, z4=(x8 && !x9 || x8&&z4 || !x9&&z4);
+                x8==z4 && !(x9==z4) -> x8=!x8, z4=(!x8 && x9 || !x8&&z4 || x9&&z4);
+
+}
+
+Process Circuit6{
+	x10,x11: BOOL;
+	Initial: x10 && x11 && z5;
+	Normative: x10==x11;
+		x10==z5 && x11==z5 -> x10=!x10, x11=!x11, z5=(!x10 && !x11 || !x10&&z5 || !x11&&z5);
+		x10==z5 && x11==z5 -> x10=!x10, z5=(!x10 && x11 || !x10&&z5 || x11&&z5);
+                x10==z5 && x11==z5 -> x11=!x11, z5=(x10 && !x11 || x10&&z5 || !x11&&z5);
+	   	!(x10==z5) && x11==z5 -> x11=!x11, z5=(x10 && !x11 || x10&&z5 || !x11&&z5);
+                x10==z5 && !(x11==z5) -> x10=!x10, z5=(!x10 && x11 || !x10&&z5 || x11&&z5);
+}
+
+Process Circuit7{
+	x12,x13: BOOL;
+	Initial: x12 && x13 && z6;
+	Normative: x12==x13;
+		x12==z6 && x13==z6 -> x12=!x12, x13=!x13, z6=(!x12 && !x13 || !x12&&z6 || !x13&&z6);
+		x12==z6 && x13==z6 -> x12=!x12, z6=(!x12 && x13 || !x12&&z6 || x13&&z6);
+                x12==z6 && x13==z6 -> x13=!x13, z6=(x12 && !x13 || x12&&z6 || !x13&&z6);
+	   	!(x12==z6) && x13==z6 -> x13=!x13, z6=(x12 && !x13 || x12&&z6 || !x13&&z6);
+                x12==z6 && !(x13==z6) -> x12=!x12, z6=(!x12 && x13 || !x12&&z6 || x13&&z6);
+
+}
+
+
+Process Circuit8{
+	x14,x15: BOOL;
+	Initial: x14 && x15 && z7;
+	Normative: x14==x15;
+		x14==z7 && x15==z7 -> x14=!x14, x15=!x15, z7=(!x14 && !x15 || !x14&&z7 || !x15&&z7);
+		x14==z7 && x15==z7 -> x14=!x14, z7=(!x14 && x15 || !x14&&z7 || x15&&z7);
+                x14==z7 && x15==z7 -> x15=!x15, z7=(x14 && !x15 || x14&&z7 || !x15&&z7);
+	   	!(x14==z7) && x15==z7 -> x15=!x15, z7=(x14 && !x15 || x14&&z7 || !x15&&z7);
+                x14==z7 && !(x15==z7) -> x14=!x14, z7=(!x14 && x15 || !x14&&z7 || x15&&z7);
+
+}
+
+Process Circuit9{
+	x16,x17: BOOL;
+	Initial: x16 && x17 && z8;
+	Normative: x16==x17;
+		x16==z8 && x17==z8 -> x16=!x16, x17=!x17, z8=(!x16 && !x17 || !x16&&z8 || !x17&&z8);
+		x16==z8 && x17==z8 -> x16=!x16, z8=(!x16 && x17 || !x16&&z8 || x17&&z8);
+                x16==z8 && x17==z8 -> x17=!x17, z8=(x16 && !x17 || x16&&z8 || !x17&&z8);
+	   	!(x16==z8) && x17==z8 -> x17=!x17, z8=(x16 && !x17 || x16&&z8 || !x17&&z8);
+                x16==z8 && !(x17==z8) -> x16=!x16, z8=(!x16 && x17 || !x17&&z8 || x17&&z8);
+}
+Process Circuit10{
+	x18,x19: BOOL;
+	Initial: x18 && x19 && z9;
+	Normative: x18==x19;
+		x18==z9 && x19==z9 -> x18=!x18, x19=!x19, z9=(!x18 && !x19 || !x18&&z9 || !x19&&z9);
+		x18==z9 && x19==z9 -> x18=!x18, z9=(!x18 && x19 || !x18&&z9 || x19&&z9);
+                x18==z9 && x19==z9 -> x19=!x19, z9=(x18 && !x19 || x18&&z9 || !x19&&z9);
+	   	!(x18==z9) && x19==z9 -> x19=!x19, z9=(x18 && !x19 || x18&&z9 || !x19&&z9);
+                x18==z9 && !(x19==z9) -> x18=!x18, z9=(!x18 && x19 || !x18&&z9 || x19&&z9);
+}
+
+Process Circuit11{
+	x20,x21: BOOL;
+	Initial: x20 && x21 && z10;
+	Normative: x20 == x21;
+		x20==z10 && x21==z10 -> x20=!x20, x21=!x21, z10=(!x20 && !x21 || !x20&&z10 || !x21&&z10);
+		x20==z10 && x21==z10 -> x20=!x20, z10=(!x20 && x21 || !x20&&z10 || x21&&z10);
+                x20==z10 && x21==z10 -> x21=!x21, z10=(x20 && !x21 || x20&&z10 || !x21&&z10);
+	   	!(x20==z10) && x21==z10 -> x21=!x21, z10=(x20 && !x21 || x20&&z10 || !x21&&z10);
+                x20==z10 && !(x21==z10) -> x20=!x20, z10=(!x20 && x21 || !x20&&z10 || x21&&z10);
+}
+
+Process Circuit12{
+	x22,x23: BOOL;
+	Initial: x22 && x23 && z11;
+	Normative: x22==x23;
+		x22==z11 && x23==z11 -> x22=!x22, x23=!x23, z11=(!x22 && !x23 || !x22&&z11 || !x23&&z11);
+		x22==z11 && x23==z11 -> x22=!x22, z11=(!x22 && x23 || !x22&&z11 || x23&&z11);
+                x22==z11 && x23==z11 -> x23=!x23, z11=(x22 && !x23 || x22&&z11 || !x23&&z11);
+	   	!(x22==z11) && x23==z11 -> x23=!x23, z11=(x22 && !x23 || x22&&z11 || !x23&&z11);
+                x22==z11 && !(x23==z11) -> x22=!x22, z11=(!x22 && x23 || !x22&&z11 || x23&&z11);
+}
+
+Process Circuit13{
+	x24,x25: BOOL;
+	Initial: x24 && x25 && z12;
+	Normative: x24==x25;
+		x24==z12 && x25==z12 -> x24=!x24, x25=!x25, z12=(!x24 && !x25 || !x24&&z12 || !x25&&z12);
+		x24==z12 && x25==z12 -> x24=!x24, z12=(!x24 && x25 || !x24&&z12 || x25&&z12);
+                x24==z12 && x25==z12 -> x25=!x25, z12=(x24 && !x25 || x24&&z12 || !x25&&z12);
+	   	!(x24==z12) && x25==z12 -> x25=!x25, z12=(x24 && !x25 || x24&&z12 || !x25&&z12);
+                x24==z12 && !(x25==z12) -> x24=!x24, z12=(!x24 && x25 || !x24&&z12 || x25&&z12);}
+
+Process Circuit14{
+	x26,x27: BOOL;
+	Initial: x26 && x27 && z13;
+	Normative: x26==x27;
+		x26==z13 && x27==z13 -> x26=!x26, x27=!x27, z13=(!x26 && !x27 || !x26&&z13 || !x27&&z13);
+		x26==z13 && x27==z13 -> x26=!x26, z13=(!x26&& x27 || !x26&&z13 || x27&&z13);
+                x26==z13 && x27==z13 -> x27=!x27, z13=(x26 && !x27 || x26&&z13 || !x27&&z13);
+	   	!(x26==z13) && x27==z13 -> x27=!x27, z13=(x26 && !x27 || x26&&z13 || !x27&&z13);
+                x26==z13 && !(x27==z13) -> x26=!x26, z13=(!x26 && x27 || !x26&&z13 || x27&&z13);
+}
+
+Process Circuit15{
+	x28,x29: BOOL;
+	Initial: x28 && x29 && z14;
+	Normative: x28==x29;
+		x28==z14 && x29==z14 -> x28=!x28, x29=!x29, z14=(!x28 && !x29 || !x28&&z14 || !x29&&z14);
+		x28==z14 && x29==z14 -> x28=!x28, z14=(!x28 && x29 || !x28&&z14 || x29&&z14);
+                x28==z14 && x29==z14 -> x29=!x29, z14=(x28 && !x29 || x28&&z14 || !x29&&z14);
+	   	!(x28==z14) && x29==z14 -> x29=!x29, z14=(x28 && !x29 || x28&&z14 || !x29&&z14);
+                x28==z14 && !(x29==z14) -> x28=!x28, z14=(!x28 && x29 || !x28&&z14 || x29&&z14);
+}
+
+Process Circuit16{
+	x30,x31: BOOL;
+	Initial: x30 && x31 && z15;
+	Normative: x30==x31;
+		x30==z15 && x31==z15 -> x30=!x30, x31=!x31, z15=(!x30 && !x31 || !x30&&z15 || !x31&&z15);
+		x30==z15 && x31==z15 -> x30=!x30, z15=(!x30 && x31 || !x30&&z15 || x31&&z15);
+                x30==z15 && x31==z15 -> x31=!x31, z15=(x30 && !x31 || x30&&z15 || !x31&&z15);
+	   	!(x30==z15) && x31==z15 -> x31=!x31, z15=(x30 && !x31 || x30&&z15 || !x31&&z15);
+                x30==z15 && !(x31==z15) -> x31=!x31, z15=(!x30 && x31 || !x30&&z15 || x31&&z15);
+}
+
+
+
+Process Join1{
+
+	Initial: z16;
+	Normative: z16;
+		!(z16== (z0 && z1 || z0&&z16 || z1&&z16)) -> z16 = !z16;
+} 
+
+Process Join2{
+
+	Initial: z17;
+	Normative: z17;
+		!(z17== (z2 && z3 || z2&&z17 || z3&&z17)) -> z17 = !z17;
+} 
+
+Process Join3{
+
+	Initial: z18;
+	Normative: z18;
+		!(z18== (z4 && z5 || z4&&z18 || z5&&z18)) -> z18 = !z18;
+} 
+
+Process Join4{
+	Initial: z19;
+	Normative: z19;
+		!(z19== (z6 && z7 || z6&&z19 || z7&&z19)) -> z19 = !z19;	 
+}
+
+Process Join5{
+
+	Initial: z20;
+	Normative: z20;
+		!(z20== (z8 && z9 || z8&&z20 || z9&&z20)) -> z20 = !z20;
+} 
+
+Process Join6{
+
+	Initial: z21;
+	Normative: z21;
+		!(z21== (z10 && z11 || z10&&z21 || z11&&z21)) -> z21 = !z21;
+} 
+
+Process Join7{
+
+	Initial: z22;
+	Normative: z22;
+		!(z22== (z12 && z13 || z12&&z22 || z13&&z22)) -> z22 = !z22;
+} 
+
+Process Join8{
+
+	Initial: z23;
+	Normative: z23;
+		!(z23== (z14 && z15 || z14&&z23 || z15&&z23)) -> z23 = !z23;
+} 
+
+Process Join9{
+
+	Initial: z24;
+	Normative: z24;
+		!(z24== (z16 && z17 || z16&&z24 || z17&&z24)) -> z24 = !z24;
+} 
+
+Process Join10{
+
+	Initial: z25;
+	Normative: z25;
+		!(z25== (z18 && z19 || z18&&z25 || z19&&z25)) -> z25 = !z25;
+} 
+
+Process Join11{
+
+	Initial: z26;
+	Normative: z26;
+		!(z26== (z20 && z21 || z20&&z26 || z21&&z26)) -> z26 = !z26;
+} 
+
+Process Join12{
+
+	Initial: z27;
+	Normative: z27;
+		!(z27== (z22 && z23 || z22&&z27 || z23&&z27)) -> z27 = !z27;
+} 
+
+Process Join13{
+
+	Initial: z28;
+	Normative: z28;
+		!(z28== (z24 && z25 || z24&&z28 || z25&&z28)) -> z28 = !z28;
+} 
+
+Process Join14{
+
+	Initial: z29;
+	Normative: z29;
+		!(z29== (z26 && z27 || z26&&z29 || z27&&z29)) -> z29 = !z29;
+} 
+
+Process Join15{
+
+	Initial: z30;
+	Normative: z30;
+		!(z30== (z28 && z29 || z28&&z30 || z29&&z30)) -> z30 = !z30;
+} 
+
+Main(){
+	c1: Circuit1;
+	c2: Circuit2;
+	c3: Circuit3;
+	c4: Circuit4;
+	c5: Circuit5;
+	c6: Circuit6;
+	c7: Circuit7;
+	c8: Circuit8;
+	c9: Circuit9;
+	c10: Circuit10;
+	c11: Circuit11;
+	c12: Circuit12;
+	c13: Circuit13;
+	c14: Circuit14;
+	c15: Circuit15;
+	c16: Circuit16;
+	join1: Join1;
+	join2: Join2;
+	join3: Join3;
+	join4: Join4;
+	join5: Join5;
+	join6: Join6;
+	join7: Join7;
+	join8: Join8;
+	join9: Join9;
+	join10: Join10;
+	join11: Join11;
+	join12: Join12;
+	join13: Join13;
+	join14: Join14;
+	join15: Join15;
+	run c1();
+	run c2();
+	run c3();
+	run c4();
+	run c5();
+	run c6();
+	run c7();
+	run c8();
+	run c9();
+	run c10();
+	run c11();
+	run c12();
+	run c13();
+	run c14();
+	run c15();
+	run c16();
+	run join1();
+	run join2();
+	run join3();
+	run join4();
+	run join5();
+	run join6();
+	run join7();
+	run join8();
+	run join9();
+	run join10();
+	run join11();
+	run join12();
+	run join13();
+	run join14();
+	run join15();
+}
+
+

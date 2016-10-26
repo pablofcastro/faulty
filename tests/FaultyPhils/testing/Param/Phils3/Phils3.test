@@ -1,0 +1,50 @@
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+Global fork2 : BOOL;
+
+
+Process OddPhil(forkL: BOOL, forkR:BOOL){
+   
+   s0, s1, hasL, hasR: BOOL;
+   Initial: !s0 && !s1  && !hasL && !hasR && forkR && forkL;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false;
+   !s0 && s1 && forkL && !hasL && !hasR  -> forkL=false, hasL=true; 
+   !s0 && s1 && !forkL && !hasL && !hasR -> s0=s0, s1=s1;
+   !s0 && s1 && hasL && forkR && !hasR -> forkR = false, hasR=true;
+   !s0 && s1 && hasL && !forkR && !hasR -> forkL = true, hasL=false; 
+   !s0 && s1 && hasL && hasR -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, forkL=true, forkR=true, hasR=false, hasL=false;
+   true -> s0=true, s1=true;   
+}
+
+Process EvenPhil(forkL: BOOL, forkR:BOOL){
+   
+   s0, s1, hasL, hasR: BOOL;
+   Initial: !s0 && !s1  && !hasL && !hasR && forkR && forkL;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false;
+   !s0 && s1 && forkR && !hasL && !hasR  -> forkR=false, hasR=true; 
+   !s0 && s1 && !forkR && !hasR && !hasL -> s0=s0, s1=s1;
+   !s0 && s1 && hasR && forkL && !hasL -> forkL = false, hasL=true;
+   !s0 && s1 && hasR && !forkL && !hasL -> forkR = true, hasR=false; 
+   !s0 && s1 && hasL && hasR -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, forkL=true, forkR=true, hasR=false, hasL=false;
+   true -> s0=true, s1=true; 
+}
+
+Main(){
+ phil1:OddPhil;
+ phil2:EvenPhil;
+ phil3:OddPhil;
+
+ run phil1(fork0,fork1);
+ run phil2(fork1,fork2);
+ run phil3(fork2,fork0);
+ 
+
+}

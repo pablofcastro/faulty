@@ -145,12 +145,12 @@
 	<fileset dir="${lib}" includes="**/**.jar"/>
         
     </copy>-->
-  </target>
+    </target>
     
     
   <!-- Test the parser in a single run -->
   <target name="runCircuit4" depends="jar">
-    <java jar="${dist}/dCTL_checker.jar" fork="true">
+    <java jar="${jar.file}" fork="true">
      <arg value="tests/circuit_4inputs/c-element_4inputs.test" />
       <arg value="tests/circuit_4inputs/property2.test" />
     </java>
@@ -158,7 +158,7 @@
 
     <!-- Test the parser in a single run -->
     <target name="runCircuit2" depends="jar">
-        <java jar="${dist}/dCTL_checker.jar" fork="true">
+        <java jar="${jar.file}" fork="true">
             <arg value="tests/circuit2-inputs/c-element_2inputs.test" />
             <arg value="tests/circuit2-inputs/property1.test" />
         </java>

@@ -1,0 +1,18 @@
+Global z: BOOL;
+
+Process Circuit{
+	x,y: BOOL;
+	Initial: x && y && z;
+	Normative: x==y;
+		x==z && y==z -> x=!x, y=!y;
+		x==z && y==z -> x=!x;
+		x==z && y==z -> y=!y;
+		!(z==(x&&y || x&&z || y&&z)) -> z=(x&&y || x&&z || y&&z);
+	   	x==z && !(y==z) -> x=!x;
+		!(x==z) && y ==z -> y=!y;
+}
+
+Main(){
+    c1:Circuit;
+    run c1();
+}

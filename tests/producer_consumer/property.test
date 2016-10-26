@@ -1,0 +1,9 @@
+
+
+
+//(O( p1.make U (!p1.make | c1.used ) )) & (O(c1.used U (p1.make | !c1.used) )) ;
+
+//( O((p1.make & !c1.used) ) W false ); // O(G())
+
+
+O( false U p1.make  ~> X !p1.make ); // O( make ~> X!make)

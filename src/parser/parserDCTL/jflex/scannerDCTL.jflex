@@ -45,6 +45,7 @@ comment=("//"(.)*)|"/*"(((([^*/])*"*"[^/])*)|((([^*])*"/"[^*/])*)|([^*/])*)*"*/"
 [a-z][_.a-z0-9]* { return new Symbol(symDCTL.ID,yyline,yycolumn,yytext()); }
 "!" { return new Symbol(symDCTL.NEG,yyline,yycolumn,yytext());}
 "->" { return new Symbol(symDCTL.IMPLIES,yyline,yycolumn,yytext());}
+"==" { return new Symbol(symDCTL.COMPARISON,yyline,yycolumn,yytext());}
 "&" { return new Symbol(symDCTL.AND,yyline,yycolumn,yytext());}
 "|" { return new Symbol(symDCTL.OR,yyline,yycolumn,yytext());}
 "~>" { return new Symbol(symDCTL.IMPLIESTEMP,yyline,yycolumn,yytext()); }

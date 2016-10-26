@@ -1,0 +1,50 @@
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+Global fork2 : BOOL;
+Global fork3 : BOOL;
+Global fork4 : BOOL;
+Global fork5 : BOOL;
+Global fork6 : BOOL;
+Global fork7 : BOOL;
+Global fork8 : BOOL;
+Global fork9 : BOOL;
+
+
+Process Philosopher(forkL:BOOL,forkR:BOOL){
+   thinking, hungry, eating, hasL, hasR: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && forkL && forkR;
+   Normative: true; 
+
+   thinking -> hungry = true, thinking = false;
+   thinking -> hungry = false, thinking = true;
+   hungry && forkL && !hasL  -> forkL = false, hasL = true;
+   hungry && hasL && forkR -> forkR = false, hasR = true;
+   hungry && hasL && hasR -> eating = true, hungry = false;
+   eating -> forkL = true, forkR = true, eating = false, thinking = true;        
+}
+
+Main(){
+ phil0: Philosopher;
+ phil1: Philosopher;
+ phil2: Philosopher;
+ phil3: Philosopher;
+ phil4: Philosopher;
+ phil5: Philosopher;
+ phil6: Philosopher;
+ phil7: Philosopher;
+ phil8: Philosopher;
+ phil9: Philosopher;
+ 
+ 
+ run phil0(fork0, fork1);
+ run phil1(fork1, fork2);
+ run phil2(fork2, fork3);
+ run phil3(fork3, fork4);
+ run phil4(fork4, fork5);
+ run phil5(fork5, fork6);
+ run phil6(fork6, fork7);
+ run phil7(fork7, fork8);
+ run phil8(fork8, fork9);
+ run phil9(fork9, fork0);
+
+}

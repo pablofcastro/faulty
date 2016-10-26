@@ -1,0 +1,2 @@
+// Property P5 in paper
+P(true U phil1.s0 & !phil1.s1);

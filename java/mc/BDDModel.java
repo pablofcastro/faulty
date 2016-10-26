@@ -1,8 +1,9 @@
 package mc;
 
-import java.util.ArrayList;
+import java.util.*;
 import mc.VarInfo.Type;
 import net.sf.javabdd.*;
+import faulty.*;
 
 public class BDDModel {
 	
@@ -14,6 +15,24 @@ public class BDDModel {
 	                                     // Their indices represents the identifier. 
 	                                     // Vbles are stored according the order of declaration on the model. 
 	                                     // Eg. for vbles a,b:BOOL  = [ ("a", Type.BOOL ), ("b" , Type.BOOL)]  
+	private LinkedList<BDD> disjuncts;   // many times the model can be represented as a list of disjuncts
+										 // in this case instead performing the disjuncts when constructing the model 
+										 // we save the disjunct delaying the construction of the model
+										 // as lates as possible
+	
+	private LinkedList<Var> externalVars;
+	private LinkedList<Var> internalVars;
+	
+	/**
+	 * A simple constructor, it is useful when we dont want to build the entire model and
+	 * only have the disjuncts in this.disjuncts.
+	 */
+	public BDDModel(){
+		this.varInfo = new ArrayList<VarInfo>();
+		this.disjuncts = new LinkedList<BDD>();
+		//this.normative = Program.myFactory.one();
+		//this.factory = Program.myFactory;
+	}
 	
 	
 	/** 
@@ -41,15 +60,7 @@ public class BDDModel {
 	}
 	
 	
-	/**
-	 * constructor with no parameters
-	 * @param f
-	 */
-	public BDDModel(){
-		this.varInfo = new ArrayList<VarInfo>();
-	}
 	
-
 	public void setFactory(BDDFactory f) {
 		this.factory = f;
 	}
@@ -71,22 +82,95 @@ public class BDDModel {
 	}
 	
 	
+	public void setDisjuncts(LinkedList<BDD> list){
+		this.disjuncts = list;
+	}
+	
+	public void setExternalVars(LinkedList<Var> vars){
+		this.externalVars = vars;
+	}
+	
+	public void setInternalVars(LinkedList<Var> vars){
+		this.internalVars = vars;
+	}
+	
+	public LinkedList<Var> getExternalVars(){
+		return externalVars;
+	}
+	
+	public LinkedList<Var> getInternalVars(){
+		return internalVars;
+	}
+	
+	
+	public LinkedList<Integer> getExternalVarsIds(){
+		LinkedList<Integer> result = new LinkedList<Integer>();
+		for(int i = 0; i < externalVars.size(); i++){
+			result.addAll(externalVars.get(i).getIds());
+		}
+		return result;
+	}
+	
+	public LinkedList<Integer> getExternalPrimedVarsIds(){
+		LinkedList<Integer> result = new LinkedList<Integer>();
+		for(int i = 0; i < externalVars.size(); i++){
+			result.addAll(externalVars.get(i).getPrimedIds());
+		}
+		return result;
+	}
+	
+	public LinkedList<Integer> getInternalVarsIds(){
+		LinkedList<Integer> result = new LinkedList<Integer>();
+		for(int i = 0; i < internalVars.size(); i++){
+			result.addAll(internalVars.get(i).getIds());
+		}
+		return result;
+	}
+	
+	public LinkedList<Integer> getInternalPrimedVarsIds(){
+		LinkedList<Integer> result = new LinkedList<Integer>();
+		for(int i = 0; i < internalVars.size(); i++){
+			result.addAll(internalVars.get(i).getPrimedIds());
+		}
+		return result;
+	}
+	
 	public BDDFactory getFactory(){
 		return factory;		
 	}
 	
+	/**
+	 * 
+	 * @return	A BDD representing the transition of the model
+	 */
 	public BDD getTransitions(){
 		return transitions;
 		
 	}
 	
+	/**
+	 * 
+	 * @return	the init predicate
+	 */
 	public BDD getIni(){
 		return init;		
 	}
 	
+	/**
+	 * 
+	 * @return	the predicate norm
+	 */
 	public BDD getNormative() {
 		return normative;
 	}	
+	
+	/**
+	 * 
+	 * @return	the list disjuncts
+	 */
+	public LinkedList<BDD> getDisjuncts(){
+		return disjuncts;
+	}
 	
     /***
      *
@@ -114,6 +198,13 @@ public class BDDModel {
 		} 
 	}
 	
+	/**
+	 * Adds a disjunct to the list
+	 * @param disj		the dijunct to be added to the list
+	 */
+	public void addDisjunct(BDD disj){
+		this.disjuncts.add(disj);		
+	}
 	
 	/***
      *

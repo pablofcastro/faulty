@@ -1,0 +1,52 @@
+
+Global z0:BOOL;
+Global z1:BOOL;
+Global z2:BOOL;
+Global z3:BOOL;
+Global z4:BOOL;
+Global z5:BOOL;
+Global z6:BOOL;
+Global z7:BOOL;
+Global z8:BOOL;
+
+Process Circuit(z:BOOL){
+	x0,x1: BOOL;
+	Initial: x0 && x1 && z;
+	Normative: x0==x1;
+		x0==z && x1==z -> x0=!x0, x1=!x1, z=(!x0 && !x1 || !x0&&z || !x1&&z);
+		x0==z && x1==z -> x0=!x0, z0=(!x0 && x1 || !x0&&z || x1&&z);
+                x0==z && x1==z -> x1=!x1, z0=(x0 && !x1 || x0&&z || !x1&&z);
+	   	!(x0==z) && x1==z -> x1=!x1, z=(x0 && !x1 || x0&&z || !x1&&z);
+                 x0==z && !(x1==z) -> x0=!x0, z=(!x0 && x1 || !x0&&z || x1&&z);
+}
+
+Process Join(out1:BOOL,out2:BOOL,out3:BOOL){
+	Initial: out3;
+	Normative: out3;
+		!(out3 == (out1 && out2 || out1 && out3 || out2 && out3)) -> out3 = !out3;
+} 
+
+
+Main(){
+	c1: Circuit;
+	c2: Circuit;
+	c3: Circuit;
+	c4: Circuit;
+        c5: Circuit;
+	join1: Join;
+	join2: Join;
+	join3: Join;
+        join4: Join;
+
+	run c1(z0);
+	run c2(z1);
+	run c3(z2);
+	run c4(z3);
+        run c5(z4);
+	run join1(z0,z1,z5);
+	run join2(z2,z3,z6);
+        run join3(z5,z6,z7);
+	run join3(z4,z7,z8);
+}
+
+

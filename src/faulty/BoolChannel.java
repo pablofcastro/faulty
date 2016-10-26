@@ -450,4 +450,17 @@ private BDD monotony(){
 	return monotony;
 }
 
+@Override
+public String toString(){
+    
+    String channelInfo = new String("       Channel ");
+	
+	String  chanString= name; 
+	String sizeS = (new Integer(size)).toString();
+	channelInfo= channelInfo.concat(chanString).concat("[").concat(sizeS).concat("] of BOOL");
+	channelInfo= channelInfo.concat("\n\n");
+ 	return channelInfo;
+}
+
+
 }// end of BoolChannel

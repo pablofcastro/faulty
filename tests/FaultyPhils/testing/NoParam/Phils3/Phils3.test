@@ -1,0 +1,67 @@
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+Global fork2 : BOOL;
+
+
+// FIRST LEFT
+Process Phil1{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork0 && fork1 && !crash;
+   Normative: !crash; 
+
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && ! crash -> hungry = false, thinking = true;
+   hungry && fork0 && !hasL && !crash  -> fork0 = false, hasL = true;
+   hungry && hasL && fork1 && !crash -> fork1 = false, hasR = true;
+   hungry && hasL && hasR && ! crash -> eating = true, hungry = false;
+   eating && ! crash -> fork0 = fork0, fork1 = fork1, eating = false, thinking = true;
+   true -> crash=true;
+   crash -> crash=crash;        
+}
+
+//FIRST RIGHT
+Process Phil2{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork1 && fork2 && !crash;
+   Normative: !crash; 
+   
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork2 && !hasR && !crash  -> fork2 = false, hasR = true;
+   hungry && hasR && fork1 && !crash -> fork1 = false, hasL = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork1 = fork1, fork2 = fork2, eating = false, thinking = true;
+   true -> crash=true;
+   crash -> crash=crash;
+    
+}
+
+// FIRST LEFT
+Process Phil3{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork2 && fork0 && !crash;
+   Normative: !crash; 
+   
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork2 && !hasR && !crash -> fork2 = false, hasR = true;
+   hungry && hasR && fork0 && !crash -> fork0 = false, hasL = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork0 = !fork0, fork2 = !fork2, eating = false, thinking = true;
+   true -> crash=true;
+   crash -> crash=crash;
+}
+
+
+
+Main(){
+ phil1:Phil1;
+ phil2:Phil2;
+ phil3:Phil3;
+
+ run phil1();
+ run phil2();
+ run phil3();
+ 
+
+}

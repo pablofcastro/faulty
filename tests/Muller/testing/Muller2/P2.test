@@ -1,0 +1,2 @@
+
+R(true U ((c1.x & c1.y & global.z) | (!c1.x & !c1.y & !global.z)));

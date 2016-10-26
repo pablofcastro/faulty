@@ -6,13 +6,18 @@ public class TableLevel {
 	
 	private LinkedList<AuxiliarChannel> chanList;
 	private LinkedList<AuxiliarVar> varList;
+    private LinkedList<AuxiliarParam> parList;
+    private LinkedList<AuxiliarEnumType> enumList;
+ 
 	private LinkedList<AuxiliarProcess> processList;
 	
 	public TableLevel(){
 		
 		chanList= new LinkedList<AuxiliarChannel>();
 		varList = new  LinkedList<AuxiliarVar>();
-		processList = new LinkedList<AuxiliarProcess>();
+		parList = new  LinkedList<AuxiliarParam>();
+        processList = new LinkedList<AuxiliarProcess>();
+        enumList = new LinkedList<AuxiliarEnumType>();
 		
 	}
 	
@@ -35,6 +40,15 @@ public class TableLevel {
 		return result;
 	}
 	
+    public boolean addParam(AuxiliarParam par){
+		boolean result = false;
+		if (!existParam(par.getDeclarationName())){
+			result =true;
+			parList.add(par);
+		}
+		return result;
+	}
+    
 	public boolean addProcess(AuxiliarProcess proc){
 		boolean result = false;
 		if (!existProcess(proc.getName())){
@@ -44,6 +58,16 @@ public class TableLevel {
 		return result;
 	}
 	
+    
+    public boolean addEnumeratedType(AuxiliarEnumType eType){
+		boolean result = false;
+		if (!existEnumeratedType(eType.getName())){
+			result =true; //added
+			enumList.add(eType);
+		}
+		return result;
+	}
+    
 	/**
 	 * 
 	 * @param name
@@ -68,6 +92,17 @@ public class TableLevel {
 		return null;
 	}
 
+    
+    public AuxiliarParam getParam(String name){
+		for(int i=0; i<parList.size();i++){
+			if (parList.get(i).getDeclarationName().equals(name)){
+				return parList.get(i);
+			}
+		}
+		return null;
+	}
+
+    
     public AuxiliarProcess getProcess(String name){
 		for(int i=0; i<processList.size();i++){
 			if (processList.get(i).getName().equals(name)){
@@ -76,6 +111,17 @@ public class TableLevel {
 		}
 		return null;
 	}
+    
+    
+    public AuxiliarEnumType getEnumeratedType(String name){
+		for(int i=0; i<enumList.size();i++){
+			if (enumList.get(i).getName().equals(name)){
+				return enumList.get(i);
+			}
+		}
+		return null;
+	}
+
     
     /**
      * 
@@ -91,7 +137,23 @@ public class TableLevel {
 		}
         return varNames;
 	}
+
     
+    /**
+     *
+     * @return Return a list with all names of enumerated variables in the current level.
+     */
+    public LinkedList<String> getEnumVarNames(){
+    	LinkedList<String> varNames = new LinkedList<String>();
+    	// Obtain all names of the global variables of type bool.
+        for(int i=0; i<varList.size();i++){
+        	if(varList.get(i).getType().isEnumerated()){
+			    varNames.add(varList.get(i).getName());
+			}
+		}
+        return varNames;
+	}
+
     /**
      * 
      * @return Return a list with all names of integer variables in the current level.
@@ -119,7 +181,7 @@ public class TableLevel {
         for(int i=0; i<processList.size();i++){
         	proc =processList.get(i);
         	if (proc !=null){
-        		LinkedList<String> processVars = proc.getBoolVarNamesProcessIntances();
+        		LinkedList<String> processVars = proc.getBoolVarNamesProcessInstances();
         		for(int j=0; j<processVars.size();j++){
         			varNames.add(processVars.get(j)); 
         		}
@@ -142,7 +204,7 @@ public class TableLevel {
         for(int i=0; i<processList.size();i++){
         	proc =processList.get(i);
         	if (proc !=null){
-        		LinkedList<String> processVars = proc.getIntVarNamesProcessIntances();
+        		LinkedList<String> processVars = proc.getIntVarNamesProcessInstances();
         		for(int j=0; j<processVars.size();j++){
         			varNames.add(processVars.get(j)); 
         		}
@@ -152,7 +214,32 @@ public class TableLevel {
         return varNames;
 	}
     
-	public boolean existChannel(String chName){
+	
+    /**
+     *
+     * @return Return a list with all names of the enumerated variables the process current level.
+     */
+    public LinkedList<String> getEnumVarNamesProcesses(){
+    	LinkedList<String> varNames = new LinkedList<String>();
+    	AuxiliarProcess proc =null;
+    	// Obtain all names of the variables according the instances names
+    	// of the process ( "Process_instanceName" + "." + "VariableName")
+        for(int i=0; i<processList.size();i++){
+        	proc =processList.get(i);
+        	if (proc !=null){
+        		LinkedList<String> processVars = proc.getEnumVarNamesProcessInstances();
+        		for(int j=0; j<processVars.size();j++){
+        			varNames.add(processVars.get(j));
+        		}
+        	}
+			
+		}
+        return varNames;
+	}
+    
+    
+    
+    public boolean existChannel(String chName){
 		for(int i=0;i<chanList.size();i++){
 			if(chanList.get(i).getName().equals(chName)){
 				return true;
@@ -170,7 +257,18 @@ public class TableLevel {
 		return false;
 	}
 	
-	public boolean existProcess(String procName){
+	
+    public boolean existParam(String parName){
+		for(int i=0;i<parList.size();i++){
+			if(parList.get(i).getDeclarationName().equals(parName)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+    
+    public boolean existProcess(String procName){
 		for(int i=0;i<processList.size();i++){
 			if(processList.get(i).getName().equals(procName)){
 				return true;
@@ -178,10 +276,20 @@ public class TableLevel {
 		}
 		return false;
 	}
+    
+    public boolean existEnumeratedType(String eName){
+		for(int i=0;i<enumList.size();i++){
+			if(enumList.get(i).getName().equals(eName)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	
 	public boolean existNameLevel(String name){
 		
-		if (!existChannel(name) && !existVar(name) && !existProcess(name)) {
+		if (!existChannel(name) && !existVar(name) && !existParam(name) && !existProcess(name)&& !existEnumeratedType(name)) {
 			return false;
 		}
 		return true;

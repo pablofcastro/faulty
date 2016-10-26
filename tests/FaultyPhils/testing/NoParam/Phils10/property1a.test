@@ -1,0 +1,6 @@
+//A(phil1.eating | (E(true U phil1.eating))   W false);
+//E( true U phil1.eating);
+//E( (E(trueU phil1.eating)) W false);
+//E(!phil1.hungry | (A(true U phil1.eating)) W false);
+P(true U phil1.s0 & !phil1.s1);
+//E(true U phil1.s0 & !phil1.s1);

@@ -1,5 +1,6 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
 
 /**
@@ -79,9 +80,47 @@ public class IntChanAssign implements Code{
     	return exp.getChannels();
     }
     
+    
+    
+    /**
+     * 
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param owner
+     * @return
+     */
     public IntChanAssign duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner){
     	IntChanAssign result = new IntChanAssign(chan, (IntExp) exp.duplicate(instName, boolMap, intMap, owner)); 
     	return result;
+    }
+    
+    /**
+     * Another duplicate taking into account duplicates
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param owner
+     * @return
+     */
+    public IntChanAssign duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner){
+    	IntChanAssign result = new IntChanAssign(chan, (IntExp) exp.duplicate(instName, boolMap, intMap, boolPars, intPars, owner)); 
+    	return result;
+    }
+    
+    
+    public IntChanAssign duplicate(String instName, HashMap<Var, Var> dups,  Process owner){
+    	IntChanAssign result = new IntChanAssign(chan, (IntExp) exp.duplicate(instName, dups, owner)); 
+    	return result;
+    }
+    
+    @Override
+    public String toString(){
+    	String channelInfo = new String("");
+    	String  chanString= chan.getName(); 
+    	String exprString = exp.toString();
+    	channelInfo= channelInfo.concat(chanString).concat(".put(").concat(exprString).concat(") ");
+     	return channelInfo;
     }
     
 }

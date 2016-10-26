@@ -24,4 +24,8 @@ public BDD[] getBits();
 
 public Expression duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner);
 
-}
+public Expression duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner);
+
+public Expression duplicate(String instName, HashMap<Var, Var> dups, Process owner);
+
+}// end interface

@@ -5,12 +5,16 @@ import java.util.*;
 
 import net.sf.javabdd.*;
 import mc.BDDModel;
+import faulty.*;
+
 
 /**
  *  This class provides a Fair SAT visitor of the model checking algorithm of
  *  dCTL, the attribute goals are the fairness goals of the algorithm
- *  some Permission has not been implemented with fairness (see below),
- *  this will be done in next versions
+ *  some Permissions have not been implemented with fairness (see below),
+ *  this will be done in next versions. The implementation can be improved using 
+ *  inheritance or agreggation, however, most of the algorithms need to be changed,
+ *  then code reuse is not useful here 
  * @author Ceci and Pablo
  *
  */
@@ -20,6 +24,12 @@ public class FairSatVisitor implements FormulaVisitor {
 	private BDD sat;
 	private BDDModel model;
 	private LinkedList<BDD> goals;
+	
+	private BDD norm; // A formula representing the normative part of the system
+	 // this can be calculated without generating the BDD for all the system
+	private LinkedList<BDDModel> models; // the list of model off all the processes, the idea is to avoid generating
+										 // the complete model as far as possible.
+	private Program program; // a reference to the main program
 
 
 	/**
@@ -27,10 +37,24 @@ public class FairSatVisitor implements FormulaVisitor {
 	 * @Pre: The model m should be initialized correctly.
 	 * @Pos: Initializes a new visitor with the parameters received.
 	 */
-	public FairSatVisitor(BDDModel m, LinkedList<BDD> goals){
+	public FairSatVisitor(Program program, LinkedList<BDD> goals){
 		sat = null;
-		model = m;
+		model = program.getModel();
 		this.goals = goals;
+		models = new LinkedList<BDDModel>();
+		this.program = program;
+		
+		// we get the BDDs of the processes in the program
+		models = program.buildPartialModels();
+		
+		// we calculate the normative conditions
+		BDD n = Program.myFactory.one();
+		for (int i=0; i < models.size(); i++){
+			BDDModel current = models.get(i);
+			// we calculate the normative condition
+			n = n.and(current.getNormative());			
+		}		
+		norm = n;			
 	}
 
 	/**
@@ -39,13 +63,12 @@ public class FairSatVisitor implements FormulaVisitor {
 	 */
 	public void visit(Variable v) {
 		String name = v.toString();
-		int id = model.getVarID(name);
-		sat = model.getFactory().ithVar(id); //gets the state where the var is true
-
+		int id = model.getVarID(name);		
+		sat = Program.myFactory.ithVar(id);
 	}
 
 	/** 
-	 * Returns the BDD zero or one, depending if the constant value is True or false, respectively
+	 * Calculates the BDD zero or one, depending if the constant value is True or false, respectively
 	 * @param c		the constant
 	 */
 	public void visit(Constant c) {
@@ -54,7 +77,7 @@ public class FairSatVisitor implements FormulaVisitor {
 	}
 
 	/**
-	 * Returns the negation of a formula
+	 * Calculates the negation of a formula
 	 * @param n
 	 */
 	public void visit(Negation n) {
@@ -63,8 +86,11 @@ public class FairSatVisitor implements FormulaVisitor {
 
 	}
 
+	public void visit(EqComparison e) {
+    }
+    
 	/**
-	 * Returns the implication
+	 * Calculates the implication
 	 * @param i
 	 */
 	public void visit(Implication i) {
@@ -76,7 +102,7 @@ public class FairSatVisitor implements FormulaVisitor {
 	}
 
 	/**
-	 * Returns the conjunction
+	 * Calculates the conjunction
 	 * @param c
 	 */
 	public void visit(Conjunction c) {
@@ -88,7 +114,7 @@ public class FairSatVisitor implements FormulaVisitor {
 	}
 
 	/**
-	 * Returns the disjunction
+	 * Calculates the disjunction
 	 * @param d
 	 */
 	public void visit(Disjunction d) {
@@ -100,15 +126,15 @@ public class FairSatVisitor implements FormulaVisitor {
 	
 	
 	public void visit(Next n){
-		
+		// not needed
 	}
 	
 	public void visit(Until u){
-		
+		// not needed
 	}
     
     public void visit(Weak u){
-		
+		// not needed
 	}
 
 
@@ -123,22 +149,19 @@ public class FairSatVisitor implements FormulaVisitor {
         // SAT(O(Xp->Xq)) = ! E(n U n ^ EX(p ^ !q ^ E(n W false))))
 		// where all the operators are fair
 		
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        // start obtaining the BDDs of the subexpressions
+		 // start obtaining the BDDs of the subexpressions
 		FormulaElement expr1 = o.getExpr1();
         expr1.accept(this);
-        BDD p = this.sat.and(mod);
+        BDD p = this.sat;
         // dont know if we really ned to do the intersection with the states of the model!
         FormulaElement expr2 = o.getExpr2();
         expr2.accept(this);
-        BDD q = this.sat.and(mod);
-        BDD nq = q.not().and(mod);
+        BDD q = this.sat;
+        BDD nq = q.not();
         // get the normative states
-        BDD ns = model.getNormative();       
+        BDD ns = norm;       
         // calculate the sat
-        sat = fairEUntil(ns,ns.and(fairEX(p.and(nq).and(fairEX(fairEWuntil(ns, model.getFactory().zero())))))).not().and(mod);
+        sat = fairEUntil(ns,ns.and(fairEX(p.and(nq).and(fairEX(fairEWuntil(ns, model.getFactory().zero())))))).not();
 	}
 
 	/**
@@ -151,27 +174,23 @@ public class FairSatVisitor implements FormulaVisitor {
         // SAT(O(Xp->sUt)) = ! E(n U (n ^ (!t ^ EX(p ^ !t ^ n W !s ^ EGn))))
 		// where all the operators are fair
         
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        // start obtaining the BDDs of the subexpressions
 		FormulaElement expr1 = o.getExpr1();
         expr1.accept(this);
-        BDD p = this.sat.and(mod);
+        BDD p = this.sat;//.and(mod);
         // dont know if we really ned to do the intersection with the states of the model!
         FormulaElement expr2 = o.getExpr2();
         expr2.accept(this);
-        BDD s = this.sat.and(mod);
+        BDD s = this.sat;//.and(mod);
         FormulaElement expr3 = o.getExpr3();
         expr3.accept(this);
-        BDD t = this.sat.and(mod);
+        BDD t = this.sat;//.and(mod);
         // we calculate the result using its CTL semantics
         // the negations are calculated taking into account the model
-        BDD nots = s.not().and(mod);
-        BDD nott = s.not().and(mod);
+        BDD nots = s.not();//.and(mod);
+        BDD nott = s.not();//.and(mod);
         // get the normative states
-        BDD ns = model.getNormative();
-        sat = fairEUntil(ns, ns.and(nots.or(nott.and(fairEX(p.and(fairEWuntil(nott.and(ns),nots.and(fairEG(ns))))))))).not().and(mod);
+        BDD ns = norm;
+        sat = fairEUntil(ns, ns.and(nots.and(nott.and(fairEX(p.and(ns)))).or(nott.and(fairEX(p.and(fairEWuntil(nott.and(ns),nott.and(nots).and(fairEG(ns))))))))).not();    
 	}
 
 	/**
@@ -184,28 +203,25 @@ public class FairSatVisitor implements FormulaVisitor {
 		// the CTL fair semantics is:
 		// O(pUq -> Xs) = !E(n U n ^ ((q ^ (EX(!s ^ EGn))) v (p ^ EX(n ^ !s ^ p ^ E(n ^ p U q ^ EG n) )) ) )
 		// where all the operators are fair
-    
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+          
         // start obtaining the BDDs of the subexpressions
 		FormulaElement expr1 = o.getExpr1();
         expr1.accept(this);
-        BDD p = this.sat.and(mod);
-        // dont know if we really ned to do the intersection with the states of the model!
+        BDD p = this.sat;//.and(mod);
+        
         FormulaElement expr2 = o.getExpr2();
         expr2.accept(this);
-        BDD q = this.sat.and(mod);
+        BDD q = this.sat;//.and(mod);
         FormulaElement expr3 = o.getExpr3();
         expr3.accept(this);
-        BDD s = this.sat.and(mod);
+        BDD s = this.sat;//.and(mod);
+        
         // we calculate the result using its CTL semantics
-        // the negations are calculated taking into account the model
-        BDD nots = s.not().and(mod);
+        BDD nots = s.not();
+        
         // get the normative states
-        BDD ns = model.getNormative();
-        //sat = fairEUntil(ns, ns.and(q.or(p.and(fairEX(nots.and(p.and(fairEUntil(p,q.and(fairEWuntil(ns,model.getFactory().zero())))))))))).not().and(mod);
-        sat = fairEUntil(ns, ns.and(q.and(fairEX(nots.and(fairEG(ns))).or(p.and(fairEX(ns.and(nots.and(p).and(fairEUntil(ns.and(p), q.and(fairEG(ns)))))))))));
+        BDD ns = norm;
+        sat = fairEUntil(ns, ns.and(q.and(fairEX(nots)).or(p.and(fairEX(nots.and(ns).and(fairEUntil(p.and(ns),q.and(fairEG(ns))))))))).not();
 	}
 
 	/**
@@ -236,9 +252,9 @@ public class FairSatVisitor implements FormulaVisitor {
         FormulaElement expr4 = o.getExpr4();
         expr4.accept(this);
         BDD t = this.sat;
-        BDD not_t = t.not().and(mod);
-        BDD not_s = s.not().and(mod);
-        BDD n =   model.getNormative();
+        BDD not_t = t.not();
+        BDD not_s = s.not();
+        BDD n =   norm;
         BDD phi1 = fairEUntil(n.and(p).and(not_t), not_s.and(not_t).and(fairEUntil(n, q.and(fairEG(n)))));
         BDD phi2 = fairEUntil(n.and(p.and(not_t)), n.and(q.and(not_s.or(fairEWuntil(not_t.and(n), n.and(not_s.and(fairEG(n))))))));
         sat = fairEUntil(n, phi1.or(phi2)).not().and(mod);
@@ -476,39 +492,39 @@ public class FairSatVisitor implements FormulaVisitor {
 		// Fair Semantics SAT(P(Xp -> Xq)) = vX . n ^ <> ((! p v q ) ^ (u Y . n ^ (Pk^  X v <>(!p v q) ^ Y) ))  
         // NOTE: Can this be expressed as a CTL formula???
 		
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
+   //     int varNum = model.getFactory().varNum();
+   //     BDD mod = model.getTransitions();
         // start obtaining the BDDs of the subexpressions
-		FormulaElement expr1 = args.getExpr1();
-        expr1.accept(this);
-        BDD p = this.sat.and(mod);
+   //		FormulaElement expr1 = args.getExpr1();
+   //     expr1.accept(this);
+  //      BDD p = this.sat.and(mod);
         // dont know if we really ned to do the intersection with the states of the model!
-        FormulaElement expr2 = args.getExpr2();
-        expr2.accept(this);
-        BDD q = this.sat.and(mod);
-        BDD n =   model.getNormative();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        BDD X = mod;
-        BDD X_old = model.getFactory().zero();
-        BDD notp = p.not().and(mod);
+  //       FormulaElement expr2 = args.getExpr2();
+  //      expr2.accept(this);
+  //      BDD q = this.sat.and(mod);
+  //      BDD n =   model.getNormative();
+  //      mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+  //      BDD X = mod;
+ //       BDD X_old = model.getFactory().zero();
+ //       BDD notp = p.not().and(mod);
         // calculate the GFP
-        while (!X.biimp(X_old).isOne()){
-            X_old = X;
+ //       while (!X.biimp(X_old).isOne()){
+ //           X_old = X;
             // calculates the conjuntction of all the goals
-            BDD satGoals = model.getFactory().one();
-            for (int i = 0; i < goals.size(); i++){
-            	BDD Y = model.getFactory().zero();
-            	BDD Y_old = model.getFactory().one();
-            	while (! Y.biimp(Y_old).isOne()){
-            		Y_old = Y;
-            		Y = goals.get(i).and(X).or(NWeakPrevious(notp.or(q).and(Y)));
-            	}
-            	satGoals = satGoals.and(Y);
-            }
-            X = NWeakPrevious(X.and(notp.or(q)).and(satGoals));
-        }
+ //           BDD satGoals = model.getFactory().one();
+ //           for (int i = 0; i < goals.size(); i++){
+ //           	BDD Y = model.getFactory().zero();
+ //           	BDD Y_old = model.getFactory().one();
+ //           	while (! Y.biimp(Y_old).isOne()){
+//            		Y_old = Y;
+//            		Y = goals.get(i).and(X).or(NWeakPrevious(notp.or(q).and(Y)));
+ //           	}
+ //           	satGoals = satGoals.and(Y);
+ //           }
+ //           X = NWeakPrevious(X.and(notp.or(q)).and(satGoals));
+ //       }
         // return the GFP
-        sat = X;
+ //       sat = X;
 	}
 
 	/**
@@ -522,40 +538,40 @@ public class FairSatVisitor implements FormulaVisitor {
 		// Fair Semantics: SAT(P(Xp -> s U t)) = TBD
 		
 		
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+  //      int varNum = model.getFactory().varNum();
+  //      BDD mod = model.getTransitions();
+  //      mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
         //TO DO: a function must be done to obtain the states of the model
-        FormulaElement expr1 = args.getExpr1();
-        expr1.accept(this);
-        BDD p = this.sat;
-        FormulaElement expr2 = args.getExpr2();
-        expr2.accept(this);
-        BDD s = this.sat;
-        FormulaElement expr3 = args.getExpr3();
-        expr3.accept(this);
-        BDD t = this.sat;
+  //      FormulaElement expr1 = args.getExpr1();
+  //      expr1.accept(this);
+  //      BDD p = this.sat;
+  //      FormulaElement expr2 = args.getExpr2();
+  //      expr2.accept(this);
+  //      BDD s = this.sat;
+  //      FormulaElement expr3 = args.getExpr3();
+  //      expr3.accept(this);
+  //      BDD t = this.sat;
         
         // we calculate the fixed points
-        BDD n =   model.getNormative();
-        BDD Y = mod;
-        BDD Y_old = null;
-        BDD X = model.getFactory().zero();
-        BDD X_old = null;
-        BDD result = null;
-        BDD notp = p.not().and(mod);
+  //      BDD n =   model.getNormative();
+  //      BDD Y = mod;
+ //       BDD Y_old = null;
+ //       BDD X = model.getFactory().zero();
+ //       BDD X_old = null;
+ //       BDD result = null;
+ //       BDD notp = p.not().and(mod);
        // BDD result =
-        while (!Y.biimp(Y_old).isOne()){
-            Y_old = Y;
-            while (!X.biimp(X_old).isOne()){
-                X_old = X;
-                X = n.and(t.and(WeakPrevious(Y)).or(s.and(WeakPrevious((notp.or(X)).and(Y)))));
-            }
-            Y = X.or(WeakPrevious(notp.and(Y))).and(n);
+ //       while (!Y.biimp(Y_old).isOne()){
+ //           Y_old = Y;
+ //           while (!X.biimp(X_old).isOne()){
+ //               X_old = X;
+ //               X = n.and(t.and(WeakPrevious(Y)).or(s.and(WeakPrevious((notp.or(X)).and(Y)))));
+ //           }
+  //          Y = X.or(WeakPrevious(notp.and(Y))).and(n);
             
-        }
+  //      }
         // we should test this!!!
-        sat = X;
+  //      sat = X;
     }
 
 	/**
@@ -567,38 +583,38 @@ public class FairSatVisitor implements FormulaVisitor {
         // Semantics: SAT(P(sUt -> Xp)) = vY . (v X . (!s \/ <>(X^Y^!t))) \/ (<>p^Y)
 		// FAir Semantics TBD
         
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+  //      int varNum = model.getFactory().varNum();
+  //      BDD mod = model.getTransitions();
+  //      mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
         //TO DO: a function must be done to obtain the states of the model
-        FormulaElement expr1 = args.getExpr1();
-        expr1.accept(this);
-        BDD s = this.sat;
-        FormulaElement expr2 = args.getExpr2();
-        expr2.accept(this);
-        BDD t = this.sat;
-        FormulaElement expr3 = args.getExpr3();
-        expr3.accept(this);
-        BDD p = this.sat;
+  //      FormulaElement expr1 = args.getExpr1();
+  //      expr1.accept(this);
+  //      BDD s = this.sat;
+  //      FormulaElement expr2 = args.getExpr2();
+  //      expr2.accept(this);
+  //      BDD t = this.sat;
+  //      FormulaElement expr3 = args.getExpr3();
+  //      expr3.accept(this);
+  //      BDD p = this.sat;
         
         // we calculate the fixed points
-        BDD n =   model.getNormative();
-        BDD Y = mod;
-        BDD Y_old = null;
-        BDD X = model.getFactory().zero();
-        BDD X_old = null;
-        BDD nots = s.not().and(mod);
-        BDD nott = t.not().and(mod);
+  //      BDD n =   model.getNormative();
+  //      BDD Y = mod;
+  //      BDD Y_old = null;
+  //      BDD X = model.getFactory().zero();
+  //      BDD X_old = null;
+  //      BDD nots = s.not().and(mod);
+  //      BDD nott = t.not().and(mod);
         
-        while(!Y.biimp(Y_old).isOne()){
-            Y_old = Y;
-            while (!X.biimp(X_old).isOne()){
-                X_old = X;
-                X = nots.or(WeakPrevious(X.and(Y).and(nott)));
-            }
-            Y = (X.and(n)).or(WeakPrevious(p.and(Y)));
-        }
-        sat = Y;
+  //      while(!Y.biimp(Y_old).isOne()){
+  //          Y_old = Y;
+  //          while (!X.biimp(X_old).isOne()){
+  //              X_old = X;
+  //              X = nots.or(WeakPrevious(X.and(Y).and(nott)));
+  //          }
+  //          Y = (X.and(n)).or(WeakPrevious(p.and(Y)));
+  //      }
+  //      sat = Y;
 	}
 
 	/**
@@ -610,34 +626,7 @@ public class FairSatVisitor implements FormulaVisitor {
 		// We calculate P(p U q -> s U t)
         // Semantics: SAT(P(p U q -> s U t) = vY . n ^ ((uX . !q \/ <>(!p ^ X ^ Y) \/ vZ . s \/ <>(t ^ Z ^ Y) )
         // Fair semantics TBD
-		int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        //TO DO: a function must be done to obtain the states of the model
-        FormulaElement expr1 = args.getExpr1();
-        expr1.accept(this);
-        BDD p = this.sat;
-        FormulaElement expr2 = args.getExpr2();
-        expr2.accept(this);
-        BDD q = this.sat;
-        FormulaElement expr3 = args.getExpr3();
-        expr3.accept(this);
-        BDD s = this.sat;
-        FormulaElement expr4 = args.getExpr4();
-        expr4.accept(this);
-        BDD t = this.sat;
-        
-        // we calculate the fixed points
-        BDD n =   model.getNormative();
-        BDD Y = mod;
-        BDD Y_old = null;
-        BDD X = model.getFactory().zero();
-        BDD X_old = null;
-        BDD Z = model.getNormative();
-        BDD Z_old = null;
-        
-        BDD notq = q.not().and(mod);
-        BDD notp = p.not().and(mod);
+		// TBD
         
         
 	}
@@ -719,7 +708,7 @@ public class FairSatVisitor implements FormulaVisitor {
 					BDD Y_old = model.getFactory().one();
 					while (!Y.biimp(Y_old).isOne()){
 						Y_old = Y;
-						Y = goals.get(i).and(X).and(n).or(WeakPrevious(n.and(s.or(t).and(Y))));
+						Y = goals.get(i).and(X).and(n).or(EX(n.and(s.or(t).and(Y))));
 					}
 					goalConjunct1 = goalConjunct1.and(Y);
 				}
@@ -729,7 +718,7 @@ public class FairSatVisitor implements FormulaVisitor {
 					BDD Y_old = model.getFactory().one();
 					while (!Y.biimp(Y_old).isOne()){
 						Y_old = Y;
-						Y = goals.get(i).and(Z).and(n).or(WeakPrevious(n.and(s.or(t).and(Y))));
+						Y = goals.get(i).and(Z).and(n).or(EX(n.and(s.or(t).and(Y))));
 					}
 					goalConjunct2 = goalConjunct2.and(Y);
 				}
@@ -779,7 +768,7 @@ public class FairSatVisitor implements FormulaVisitor {
 					BDD Y_old = model.getFactory().one();
 					while (!Y.biimp(Y_old).isOne()){
 						Y_old = Y;
-						Y = goals.get(i).and(X).and(n).or(WeakPrevious(n.and(s.or(t).and(Y))));
+						Y = goals.get(i).and(X).and(n).or(EX(n.and(s.or(t).and(Y))));
 					}
 					goalConjunct1 = goalConjunct1.and(Y);
 				}
@@ -789,7 +778,7 @@ public class FairSatVisitor implements FormulaVisitor {
 					BDD Y_old = model.getFactory().one();
 					while (!Y.biimp(Y_old).isOne()){
 						Y_old = Y;
-						Y = goals.get(i).and(Z).and(n).or(WeakPrevious(n.and(s.or(t).and(Y))));
+						Y = goals.get(i).and(Z).and(n).or(EX(n.and(s.or(t).and(Y))));
 					}
 					goalConjunct2 = goalConjunct2.and(Y);
 				}
@@ -800,12 +789,6 @@ public class FairSatVisitor implements FormulaVisitor {
 		sat = X;
 	}
 
-	
-	public void visit(Recovery r){
-		// TBD
-	}
-	
-	
 	/**
 	 * Calculates the sat for RXp
 	 * @param r
@@ -835,6 +818,43 @@ public class FairSatVisitor implements FormulaVisitor {
 		 *  TO DO
 		 */
 	}
+    
+    
+    @Override
+	public void visit(RWW e) {
+    }
+	
+    @Override
+	public void visit(RWU e) {
+    }
+    
+	@Override
+	public void visit(RWX e) {
+    }
+    
+    @Override
+	public void visit(RUW e) {
+    }
+    
+    @Override
+	public void visit(RXW e) {
+    }
+    
+    @Override
+	public void visit(RUU e) {
+    }
+    
+    @Override
+	public void visit(RXX e) {
+    }
+    
+    @Override
+	public void visit(RXU e) {
+    }
+	
+    @Override
+	public void visit(RUX e) {
+    }
 	
 	/**
 	 * Calculates fair sat for AXp
@@ -923,201 +943,46 @@ public class FairSatVisitor implements FormulaVisitor {
 	 * @param a
 	 */
 	public void visit(AXX a) {
-        //Sat(A(Xp ~> Xq) = StrongPrevious(p->q)
-        
-       	//calculates Sat (p->q)
-		BDD sat_imp = satImplies(a.getExpr1(),a.getExpr2());
-        
-        int varNum = model.getFactory().varNum();
-		BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-		mod = Post(mod).and(sat_imp);	//calculates all reachable states that satisfies the implication.
-        
-        sat = StrongPrevious(mod); // calculate the strong previous of the states that satisfies the implication
+       // SAT version of these operators are not implemented in this stage
 	}
 
 	@Override
 	public void visit(AXU a) {
-        // we calculate A(Xp->sUt)
-        // A(Xp->sUt) = ! E(Xp ^ !(sUt)) =! ((!s ^ EXp) \/ (!t ^ EX(p ^ E(!tU!s))) \/ (!t ^ EX(p ^ EG!t))  )
-        // Get the states of the model in mod
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        // start obtaining the BDDs of the subexpressions
-		FormulaElement expr1 = a.getExpr1();
-        expr1.accept(this);
-        BDD p = this.sat.and(mod);
-        // dont know if we really ned to do the intersection with the states of the model!
-        FormulaElement expr2 = a.getExpr2();
-        expr2.accept(this);
-        BDD s = this.sat.and(mod);
-        FormulaElement expr3 = a.getExpr3();
-        expr3.accept(this);
-        BDD t = this.sat.and(mod);
-        // we calculate the result using its CTL semantics
-        // the negations are calculated taking into account the model
-        BDD ns = s.not().and(mod);
-        BDD nt = t.not().and(mod);
-        sat = (ns.and(EX(p)).or(nt.and(EUntil(nt,ns))).or(nt.and(EX(p.and(EWuntil(nt,model.getFactory().zero())))))).not().and(mod);
+       // TBD
     }
 
 	@Override
 	public void visit(AUX a) {
-        // we calculate A(sUt->Xp)
-        // A(sUt->Xp) = ! E((sUt) ^ X!p) = !( t^EX(!p) \/ (p ^ EX(!p ^ E(sUt))))
-        
-        // Get the states of the model in mod
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        // start obtaining the BDDs of the subexpressions
-		FormulaElement expr1 = a.getExpr1();
-        expr1.accept(this);
-        BDD s = this.sat.and(mod);
-        // dont know if we really ned to do the intersection with the states of the model!
-        FormulaElement expr2 = a.getExpr2();
-        expr2.accept(this);
-        BDD t = this.sat.and(mod);
-        FormulaElement expr3 = a.getExpr3();
-        expr3.accept(this);       
-        BDD p = this.sat.and(mod);
-        // we calculate the result using its CTL semantics
-        // the negations are calculated taking into account the model
-        BDD np = p.not().and(mod);
-       
-        sat = (t.and(EX(np)).or(p.and(EX(np.and(EUntil(s,t)))))).not().and(mod);
+       // TBD
     }
     
 
 	@Override
 	public void visit(AUU a) {
-        // we calculate A(pUq -> sUt)
-        // the semantics is: A(pUq->sUt) = E(p ^ !t U (q ^!t ^ EG!t)) \/ E(p ^ !t U (q ^ E(!t U !s))) \/ E(p ^ !t U !s ^ E(pUq))
-		int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        //TO DO: a function must be done to obtain the states of the model
-        FormulaElement expr1 = a.getExpr1();
-        expr1.accept(this);
-        BDD p = this.sat;
-        FormulaElement expr2 = a.getExpr2();
-        expr2.accept(this);
-        BDD q = this.sat;
-        FormulaElement expr3 = a.getExpr3();
-        expr3.accept(this);
-        BDD s = this.sat;
-        FormulaElement expr4 = a.getExpr4();
-        expr4.accept(this);
-        BDD t = this.sat;
-        BDD nt = t.not().and(mod);
-        BDD ns = t.not().and(mod);
-        sat= (EUntil(p.and(nt),q.and(nt).and(EWuntil(nt,model.getFactory().zero()))).or(EUntil(p.and(nt), q.and(EUntil(nt,ns)))).or(EUntil(p.and(nt), ns.and(EUntil(p,q))))).not().and(mod);
-        
-        //BDD notq_until_not_p = AWuntil(q.not(),p.not());
-        //BDD s_until_q = AUntil(s,t);
-        //BDD impl = notq_until_not_p.or(s_until_q); // this BBD captures the implication !pUq -> sUt
-        // we calculate the greatest fixed point
-        // this is not need it as A(->) is different from O
-        //BDD result = mod;
-        //BDD result_old = model.getFactory().zero();
-        //while (!result.biimp(result_old).isOne()){
-        //    result_old = result;
-        //    result = StrongPrevious(result).and(impl); // those states satisfying the implication
-        //}
-        //sat = impl;
+        // TBD
         
 	}
 
 	@Override 
 	public void visit(EXX e) {
-		// Sat( E(Xp ~> Xq) ) = {s in S/ Post(s) intersection Sat(!p or q) != Empty}
-		// calculates Sat (p->q)
-		BDD sat_imp = satImplies(e.getExpr1(),e.getExpr2());
-		
-		int varNum = model.getFactory().varNum();
-		BDD mod = model.getTransitions();		
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-    	mod = Post(mod).and(sat_imp);	//calculates all reachable states that satisfies the implication.
-		
-    	sat = WeakPrevious(mod); // calculate the weak previous of the states that satisfies the implication
+		// TBD
 	}
 
 	@Override
 	public void visit(EXU e) {
-		// We calculate E(Xp -> sUt)
-        // the CTL semantics is E(Xp->sUt) = EX(!p) \/ E(sUt)
-        
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        // start obtaining the BDDs of the subexpressions
-		FormulaElement expr1 = e.getExpr1();
-        expr1.accept(this);
-        BDD p = this.sat.and(mod);
-        // dont know if we really ned to do the intersection with the states of the model!
-        FormulaElement expr2 = e.getExpr2();
-        expr2.accept(this);
-        BDD s = this.sat.and(mod);
-        FormulaElement expr3 = e.getExpr3();
-        expr3.accept(this);
-        BDD t = this.sat.and(mod);
-        // we calculate the result using its CTL semantics
-        // the negations are calculated taking into account the model
-        BDD np = p.not().and(mod);
-        sat = EX(np).or(EUntil(s,t));
+		// TBD
 
 	}
 
 	@Override
 	public void visit(EUX e) {
-		// We calculate E(sUt -> Xp)
-        // the CTL semantics is E(sUt->Xp) = E(!tU!s) \/ EG(s) \/ EXp
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        // start obtaining the BDDs of the subexpressions
-		FormulaElement expr1 = e.getExpr1();
-        expr1.accept(this);
-        BDD s = this.sat.and(mod);
-        // dont know if we really ned to do the intersection with the states of the model!
-        FormulaElement expr2 = e.getExpr2();
-        expr2.accept(this);
-        BDD t = this.sat.and(mod);
-        FormulaElement expr3 = e.getExpr3();
-        expr3.accept(this);
-        BDD p = this.sat.and(mod);
-        BDD nt = t.not().and(mod);
-        BDD ns = s.not().and(mod);
-        
-        sat = EUntil(nt,ns).or(EWuntil(s,model.getFactory().zero())).or(EX(p));
+		// TBD
 
 	}
 
 	@Override
 	public void visit(EUU e) {
-		// We calculate E(pUq -> sUt)
-        // the semantics is E(pUq -> sUt) = E(!qU!p) \/ EG(!q) \/ E(sUt)
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-        mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        //TO DO: a function must be done to obtain the states of the model
-        FormulaElement expr1 = e.getExpr1();
-        expr1.accept(this);
-        BDD p = this.sat;
-        FormulaElement expr2 = e.getExpr2();
-        expr2.accept(this);
-        BDD q = this.sat;
-        FormulaElement expr3 = e.getExpr3();
-        expr3.accept(this);
-        BDD s = this.sat;
-        FormulaElement expr4 = e.getExpr4();
-        expr4.accept(this);
-        BDD t = this.sat;
-        BDD np = p.not().and(mod);
-        BDD nq = q.not().and(mod);
-        
-        sat = EUntil(nq,np).or(EWuntil(nq,model.getFactory().zero())).or(EUntil(s,t));
+		// TBD
 
 	}
 
@@ -1128,45 +993,45 @@ public class FairSatVisitor implements FormulaVisitor {
 		return sat;		
 	}
 
-    /***
+	 /***
      * @return returns the set of states
      * @param p: the first formula of A(pUq)
      * @param q: the second formula of A(pUq)
      */
     private BDD AUntil(BDD p, BDD q){
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        q = q.and(mod); // get those states that hold q
-        BDD result = q;
-        BDD result_old = model.getFactory().zero();
+        //int varNum = model.getFactory().varNum();
+        //BDD mod = model.getTransitions();
+		//mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+        //q = q.and(mod); // get those states that hold q
+        
+    	BDD result = Program.myFactory.zero();
+        BDD result_old = Program.myFactory.one();
         // this loop calculates the least fixed point
         while (!result.biimp(result_old).isOne()){
             result_old = result;
-            result = StrongPrevious(result).and(p).or(q);
+            result = AX(result).and(p).or(q);
         }
         return result;
     }
     
     
     /***
-     * @return returns the set of states
+     * @return returns the set of states satisfying A(pWq)
      * @param p: the first formula of A(pWq)
      * @param q: the second formula of A(pWq)
      */
     public BDD AWuntil(BDD p, BDD q){
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        q = q.and(mod); // get those states that hold q
-        p = p.and(mod); // get those states that hold p
-        BDD result = mod;
-        BDD result_old = model.getFactory().zero();
+        //int varNum = model.getFactory().varNum();
+        //BDD mod = model.getTransitions();
+		//mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+        //q = q.and(mod); // get those states that hold q
+        //p = p.and(mod); // get those states that hold p
+        BDD result = Program.myFactory.one();
+        BDD result_old = Program.myFactory.zero();
         // this loop calculates the greatest fixed point
         while (!result.biimp(result_old).isOne()){
-            result_old = result;
-            result.printSet();
-            result = StrongPrevious(result).and(p).or(q);
+            result_old = result;         
+            result = AX(result).and(p).or(q);
         }
         return result;
     }
@@ -1177,11 +1042,11 @@ public class FairSatVisitor implements FormulaVisitor {
      * @param p: the first formula of AGp
      */
     public BDD AG(BDD p){
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        p = p.and(mod); // get those states that hold p
-        return AWuntil(p,model.getFactory().zero());
+    //    int varNum = model.getFactory().varNum();
+    //    BDD mod = model.getTransitions();
+	//	mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+    //    p = p.and(mod); // get those states that hold p
+        return AWuntil(p, Program.myFactory.zero());
     }
     
 
@@ -1192,35 +1057,52 @@ public class FairSatVisitor implements FormulaVisitor {
      * @param q: the second formula of E(pWq)
      */
     public BDD EWuntil(BDD p, BDD q){
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        q = q.and(mod); // get those states that hold q
-        p = p.and(mod); // get those states that hold p
-        BDD result = mod;
-        BDD result_old = model.getFactory().zero();
+     //   int varNum = model.getFactory().varNum();
+    //    BDD mod = model.getTransitions();
+	//	mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+    //    q = q.and(mod); // get those states that hold q
+    //    p = p.and(mod); // get those states that hold p
+    	
+        BDD result = Program.myFactory.one();
+        BDD result_old = Program.myFactory.zero();
         // this loop calculates the greatest fixed point
         while (!result.biimp(result_old).isOne()){
-            result_old = result;
-            result = WeakPrevious(result).and(p).or(q);
+            result_old = result; 
+            result = EX(result).and(p).or(q);          
         }
         return result;
     }
 
+    /**
+     * 
+     * @param q
+     * @return a BDD representing EF(q)
+     */
+    public BDD EF(BDD q){
+    	BDD result = EUntil(Program.myFactory.one(), q);
+    	return result;
+    }
     
     /***
      * @return returns the set of states
      * @param p: the first formula of EGp
      */
     public BDD EG(BDD p){
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        p = p.and(mod); // get those states that hold p
-        return EWuntil(p,model.getFactory().zero());
+      //  int varNum = model.getFactory().varNum();
+      //  BDD mod = model.getTransitions();
+	//	mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+     //   p = p.and(mod); // get those states that hold p   
+     //   return EWuntil(p, Program.myFactory.zero()); old version calculting the greatest fix point is better
+    	 BDD result = Program.myFactory.one();
+         BDD result_old = Program.myFactory.zero();
+         // this loop calculates the greatest fixed point
+         while (!result.biimp(result_old).isOne()){
+             result_old = result; 
+             result = EX(result).and(p);
+         }
+         return result;
     }
     
-
     
     /***
      * @return returns the set of states
@@ -1228,16 +1110,18 @@ public class FairSatVisitor implements FormulaVisitor {
      * @param q: the second formula of E(pUq)
      */
     private BDD EUntil(BDD p, BDD q){
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        q = q.and(mod); // get those states that hold q
-        BDD result = model.getFactory().zero();
-        BDD result_old = model.getFactory().one();
+     //   int varNum = model.getFactory().varNum();
+     //   BDD mod = model.getTransitions();
+	//	mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+    //    q = q.and(mod); // get those states that hold q
+    	
+    	
+        BDD result = Program.myFactory.zero();
+        BDD result_old = Program.myFactory.one();
         // this loop calculates the least fixed point
         while (!result.biimp(result_old).isOne()){
             result_old = result;
-            result = WeakPrevious(result).and(p).or(q);
+            result = EX(result).and(p).or(q);          
         }
         return result;
     }
@@ -1245,25 +1129,22 @@ public class FairSatVisitor implements FormulaVisitor {
     /**
      * Fair Statement, it captures EGFair formula
      * saying that there is a fair path satisfying the goals
+     * it uses Emerson characterization of fairness
      * @param	goals	the goals to be hold
      */
     private BDD fair(){
-    	int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        
+    	
         BDD result = model.getFactory().one();
         BDD result_old = model.getFactory().zero();
         while(!result.biimp(result_old).isOne()){
         	result_old = result;
         		BDD conjunct = model.getFactory().one();
         		for(int i = 0; i < goals.size(); i++){
-        			conjunct = conjunct.and(WeakPrevious(EUntil(model.getFactory().one(), result.and(goals.get(i)))));
+        			conjunct = conjunct.and(EX(EUntil(model.getFactory().one(), result.and(goals.get(i)))));
         		}
         		result = conjunct;
         }
-        //return result;
-        return goals.get(0);
+        return result;        
     }
     
     /**
@@ -1272,16 +1153,13 @@ public class FairSatVisitor implements FormulaVisitor {
      * @param	goals	the goals to be hold
      */
     private BDD allFair(){
-    	int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        	
+    	
         BDD result = model.getFactory().one();
         BDD result_old = model.getFactory().zero();
         while(!result.biimp(result_old).isOne()){
         	result_old = result;
         		for(int i = 0; i < goals.size(); i++){
-        			result = result.and(StrongPrevious(AUntil(model.getFactory().one(), result.and(goals.get(i)))));
+        			result = result.and(AX(AUntil(model.getFactory().one(), result.and(goals.get(i)))));
         		}
         }
         return result;
@@ -1317,21 +1195,7 @@ public class FairSatVisitor implements FormulaVisitor {
      */
     public BDD fairEWuntil(BDD p, BDD q){
 
-    	int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        	
-        BDD result = model.getFactory().one();
-        BDD result_old = model.getFactory().zero();
-        
-        while (!result.biimp(result_old).isOne()){
-        	result_old = result;
-        	BDD conjunct = model.getFactory().one();
-        	for (int i = 0; i < goals.size(); i++){
-        		conjunct = conjunct.and(WeakPrevious(EUntil(p, result.and(goals.get(i)))));
-        	}
-        	result = q.or(p.and(conjunct));
-        }  
+    	BDD result = fairEUntil(p,q).or(fairEG(p.and(q.not())));
         return result;
     }
     
@@ -1342,16 +1206,8 @@ public class FairSatVisitor implements FormulaVisitor {
      * @return	the BDD respresenting fairAX
      */
     public BDD fairAX(BDD p){
-    	int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-		
-		BDD not_p = p.not().and(mod); 
-		
-		BDD result = fairEX(not_p).not().and(mod);
-		return result;
-    	//return AX(p.and(allFair()));
-		
+		BDD result = fairEX(p.not()).not();
+		return result;	
     }
     
     /**
@@ -1361,14 +1217,8 @@ public class FairSatVisitor implements FormulaVisitor {
      * @param goals		the fairness foals
      * @return	the BDD respresenting the formula
      */
-    public BDD fairAUntil(BDD p, BDD q){
-    	int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-		
-		BDD not_p = p.not().and(mod);
-		BDD not_q = p.not().and(mod);
-		BDD result = fairEWuntil(not_q, not_p).not().and(mod);
+    public BDD fairAUntil(BDD p, BDD q){   	
+		BDD result = fairEWuntil(q.not(), p.not().and(q.not())).not();
 		return result;
     }
     
@@ -1379,64 +1229,88 @@ public class FairSatVisitor implements FormulaVisitor {
      * @param goals	the goals of the fairness
      * @return		the BDD respresenting the property
      */
-    public BDD fairAWuntil(BDD p, BDD q){
-    	int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-		
-		BDD not_p = p.not().and(mod);
-		BDD not_q = p.not().and(mod);
-		BDD result = fairEUntil(not_q, not_p).not().and(mod);
+    public BDD fairAWuntil(BDD p, BDD q){    	
+		BDD result = fairEUntil(q.not(), p.not().and(q.not())).not();
 		return result;
     }
     
     /**
      * Fair version of EG
+     * similar to fair 
      */
     public BDD fairEG(BDD p){
-    	return fairAWuntil(p, model.getFactory().zero());
+    	 BDD result = model.getFactory().one();
+         BDD result_old = model.getFactory().zero();
+         while(!result.biimp(result_old).isOne()){
+         	result_old = result;
+         		BDD conjunct = model.getFactory().one();
+         		for(int i = 0; i < goals.size(); i++){
+         			conjunct = conjunct.and(EX(EUntil(p, result.and(goals.get(i)))));
+         		}
+         		result = conjunct;
+         }
+         return result;   
     }
     
+    
+    
     /***
+     * This implementation of EX uses early quantification, the idea is to avoid generating the
+     * BDD of the complete program, instead we use each process BDD Ri, that is, for
+     * calculating EXp, we use the following expression:
+     *  \/Ri^p' 
      * @return returns the set of states that hold EXp
      * @param p: the first formula of EXp
      */
     private BDD EX(BDD p){
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        p = p.and(mod); // get those states that hold p
-        BDD result = WeakPrevious(p); // the result is the weak previous
-        return result;
+    	// for calculating the EX we use early quantification that is
+    	// we calculate EX for each process and then we calculate the big or
+    	
+    	BDD result = Program.myFactory.zero();
+    	int varNum = Program.myFactory.varNum(); 	
+    	for (int i=0;  i < models.size(); i++){
+    		BDDModel current = models.get(i);
+    		   		
+    		LinkedList<BDD> listBranches = current.getDisjuncts();   	
+    		// we loop the branches    		
+    		for (int j = 0; j < listBranches.size(); j++){
+    			//get the BDD representation
+    			BDD mod = listBranches.get(j);//.and(skipExternalVars);
+    			// calculate the result with WeakPrevious
+    			result = result.or(WeakPrevious(p, mod,current));
+    		}
+    	}    		  	
+    	return result;       
     }
 
     /***
-     * @return returns the set of states that hold AXp
+     * @return returns the set of states that hold AXp using early quantification
      * @param p: the first formula of AXp
      */
     private BDD AX(BDD p){
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        p = p.and(mod); // get those states that hold p
-        BDD result = StrongPrevious(p); // the result is the strong previous
-        return result;
+    	 BDD result = EX(p.not()).not();
+    	 return result;
     }
     
     
-	/***
-	 * 
-	 * @return returns the set of successors states, reached in a step from the state "s".
+    /***
+	 * @param model		a BDD representing the Kripke structure		
+	 * @param s			a 	BDD representing the state
+	 * @return returns the set of successors states, reached in a step from the state "s", i.e., Post(s).
 	 */
-	private BDD Post(BDD s){
-		BDD trans = model.getTransitions();
-		BDD rest = trans.and(s);	
-		rest = addExists(0, model.getFactory().varNum()/2, rest,model.getFactory()); 
+	private BDD Post(BDD s, BDD model){
+		// we obtain the set of successors of s
+		BDD rest = model.and(s);
+		
+		// we remove the non-primed variables
+		rest = addExists(0, Program.myFactory.varNum()/2, rest, Program.myFactory); 
 
-		boolean r_primed = true;  //flag to indicates that will be changes all variables v' by v
+		// we change v' by v, primed by unprimed
+		boolean r_primed = true;  //flag to indicate that it will change all variables v' by v
 		BDDPairing pairs = makePairsToReplace(r_primed);
 		rest = rest.replaceWith(pairs);//rename each variable: v' -> v
 		
+		// that is the result
 		return 	rest;	
 	}
 
@@ -1445,12 +1319,12 @@ public class FairSatVisitor implements FormulaVisitor {
 	 * 
 	 * @return returns the set of successors states("normal"), reached in a step from the state b.
 	 */
-	private BDD Post_N(BDD b){
+	private BDD Post_N(BDD b, BDD model, BDD norm){
 
-		BDD trans = model.getTransitions();
+		//BDD trans = model.getTransitions();
 		// calculates the set of successors states, reached in a step from the state "b"
-		BDD post = Post(b);
-		return post.and(model.getNormative());		
+		BDD post = Post(b, model);
+		return post.and(norm);		
 	}
 	
 	
@@ -1458,49 +1332,67 @@ public class FairSatVisitor implements FormulaVisitor {
 	 * @param
 	 * @return returns the set of previous states of the states "b".
 	 */
-	private BDD WeakPrevious(BDD b){
-        
-        int varNum = model.getFactory().varNum();
-		BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-		mod = Post(mod).and(b);	//calculates those  states that are succesors of someone and hold b .
- 
-    	boolean r_primed = false;  //flag to indicates that will be changes all variables v by v'
-		BDDPairing pairs = makePairsToReplace(r_primed);
+	private BDD WeakPrevious(BDD b, BDD model, BDDModel bddmodel){
 		
-       /* BDDPairing pairs = model.getFactory().makePair();             
-          for (int i=0; i<varNum/2; i++)
-            pairs.set(i,(varNum/2)+i);      
-       */       
+		
+		// first we calculate the post
+		int varNum = Program.myFactory.varNum();  
+		BDD target = addExists(Program.myFactory.varNum()/2, varNum, b, Program.myFactory); 
+		
+		
+		boolean r_primed = false;  //flag to indicate that we changed all variables v by v'
+		BDDPairing pairs = makePairsToReplace(r_primed);    
+		
+		// we change in b all variables v by v'
+		target = target.replaceWith(pairs); 
         
-        //rename each variable: v' -> v
-	    mod = mod.replaceWith(pairs);	       
-	    mod = model.getTransitions().and(mod);
-        return addExists(varNum/2, varNum, mod ,model.getFactory());
-
+		// All the primed internal vars of the process are removed
+		BDD result = addExists(bddmodel.getInternalPrimedVarsIds(), target.and(model));
+        
+		// The following code deals with external vars, any external var (say z)
+		// must keep its value, that is z=z'. We avoid to calculate this by means of
+		// subtitutions, each z is replaced by z', this does not affect the calculation
+		// sin external vars are not restricted by the process's BDD.
+        result = addExists(bddmodel.getExternalVarsIds(), result);     
+        
+       
+        // We replace v -> v'
+        r_primed = true;
+        BDDPairing externalSubs = makePairsToReplaceFromList(bddmodel.getExternalVarsIds(), r_primed);          
+        result = result.replaceWith(externalSubs);
+       
+        // primed vars are removed
+        result = addExists(Program.myFactory.varNum()/2, varNum, result, Program.myFactory); 
+       
+        // the result
+        return result;
+        
 	}
 	
 	/***
 	 * 
-	 * @return the set of previous states of the states "b", in which all successors are
+	 * @return returns the set of previous states of the states "b", in which all successors are
 	 * included in the states given as parameter.-
 	 */
-	private BDD StrongPrevious(BDD b){
-        BDD npre = WeakPrevious(b.not()); //calculates the weak previous of not b
-        BDD pre = WeakPrevious(b); // calculates the weak previous of b
-        return (pre.and(npre.not())); // the result is given by those sets in pre and not in npre
+	private BDD StrongPrevious(BDD b, BDD model, BDDModel bddmodel){		
+		//calculates the weak previous of not b
+		BDD npre = WeakPrevious(b.not(), model, bddmodel); 
+		// calculates the weak previous of b
+        BDD pre = WeakPrevious(b, model, bddmodel); 
+     // the result is given by those sets in pre and not in npre
+        return (pre.and(npre.not()));         
 	}
 
     /***
 	 *
-	 * @return the set of normative previous states of the states "b".
+	 * @return returns the set of normative previous states of the states "b".
 	 */
-	private BDD NWeakPrevious(BDD b){
-        BDD norm = model.getNormative();
-        int varNum = model.getFactory().varNum();
-		BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-		mod = Post(mod).and(b);	//calculates those  states that are succesors of someone and hold b .
+	private BDD NWeakPrevious(BDD b, BDD model, BDD norm){
+        //BDD norm = model.getNormative();
+        int varNum = Program.myFactory.varNum();
+		//BDD mod = model.getTransitions();
+		BDD mod = addExists(varNum/2, varNum, model, Program.myFactory); // obtain all states of the model.
+		mod = Post(mod, model).and(b);	//calculates those  states that are succesors of someone and hold b .
 
 		boolean r_primed = false;  //flag to indicates that will be changes all variables v by v'
 		BDDPairing pairs = makePairsToReplace(r_primed);
@@ -1513,58 +1405,48 @@ public class FairSatVisitor implements FormulaVisitor {
         //rename each variable: v' -> v
 	    mod = mod.replaceWith(pairs);
 	          
-	    mod = model.getTransitions().and(mod).and(norm);
-        return addExists(varNum/2, varNum, mod ,model.getFactory());
+	    //mod = model.getTransitions().and(mod).and(norm);
+        return addExists(varNum/2, varNum, norm,Program.myFactory);
 	}
+	
 	
 	/***
 	 *
-	 * @return the set of normative previous states of the states "b", in which all successors are
+	 * @return returns the set of normative previous states of the states "b", in which all successors are
 	 * included in the states given as parameter.-
 	 */
-	private BDD NStrongPrevious(BDD b){
-        BDD npre = NWeakPrevious(b.not()); //calculates the weak previous of not b
-        BDD pre = NWeakPrevious(b); // calculates the weak previous of b
+	private BDD NStrongPrevious(BDD b, BDD model, BDD norm){
+        BDD npre = NWeakPrevious(b.not(), model, norm); //calculates the weak previous of not b
+        BDD pre = NWeakPrevious(b, model, norm); // calculates the weak previous of b
         return (pre.and(npre.not())); // the result is given by those sets in pre and not in npre
     }
 
-    
-
-	/***
+	/**
 	 * 
-	 * @param f
-	 * @return Compute the set Sat( P (X f) )
+	 * @param vars
+	 * @param r_primed
+	 * @return	A BDDPairing for replacing vars by primed vars or viceversa
 	 */
-	private void SatPX(FormulaElement f){
-		// Sat( P(X f) ) = {s in Normatives / Post_N (s) intersection Sat(f) != Empty}		
-		f.accept(this);
-		BDD sat_f = this.getSat();				
-		sat =(Post_N(model.getNormative()).and(sat_f));
+	private BDDPairing makePairsToReplaceFromList(LinkedList<Integer> vars, boolean r_primed){
+		BDDPairing pairs = Program.myFactory.makePair();
+		int varNum = Program.myFactory.varNum()/2;
+		if (r_primed){// changes v' by v
+			for (int i=0; i < vars.size(); i++){
+				int k = vars.get(i).intValue();
+				pairs.set(varNum+k, k);
+			}
+		}
+		else{// changes v by v'
+			for (int i=0; i < vars.size(); i++){
+				int k = vars.get(i).intValue();
+				pairs.set(k, varNum+k);
+			}
+		}
+		return pairs;
 	}
-
-
-	/***
-	 * 
-	 * @param f
-	 * @return Compute the greatest fixed point of the formula 
-	 */
-	private void GFP(FormulaElement f){
-		f.accept(this);
-		sat = this.sat;
-
-	}
-
-	/***
-	 * 
-	 * @param f
-	 * @return Compute the Least fixed point of the formula 
-	 */
-	private void LFP(FormulaElement f){
-		f.accept(this);
-		sat = this.sat;
-
-	}
-
+	
+	
+	
     /****
      * 
      * @param r_primed : Boolean flag to indicates if will be replaced all primed variables
@@ -1640,6 +1522,24 @@ public class FairSatVisitor implements FormulaVisitor {
 		}		
 		return b;		
 	}
+	
+	/**
+	 * 
+	 * @param vars
+	 * @param b
+	 * @return	quantifies all the variables in var on expression b
+	 */
+	private BDD addExists(LinkedList<Integer> vars, BDD b){
+		BDD var;
+		for(int i=0; i < vars.size(); i++){		
+			int k = vars.get(i).intValue();
+			var = Program.myFactory.ithVar(k);
+			b = b.exist(var);
+		}		
+		return b;
+		
+	}
+	
 	
 	/****
 	 * 

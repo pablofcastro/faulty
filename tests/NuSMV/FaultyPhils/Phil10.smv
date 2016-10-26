@@ -1,0 +1,132 @@
+-- An implementation of the (faulty) dinner philosophers,
+
+MODULE EvenPhil(lfork, rfork)
+VAR
+	state : {thinking, hungry, eating, crash};
+        hasR : boolean;
+        hasL: boolean;
+INIT
+  state=thinking & !hasR & !hasL; 
+
+ASSIGN
+     next(state) := case
+                    state = thinking & !hasL & !hasR : {thinking, hungry, crash};
+                    state = hungry & hasL & hasR: {eating, crash};
+                    state = eating : {thinking, crash};
+		    TRUE : {state, crash};
+                   esac;
+
+     next(lfork) := case 
+                     state = hungry & lfork : !lfork;
+		     state = hungry & hasL & !hasR & !rfork : TRUE; -- returns the fork
+                     state = eating : TRUE;
+                     TRUE : lfork;
+                    esac;
+
+     next(rfork) := case 
+                    state = hungry & hasL & rfork : !rfork;
+                    state = eating : TRUE;
+                    TRUE : rfork;
+                   esac; 
+    
+     next(hasL) := case
+                   state = hungry & lfork : TRUE;
+                   state = hungry & hasL & !hasR & !rfork : FALSE; -- returns de fork
+                   state = eating : FALSE;
+                   TRUE : hasL;
+                   esac;
+
+     next(hasR) := case
+                   state=hungry & hasL & rfork : TRUE;
+                   state=eating : FALSE;
+                   TRUE : hasR;
+                  esac;
+DEFINE
+   n:= !(state = crash);
+
+
+MODULE OddPhil(lfork, rfork)
+VAR
+	state : {thinking, hungry, eating, crash};
+        hasR : boolean;
+        hasL: boolean;
+INIT
+    state=thinking & !hasR & !hasL; 
+
+ASSIGN
+
+     init(state) := thinking;
+     init(hasR) := FALSE;
+     init(hasL) := FALSE;
+     next(state) := case
+                    state = thinking & !hasL & !hasR : {thinking, hungry, crash};
+                    state = hungry & hasL & hasR: {eating, crash};
+                    state = eating : {thinking, crash};
+		    TRUE : {state, crash};
+                   esac;
+
+     next(rfork) := case 
+                     state = hungry & rfork : !rfork;
+                     state = hungry & hasR & !hasL & !lfork : TRUE; -- returns the fork
+                     state = eating : TRUE;
+                     TRUE : rfork;
+                    esac;
+     next(lfork) := case 
+                    state = hungry & hasR & lfork : !lfork;
+                    state = eating : TRUE;
+                    TRUE : lfork;
+                   esac; 
+    
+     next(hasR) := case
+                   state = hungry & rfork : TRUE;
+                   state = hungry & hasR & !hasL & !lfork : FALSE; -- return the fork
+                   state = eating : FALSE;
+                   TRUE : hasR;
+                   esac;
+     next(hasL) := case
+                   state=hungry & hasR & lfork : TRUE;
+                   state=eating : FALSE;
+                   TRUE : hasL;
+                  esac;
+DEFINE
+    n := !(state=crash);
+
+
+MODULE main
+VAR
+  fork0: boolean;
+  fork1: boolean;
+  fork2: boolean;
+  fork3: boolean;
+  fork4: boolean;
+  fork5: boolean;
+  fork6: boolean;
+  fork7: boolean;
+  fork8: boolean;
+  fork9: boolean;
+  phil0: process EvenPhil(fork0,fork1);
+  phil1: process OddPhil(fork1,fork2);
+  phil2: process EvenPhil(fork2, fork3);
+  phil3: process OddPhil(fork3, fork4);
+  phil4: process EvenPhil(fork4, fork5);
+  phil5: process OddPhil(fork5, fork6);
+  phil6: process EvenPhil(fork6, fork7);
+  phil7: process OddPhil(fork7, fork8);
+  phil8: process EvenPhil(fork8, fork9);
+  phil9: process OddPhil(fork9, fork0);  
+
+INIT
+  fork0 & fork1 & fork2 & fork3 & fork4 & fork5 & fork6 & fork7 & fork8 & fork9;
+
+DEFINE
+    norm := !(phil0.state = crash) & !(phil1.state = crash) & !(phil2.state = crash) & !(phil3.state = crash);
+
+SPEC
+-- Simple property if a philosopher is hungry, it will eventually eat
+-- AG(phil0.state = hungry -> AF(phil0.state = eating))
+-- Property P(true U phili.n) 
+--     EG(E[phil0.n & phil1.n & phil2.n & phil3.n U (phil0.state = eating) & phil0.n & phil1.n & phil2.n & phil3.n])
+
+-- Property: R(EFphi2.state = eating | G(!phi1.crash & !phi3.crash))
+       !EF(!norm & EG(!(phil1.state = crash) & !(phil3.state = crash) & !(phil2.state = crash) & !EF(phil2.state = eating | phil1.state = eating | phil3.state = eating)))  
+--  !EF(phil0.state = crash & phil2.state=eating)

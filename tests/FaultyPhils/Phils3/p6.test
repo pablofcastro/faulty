@@ -1,0 +1,2 @@
+
+R( !(phil1.s==error) & !(phil3.s==error) & !(phil2.s==error) W false  ~> false U E( true U (phil2.s == eating)));

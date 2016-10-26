@@ -1,5 +1,6 @@
 package faulty;
 import java.util.*;
+
 import net.sf.javabdd.*;
 /**
  *  A class to represent the "and" of two boolean expressions
@@ -27,6 +28,17 @@ public class BiimpBoolExp implements BoolExp{
     }
     
     /**
+     * 
+     * @return the list of all variables apperaing in the expression
+     */
+    public LinkedList<Var> getVars(){
+    	LinkedList<Var> result = new LinkedList<Var>();
+    	result.addAll(exp1.getVars());
+    	result.addAll(exp2.getVars());
+    	return result;
+    }
+    
+    /**
      * Returns the list of channel occurring in the expression
      * @return the list of channels
      */
@@ -46,5 +58,32 @@ public class BiimpBoolExp implements BoolExp{
     	return result;
     	
     }
+    
+    public BiimpBoolExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars,  Process owner){
+    	BiimpBoolExp result = new BiimpBoolExp((BoolExp) exp1.duplicate(instName, boolMap, intMap, boolPars, intPars, owner), (BoolExp) exp2.duplicate(instName, boolMap, intMap, boolPars, intPars, owner));
+    	return result;
+    }
+    
+    public BiimpBoolExp duplicate(String instName, HashMap<Var, Var> dups,  Process owner){
+    	BiimpBoolExp result = new BiimpBoolExp((BoolExp) exp1.duplicate(instName, dups, owner), (BoolExp) exp2.duplicate(instName, dups, owner));
+    	return result;
+    }
+    
+    
+    @Override
+    public String toString(){
+        
+        String biimpInfo = new String(" ");
+		
+		String  exp1String= exp1.toString(); 
+		String  exp2String= exp2.toString(); 
+		
+		biimpInfo= biimpInfo.concat(exp1String).concat("<->").concat(exp2String);
+        
+	 	return biimpInfo;
+	
+		
+    }
+
     
 }

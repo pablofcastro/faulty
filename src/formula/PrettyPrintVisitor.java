@@ -37,6 +37,14 @@ public class PrettyPrintVisitor implements FormulaVisitor  {
 		
 	}
     
+    @Override
+	public void visit(EqComparison e){
+		FormulaElement f1 = e.getExpr1();
+		FormulaElement f2 = e.getExpr2();
+		visitBinaryOp(f1,e.toString(),f2);
+		
+	}
+    
 	@Override
 	public void visit(Conjunction c) {
 		FormulaElement f1 = c.getExpr1();
@@ -102,16 +110,49 @@ public class PrettyPrintVisitor implements FormulaVisitor  {
 		visitUUFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
 		
 	}
+    
+    
+    
+     @Override
+     public void visit(OXW o){
+         visitXWFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3());
+     }
+     
+     @Override
+     public void visit(OUW o){
+         visitUWFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     @Override
+     public void visit(OWX o){
+         visitWXFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3());
+     }
+     
+     @Override
+     public void visit(OWU o){
+         visitWUFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     @Override
+     public void visit(OWW o){
+         visitWWFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     
 	
+    
+	@Override
 	public void visit(OX o) {
 		visitXFormula(o.toString(),o.getExpr1());
 	}
-	
+    
+	@Override
 	public void visit(OU o) {
 		visitUFormula(o.toString(),o.getExpr1(),o.getExpr2());
 		
 	}
     
+    @Override
 	public void visit(OW o) {
 		visitWFormula(o.toString(),o.getExpr1(),o.getExpr2());
 	}
@@ -139,6 +180,34 @@ public class PrettyPrintVisitor implements FormulaVisitor  {
 		
 	}
     
+    
+     @Override
+     public void visit(PXW o){
+     visitXWFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3());
+     }
+     
+     @Override
+     public void visit(PUW o){
+     visitUWFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     @Override
+     public void visit(PWX o){
+     visitWXFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3());
+     }
+     
+     @Override
+     public void visit(PWU o){
+     visitWUFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     @Override
+     public void visit(PWW o){
+     visitWWFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+     }
+     
+     
+    
 	public void visit(PX p){
 		visitXFormula(p.toString(),p.getExpr1());		}
 	
@@ -149,15 +218,67 @@ public class PrettyPrintVisitor implements FormulaVisitor  {
 	public void visit(PW p){
 		visitWFormula(p.toString(),p.getExpr1(),p.getExpr2());	}
 	
-	@Override
-	public void visit(Recovery r) {
+/*	@Override
+	public void visit(Recovery r) {  // Para luego eliminar....
 		r.getExpr1().accept(this);
 		String s1 = this.getPrettyFormula();
 		r.getExpr2().accept(this);
 		String s2 = this.getPrettyFormula();
 		formula = r.toString() + "( "+ s1 + " ~> "+ s2 +" )";
 		
+	}*/
+    
+    
+      
+    @Override
+	public void visit(RXX p) {
+		visitXXFormula(p.toString(),p.getExpr1(),p.getExpr2());
 	}
+    
+	@Override
+	public void visit(RXU p) {
+		visitXUFormula(p.toString(),p.getExpr1(),p.getExpr2(), p.getExpr3());
+		
+	}
+    
+	@Override
+	public void visit(RUX p) {
+		visitUXFormula(p.toString(),p.getExpr1(),p.getExpr2(), p.getExpr3());
+		
+	}
+    
+	@Override
+	public void visit(RUU p) {
+		visitUUFormula(p.toString(),p.getExpr1(),p.getExpr2(), p.getExpr3(), p.getExpr4());
+		
+	}
+
+    @Override
+    public void visit(RXW o){
+       visitXWFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3());
+    }
+     
+    @Override
+    public void visit(RUW o){
+       visitUWFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+    }
+     
+    @Override
+    public void visit(RWX o){
+        visitWXFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3());
+    }
+     
+    @Override
+    public void visit(RWU o){
+        visitWUFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+    }
+     
+    @Override
+    public void visit(RWW o){
+        visitWWFormula(o.toString(),o.getExpr1(),o.getExpr2(), o.getExpr3(), o.getExpr4());
+    }
+     
+     
 	
 	public void visit(RX r) {
 		visitXFormula(r.toString(),r.getExpr1());
@@ -301,7 +422,70 @@ public class PrettyPrintVisitor implements FormulaVisitor  {
 		formula = op + "( "+ s1 + " U " + s2 + " ~> " + s3 + " U " + s4 + " )";
 	}
 	
-	private void visitUFormula(String op, FormulaElement f1, FormulaElement f2){
+	
+     
+    
+    private void visitXWFormula(String op,FormulaElement f1, FormulaElement f2, FormulaElement f3){
+		f1.accept(this);
+		String s1 = this.getPrettyFormula();
+		f2.accept(this);
+		String s2 = this.getPrettyFormula();
+		f3.accept(this);
+		String s3 = this.getPrettyFormula();
+		formula = op+ "( X"+ s1 + " ~> "+ s2 +" W " + s3+ " )";
+	}
+    
+    private void visitUWFormula(String op, FormulaElement f1, FormulaElement f2, FormulaElement f3, FormulaElement f4){
+		f1.accept(this);
+		String s1 = this.getPrettyFormula();
+		f2.accept(this);
+		String s2 = this.getPrettyFormula();
+		f3.accept(this);
+		String s3 = this.getPrettyFormula();
+		f4.accept(this);
+		String s4 = this.getPrettyFormula();
+		formula = op + "( "+ s1 + " U " + s2 + " ~> " + s3 + " W " + s4 + " )";
+	}
+	
+	
+    
+    private void visitWXFormula(String op, FormulaElement f1, FormulaElement f2, FormulaElement f3){
+		f1.accept(this);
+		String s1 = this.getPrettyFormula();
+		f2.accept(this);
+		String s2 = this.getPrettyFormula();
+		f3.accept(this);
+		String s3 = this.getPrettyFormula();
+		formula = op + "( "+ s1 + " W " + s2 + " ~>  X" + s3 + " )";
+	}
+	
+    private void visitWUFormula(String op, FormulaElement f1, FormulaElement f2, FormulaElement f3, FormulaElement f4){
+		f1.accept(this);
+		String s1 = this.getPrettyFormula();
+		f2.accept(this);
+		String s2 = this.getPrettyFormula();
+		f3.accept(this);
+		String s3 = this.getPrettyFormula();
+		f4.accept(this);
+		String s4 = this.getPrettyFormula();
+		formula = op + "( "+ s1 + " W " + s2 + " ~> " + s3 + " U " + s4 + " )";
+	}
+    
+    private void visitWWFormula(String op, FormulaElement f1, FormulaElement f2, FormulaElement f3, FormulaElement f4){
+		f1.accept(this);
+		String s1 = this.getPrettyFormula();
+		f2.accept(this);
+		String s2 = this.getPrettyFormula();
+		f3.accept(this);
+		String s3 = this.getPrettyFormula();
+		f4.accept(this);
+		String s4 = this.getPrettyFormula();
+		formula = op + "( "+ s1 + " W " + s2 + " ~> " + s3 + " W " + s4 + " )";
+	}
+    
+     
+    
+    private void visitUFormula(String op, FormulaElement f1, FormulaElement f2){
 		f1.accept(this);
 		String s1 = this.getPrettyFormula();
 		f2.accept(this);

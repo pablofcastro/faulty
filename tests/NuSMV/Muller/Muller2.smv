@@ -1,0 +1,46 @@
+-- This is an implementation of the Muller circuit in SMV
+-- without the feedback from u to an input, this is implicitly implemented
+-- n s true in those state without faults.
+
+
+MODULE Circuit
+VAR
+   x: boolean;
+   y: boolean;
+   z: boolean;
+
+ASSIGN
+   init(z) := TRUE;
+   init(x) := TRUE;
+   init(y) := TRUE;
+  
+   next(x) :=
+	case
+	   (x=z)&(x=y) : {x, !x};
+	   (x=z)&!(y=z)   : !x;
+	   TRUE        : x;	
+        esac;
+   next(y) :=
+	case
+          (y=z)&(y=x) : {y, !y};
+          (y=z)&!(x=z) : !y;
+          TRUE : y;
+	esac;
+   next(z) := ((next(x)&next(y)) | (next(x)&z) | (next(y)&z));
+        
+   
+DEFINE  
+   n := x=y;	
+
+
+MODULE main
+VAR 
+  c1 : process Circuit();
+
+SPEC
+--P1:
+--  !E[c1.n U c1.n & (E[(c1.x | c1.y) & c1.n U !c1.z & (c1.x | c1.y) & EG(c1.n)])];
+--P2
+-- AG(!c1.n -> AF(c1.n))
+--P2:
+  AG(!c1.n -> EF(c1.n))

@@ -1,5 +1,6 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
 
 /**
@@ -46,5 +47,26 @@ public interface Code{
      * @return	the duplicate
      */
     public Code duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner);
+    
+    /**
+     * Similar to above but taking into account parameters
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param boolPars
+     * @param intPars
+     * @param owner
+     * @return
+     */
+    public Code duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner);
+    
+    /**
+     * 
+     * @param instName
+     * @param dups
+     * @param owner
+     * @return
+     */
+    public Code duplicate(String instName, HashMap<Var, Var> dups, Process owner);
     	
 }

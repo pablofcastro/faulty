@@ -5,11 +5,13 @@ package faulty.auxiliar;
 public interface AuxiliarFaultyVisitor {
 
 	public void visit(AuxiliarProgram a);
+    public void visit(AuxiliarEnumType a);
 	public void visit(AuxiliarGlobalVarCollection a);
 	public void visit(AuxiliarProcessCollection a);
 	public void visit(AuxiliarChannelCollection a);
 	public void visit(AuxiliarProcess a);
-	public void visit(AuxiliarChannel a);
+	public void visit(AuxiliarParam a);
+    public void visit(AuxiliarChannel a);
 	public void visit(AuxiliarBranch a);
 	public void visit(AuxiliarChanAssign a);
 	public void visit(AuxiliarChanAccess a);
@@ -30,6 +32,8 @@ public interface AuxiliarFaultyVisitor {
 	public void visit(AuxiliarConsIntExp a);
 	public void visit(AuxiliarMain a);
 	public void visit(AuxiliarProcessDecl a);
+    public void visit(AuxiliarInvkProcess a);
+	
 	
 	
 }

@@ -1,5 +1,6 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
 
 /**
@@ -40,6 +41,15 @@ public class ConsBoolExp implements BoolExp{
     }
     
     /**
+     * 
+     * @return the listo of vars appearing in the contant, null
+     */
+    public LinkedList<Var> getVars(){
+    	LinkedList<Var> result = new LinkedList<Var>();
+    	return result;
+    }
+    
+    /**
      * A duplicate of a constant is the same constant
      * @param instName
      * @return "a duplicate" 
@@ -47,4 +57,42 @@ public class ConsBoolExp implements BoolExp{
     public ConsBoolExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner){
     	return this;
     }
+    
+    /**
+     * Another duplicate that takes into ccount parameters
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param owner
+     * @return
+     */
+    public ConsBoolExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars,  Process owner){
+    	return this;
+    }
+    
+    /**
+     * 
+     * @param instName
+     * @param dups
+     * @param owner
+     * @return
+     */
+    public ConsBoolExp duplicate(String instName, HashMap<Var, Var> dups,  Process owner){
+    	return this;
+    }
+    
+    @Override
+    public String toString(){
+    	
+        String consInfo;
+        
+	 	if (value){
+	 		consInfo = new String("true");
+	 	}else{
+	 		consInfo = new String("false");
+	 	}
+        
+        return consInfo;
+	}
+
 }

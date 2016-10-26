@@ -1,0 +1,64 @@
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+Global fork2 : BOOL;
+
+
+// FIRST LEFT
+Process Phil1{
+   s0, s1, hasL, hasR: BOOL;
+   Initial: !s0 && !s1  && !hasL && !hasR && fork0 && fork1;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork0 && !hasL  -> fork0=false, hasL=true; 
+   !s0 && s1 && hasL && fork1 -> fork1=false, hasR=true;  
+   !s0 && s1 && hasL && hasR -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork0=true, fork1=true, hasL=false, hasR=false;
+   true -> s0=true, s1=true;   
+   
+}
+
+//FIRST RIGHT
+Process Phil2{
+   s0, s1, hasL, hasR: BOOL;
+   Initial: !s0 && !s1  && !hasL && !hasR && fork1 && fork2;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork2 && !hasR  -> fork2=false, hasR=true; 
+   !s0 && s1 && hasR && fork1 -> fork1=false, hasL=true;  
+   !s0 && s1 && hasL && hasR -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork1=true, fork2=true, hasL=false, hasR=false;
+   true -> s0=true, s1=true;  
+}
+
+// FIRST LEFT
+Process Phil3{
+   s0, s1, hasL, hasR: BOOL;
+   Initial: !s0 && !s1  && !hasL && !hasR && fork2 && fork0;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork2 && !hasL  -> fork2=false, hasL=true; 
+   !s0 && s1 && hasL && fork0 -> fork0=false, hasR=true;  
+   !s0 && s1 && hasL && hasR -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork0=true, fork2=true, hasL=false, hasR=false;
+   true -> s0=true, s1=true;
+}
+
+
+
+Main(){
+ phil1:Phil1;
+ phil2:Phil2;
+ phil3:Phil3;
+
+ run phil1();
+ run phil2();
+ run phil3();
+ 
+
+}

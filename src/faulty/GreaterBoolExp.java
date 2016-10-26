@@ -1,5 +1,6 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
 
 /**
@@ -33,6 +34,11 @@ public class GreaterBoolExp implements BoolExp{
         return result;
     }
     
+    public LinkedList<Var> getVars(){
+    	LinkedList<Var> result = new LinkedList<Var>();
+    	return result;
+    }
+    
     /**
      * Returns a list of channels participating in the comparison
      * @return a list of channels
@@ -53,5 +59,48 @@ public class GreaterBoolExp implements BoolExp{
     	GreaterBoolExp result = new GreaterBoolExp((IntExp) int1.duplicate(instName, boolMap, intMap, owner), (IntExp) int2.duplicate(instName, boolMap, intMap, owner));
     	return result;
     	
+    }
+    
+    /**
+     * Another version of duplicate taking into account process parameters
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param boolPars
+     * @param intPars
+     * @param owner
+     * @return
+     */
+    public GreaterBoolExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner){
+    	GreaterBoolExp result = new GreaterBoolExp((IntExp) int1.duplicate(instName, boolMap, intMap, boolPars, intPars, owner), (IntExp) int2.duplicate(instName, boolMap, intMap, boolPars, intPars, owner));
+    	return result;
+    	
+    }
+    
+    /**
+     * 
+     * @param instName
+     * @param dups
+     * @param owner
+     * @return
+     */
+    public GreaterBoolExp duplicate(String instName, HashMap<Var, Var> dups, Process owner){
+    	GreaterBoolExp result = new GreaterBoolExp((IntExp) int1.duplicate(instName, dups, owner), (IntExp) int2.duplicate(instName, dups, owner));
+    	return result;
+    	
+    }
+    
+    
+    @Override
+    public String toString(){
+        
+        String greatInfo = new String(" ");
+    	
+    	String  exp1String= int1.toString(); 
+    	String  exp2String= int2.toString(); 
+    	
+    	greatInfo= greatInfo.concat(exp1String).concat(">").concat(exp2String);
+        
+     	return greatInfo;
     }
 }

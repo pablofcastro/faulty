@@ -13,7 +13,7 @@ public class OUW extends Obligation{
 	
 	@Override
 	public void accept(FormulaVisitor v){
-	   //  v.visit(this);			
+	     v.visit(this);			
 	}
 	
 	/***

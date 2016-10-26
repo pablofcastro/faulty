@@ -82,9 +82,53 @@ public class BoolChanAssign implements Code{
     }
     
     
+    /**
+     * 
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param owner
+     * @return
+     */
     public BoolChanAssign duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner){
     	BoolChanAssign result = new BoolChanAssign(chan, (BoolExp) exp.duplicate(instName, boolMap, intMap, owner)); 
     	return result;
+    }
+    
+    /**
+     * Another version of duplicate taht takes into account params
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param owner
+     * @return
+     */
+    public BoolChanAssign duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner){
+    	BoolChanAssign result = new BoolChanAssign(chan, (BoolExp) exp.duplicate(instName, boolMap, intMap, boolPars, intPars, owner)); 
+    	return result;
+    }
+    
+    /**
+     * 
+     * @param instName
+     * @param dups
+     * @param owner
+     * @return
+     */
+    public BoolChanAssign duplicate(String instName, HashMap<Var, Var> dups, Process owner){
+    	BoolChanAssign result = new BoolChanAssign(chan, (BoolExp) exp.duplicate(instName, dups, owner)); 
+    	return result;
+    }
+    
+    
+    @Override
+    public String toString(){
+    	
+        String channelInfo = new String("");
+    	String  chanString= chan.getName(); 
+    	String exprString = exp.toString();
+    	channelInfo= channelInfo.concat(chanString).concat(".put(").concat(exprString).concat(") ");
+    	return channelInfo;
     }
     
 }

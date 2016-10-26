@@ -8,24 +8,33 @@ import java.util.*;
 public class AuxiliarProcess extends AuxiliarProgramNode {
 
 	LinkedList<AuxiliarChannel> channelIds;
+    LinkedList<AuxiliarParam> paramList;
+
 	String processName;
 	LinkedList<AuxiliarVar> intVars; // it has a collection of local variables of type int
 	LinkedList<AuxiliarVar> boolVars; // it has a collections of local variables of type boolean
+    LinkedList<AuxiliarVar> enumVars; // it has a collections of local variables of type enumerated
+    
 	LinkedList<AuxiliarBranch> branches; // a collection of branches (Bi -> Ci)
 	AuxiliarExpression normCondition; // normative condition for characterising the non-faulty part of the program
 	AuxiliarExpression initialCond; // the initial valuations of the local variables.
 	LinkedList<String> processInstanceNames; // Names of the differents process Instances
+	LinkedList<AuxiliarInvkProcess> processInvkParameters; // Invocation Parameters of each process instance.
 	
 	
 	public AuxiliarProcess(String name){
 		this.processName = name;
 		channelIds =new LinkedList<AuxiliarChannel>();
-		intVars = new LinkedList<AuxiliarVar>();
+		paramList = new LinkedList<AuxiliarParam>();
+
+        intVars = new LinkedList<AuxiliarVar>();
 		boolVars = new LinkedList<AuxiliarVar>();
+        enumVars = new LinkedList<AuxiliarVar>();
 		branches = new LinkedList<AuxiliarBranch>();
 		normCondition = null;
 	    initialCond = null;
 	    processInstanceNames= new LinkedList<String>();
+        processInvkParameters = new LinkedList<AuxiliarInvkProcess>();
 		
 	}
 	
@@ -33,13 +42,15 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
 	public AuxiliarProcess(String name,AuxiliarExpression iniC, AuxiliarExpression normC,LinkedList<AuxiliarVar> varList,LinkedList<AuxiliarBranch> branchList){
 		this.processName = name;
 		channelIds =new LinkedList<AuxiliarChannel>();
-		initialCond =iniC;
+		paramList = new LinkedList<AuxiliarParam>();
+        initialCond =iniC;
 		normCondition =normC;
 		branches = branchList;
 		intVars = new LinkedList<AuxiliarVar>();
 		boolVars = new LinkedList<AuxiliarVar>();
+        enumVars = new LinkedList<AuxiliarVar>();
 		processInstanceNames= new LinkedList<String>();
-		
+		processInvkParameters= new LinkedList<AuxiliarInvkProcess>();
 		
 		 /* --- Adding the Declarated Vbles according the type ---*/
         for (int i = 0; i < varList.size(); i++){
@@ -48,9 +59,12 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
             	boolVars.add(varList.get(i));
             }
             else{
-            	intVars.add(varList.get(i));
+                if ( varList.get(i).getType().isINT() ){
+                    intVars.add(varList.get(i));
+                }else{
+                    enumVars.add(varList.get(i));
+                }
             }
-            
         }
 		
 		
@@ -59,23 +73,30 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
 	public AuxiliarProcess(AuxiliarExpression iniC, AuxiliarExpression normC,LinkedList<AuxiliarVar> varList,LinkedList<AuxiliarBranch> branchList){
 		this.processName = new String();
 		channelIds =new LinkedList<AuxiliarChannel>();
+        paramList = new LinkedList<AuxiliarParam>();
 		initialCond =iniC;
 		normCondition =normC;
 		branches = branchList;
 		intVars = new LinkedList<AuxiliarVar>();
 		boolVars = new LinkedList<AuxiliarVar>();
+        enumVars = new LinkedList<AuxiliarVar>();
 		processInstanceNames= new LinkedList<String>();
+        processInvkParameters= new LinkedList<AuxiliarInvkProcess>();
 		
-		 /* --- Adding the Declarated Vbles according the type ---*/
+		
+		/* --- Adding the Declarated Vbles according the type ---*/
         for (int i = 0; i < varList.size(); i++){
             
             if ( varList.get(i).getType().isBOOLEAN() ){
             	boolVars.add(varList.get(i));
             }
             else{
-            	intVars.add(varList.get(i));
+                if ( varList.get(i).getType().isINT() ){
+                    intVars.add(varList.get(i));
+                }else{
+                    enumVars.add(varList.get(i));
+                }
             }
-            
         }
 		
 		
@@ -84,12 +105,16 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
 	public AuxiliarProcess(AuxiliarExpression iniC, AuxiliarExpression normC,LinkedList<AuxiliarBranch> branchList){
 		this.processName = new String();
 		channelIds =new LinkedList<AuxiliarChannel>();
+        paramList = new LinkedList<AuxiliarParam>();
 		initialCond =iniC;
 		normCondition =normC;
 		branches = branchList;
 		intVars = new LinkedList<AuxiliarVar>();
 		boolVars = new LinkedList<AuxiliarVar>();
+        enumVars = new LinkedList<AuxiliarVar>();
 		processInstanceNames= new LinkedList<String>();
+        processInvkParameters= new LinkedList<AuxiliarInvkProcess>();
+		
 	}
 	
 	public String getName(){
@@ -103,6 +128,11 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
 		return channelIds;
 	}
     
+    public LinkedList<AuxiliarParam> getParamList(){
+		
+		return paramList;
+	}
+    
     public LinkedList<AuxiliarBranch> getBranches(){
 		
 		return branches;
@@ -114,10 +144,15 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
 	}
  
     public LinkedList<AuxiliarVar> getVarBool(){
-		
-    	
+        
 		return boolVars;
 	}
+    
+    public LinkedList<AuxiliarVar> getVarEnum(){
+        
+		return enumVars;
+	}
+
 
     
     public AuxiliarExpression getInitialCond(){
@@ -131,7 +166,75 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     }
     
     /**
-     * 
+     *
+     * @param processName Name of the process.
+     * @return return the list with the invocation parameters of the process with that name, an empty list otherwise.-
+     */
+    
+    public LinkedList<AuxiliarExpression> getInvkParametersList(String processName){
+        
+        
+        for(int i=0;i<processInvkParameters.size();i++){
+            String pName = processInvkParameters.get(i).getInstanceName();
+            
+            if(pName.equals(processName)){
+                return processInvkParameters.get(i).getInvkValues();
+            }
+            
+        }
+        return new LinkedList<AuxiliarExpression>();
+        
+	}
+    
+    
+    /**
+     *
+     * @param processName Name of the process.
+     * @return return the list with the boolean parameters of the process with that name, an empty list otherwise.-
+     */
+    
+    public LinkedList<AuxiliarExpression> getInvkBoolParamList(String processName){
+        
+        LinkedList<AuxiliarExpression> boolPar = new LinkedList<AuxiliarExpression>();
+        LinkedList<AuxiliarExpression> invkPar = this.getInvkParametersList(processName);
+        
+        for(int i=0;i<invkPar.size();i++){
+            AuxiliarVar var = (AuxiliarVar)invkPar.get(i);
+            if(var.getType().isBOOLEAN()){
+                boolPar.add(invkPar.get(i));
+            }
+        }
+        
+        return boolPar;
+	}
+    
+    
+    /**
+     *
+     * @param processName Name of the process.
+     * @return return the list with the integer parameters of the process with that name, an empty list otherwise.-
+     */
+    
+    public LinkedList<AuxiliarExpression> getInvkIntParamList(String processName){
+        
+        LinkedList<AuxiliarExpression> intPar = new LinkedList<AuxiliarExpression>();
+        LinkedList<AuxiliarExpression> invkPar = this.getInvkParametersList(processName);
+        
+        for(int i=0;i<invkPar.size();i++){
+            AuxiliarVar var = (AuxiliarVar)invkPar.get(i);
+            
+            if(var.getType().isINT()){
+                intPar.add(invkPar.get(i));
+            }
+        }
+        
+        return intPar;
+	}
+    
+    
+    
+    /**
+     *
      * @param i ith intance position
      * @return return the name of the ith instance, null if not exist.-
      */
@@ -148,13 +251,19 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     
     public int getNumVar(){
     	
-        return ( boolVars.size() + intVars.size());
+        return ( boolVars.size() + intVars.size() + enumVars.size());
     }
     
     public int getNumVarInt(){
     	
         return ( intVars.size());
     }
+   
+    public int getNumVarEnumerated(){
+    	
+        return ( enumVars.size());
+    }
+    
     
     public int getNumVarBool(){
     	
@@ -195,6 +304,16 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     	
     }
     
+    public void addParam(String parId){
+    	paramList.add(new AuxiliarParam(parId));
+    	
+    }
+    
+    public void addInvkParam(AuxiliarInvkProcess invP){
+    	processInvkParameters.add(invP);
+    }
+    
+    
     public void addBranchList(LinkedList<AuxiliarBranch> list){
     	branches = list;
     	
@@ -224,13 +343,19 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     	
     }
     
+    
+    public void setParamList(LinkedList<AuxiliarParam> parL){
+    	paramList = parL;
+    }
+    
+    
     /**
      * Return the list of all names of the boolean variables involved of this
      *  process (according the instance name of the process) :
      * "Process_instanceName" + "." + "VariableName"
      * @return
-     */
-    public LinkedList<String> getBoolVarNamesProcessIntances(){
+     */                       
+    public LinkedList<String> getBoolVarNamesProcessInstances(){
     	LinkedList<String> varNames = new LinkedList<String>();
     	
     	for(int j=0; j< processInstanceNames.size() ; j++){
@@ -250,7 +375,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
      * "Process_instanceName" + "." + "VariableName"
      * @return
      */
-    public LinkedList<String> getIntVarNamesProcessIntances(){
+    public LinkedList<String> getIntVarNamesProcessInstances(){
     	LinkedList<String> varNames = new LinkedList<String>();
     	
     	for(int j=0; j< processInstanceNames.size() ; j++){
@@ -263,6 +388,82 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     	return varNames;
     }
     
+    /**
+     * Return the list of all names of the enumerated variables involved of this
+     *  process (according the instance name of the process) :
+     * "Process_instanceName" + "." + "VariableName"
+     * @return
+     */
+    public LinkedList<String> getEnumVarNamesProcessInstances(){
+    	LinkedList<String> varNames = new LinkedList<String>();
+    	
+    	for(int j=0; j< processInstanceNames.size() ; j++){
+            for(int i = 0; i< enumVars.size(); i++){
+                String nameI = new String (processInstanceNames.get(j) + "." + enumVars.get(i).getName());
+                varNames.add(nameI);
+                
+            }
+   	    }
+    	return varNames;
+    }
+    
+    /**
+     * @return Return the total number of enumVars of a single Process.
+     * 
+     */
+    public int getNumEnumVarsProcess(String enumName){
+        
+        int numberVars =0;
+        int numberParam = 0;
+        
+        
+        for(int i = 0; i< enumVars.size(); i++){
+            if(enumVars.get(i).getEnumName().equals(enumName) ){
+                numberVars++;
+            }
+        }
+        
+        for(int i = 0; i< paramList.size(); i++){
+            if(paramList.get(i).getEnumName().equals(enumName) ){
+                numberParam++;
+            }
+        }
+        
+        
+    	return (numberVars+numberParam);
+    }
+    
+    
+    /**
+     * @return Return the total number of enumVars according the number of process instances.
+     *
+     */
+    public int getNumEnumProcessInstances(String enumName){
+        
+        
+        int numberVars =0;
+        int numberInstances=0;
+        int numberParam = 0;
+        
+        for(int i = 0; i< enumVars.size(); i++){
+            if(enumVars.get(i).getEnumName().equals(enumName) ){
+                numberVars++;
+            }
+        }
+        
+        
+        for(int i = 0; i< paramList.size(); i++){
+            if (paramList.get(i).getType().isEnumerated()){//Only compare if the type of parameter is Enum.
+                if(paramList.get(i).getEnumName().equals(enumName) ){
+                    numberParam++;
+                }
+            }
+        }
+        
+        numberInstances = processInstanceNames.size();
+        
+       return ((numberParam + numberVars) * numberInstances);
+    }
     
     
 	public void accept(AuxiliarFaultyVisitor v){

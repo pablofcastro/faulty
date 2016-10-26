@@ -127,7 +127,7 @@ white_space     = {end_of_line} | [ \t\f]
     }
     
 "true"  {   //System.out.println(" TRUE :"+ yytext()); 
-           return new Symbol(symFaulty.FALSE,yyline,yycolumn, yytext());
+           return new Symbol(symFaulty.TRUE,yyline,yycolumn, yytext());
          }
          
 "false"  {  //System.out.println(" FALSE :"+ yytext());
@@ -145,7 +145,13 @@ white_space     = {end_of_line} | [ \t\f]
 "Global" { //System.out.println(" GLOBAL :"+ yytext());
            return new Symbol(symFaulty.GLOBAL,yyline,yycolumn,yytext());
         }
-        
+
+      
+"Enum" { //System.out.println(" ENUM :"+ yytext());
+           return new Symbol(symFaulty.ENUM,yyline,yycolumn,yytext());
+        }
+
+
 "Initial" { //System.out.println(" INIT:"+ yytext());
             return new Symbol(symFaulty.INIT,yyline,yycolumn,yytext());
           }
@@ -200,7 +206,5 @@ white_space     = {end_of_line} | [ \t\f]
           
 {white_space} {/* Ignore */} 
 
-.     {   String value=yytext();
-          System.out.println("Invalid token: " + value + ", line: " + yyline + ".-");
-          //return new Symbol(symFaulty.LEXICAL_ERROR,yyline,yycolumn,yytext());
+.     {   //return new Symbol(symFaulty.LEXICAL_ERROR,yyline,yycolumn,yytext());
        }

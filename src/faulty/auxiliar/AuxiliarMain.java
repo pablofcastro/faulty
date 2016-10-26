@@ -6,16 +6,16 @@ import java.util.*;
 public class AuxiliarMain extends AuxiliarProgramNode{
 	
 	LinkedList<AuxiliarProcessDecl> processDecl;
-	LinkedList<String> processInvk;
+	LinkedList<AuxiliarInvkProcess> processInvk;
 	
 	public AuxiliarMain(){
 		processDecl = new LinkedList<AuxiliarProcessDecl>();
-		processInvk = new LinkedList<String>();
+		processInvk = new LinkedList<AuxiliarInvkProcess>();
 		
 	}
 	
 
-	public AuxiliarMain(LinkedList<AuxiliarProcessDecl> pDecl,LinkedList<String> pInvk){
+	public AuxiliarMain(LinkedList<AuxiliarProcessDecl> pDecl,LinkedList<AuxiliarInvkProcess> pInvk){
 		processDecl = pDecl;
 		processInvk = pInvk;
 		
@@ -65,7 +65,7 @@ public class AuxiliarMain extends AuxiliarProgramNode{
 		
 		while ( i < processInvk.size() ){
 			
-			correct = correct && existProcessDecl(processInvk.get(i));
+			correct = correct && existProcessDecl(processInvk.get(i).getInstanceName());
 			i++;
 	    }
 		
@@ -87,7 +87,7 @@ public class AuxiliarMain extends AuxiliarProgramNode{
 		
 	}
 	
-	public LinkedList<String> getProcessInvk(){
+	public LinkedList<AuxiliarInvkProcess> getProcessInvk(){
 		return processInvk;	
 	}
 	

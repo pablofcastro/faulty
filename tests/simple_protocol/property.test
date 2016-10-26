@@ -1,0 +1,9 @@
+
+
+//(A(true U p1.delivered)); // means ->(A( F p1.delivered) which is not true in this model
+
+( E(X p1.send)); //Should be true...
+
+//E(X p1.send); 
+
+

@@ -1,0 +1,10 @@
+Faulty Phils Example.
+
+
+	The dining philosophers problem is one of the most used examples in concurrency. It is in particular useful for illustrating the idea of deadlock and livelock.
+In this section, we consider a variation of this problem in which philosophers may exhibit crash failures (as presented in [Pike04]), i.e., at any moment a philosopher may go into an error state and stay in that state forever. The main difficulty in this setting comes from the fact that crashed processes may prevent other processes from accessing resources. 
+	 We are interested in measuring the fault locality of a given implementation of dining philosophers,
+that is, the number of processes that are disrupted by the crashing of a given philosopher. It is well-known that crash-locality 2 (that is, only the neighboring  philosophers are disrupted) is a lower bound for any asynchronous implementation of this problem. 
+Here we analyze the implementation given in [MageeBook], where the philosophers are classified into two groups: even philosophers, which take their corresponding right forks first and afterwards take their left forks, and odd philosophers, that take their left forks first, and then their right ones. It can be shown that this policy avoids the occurrence of deadlock.
+
+	In folder PhilsX (for X=2,3,4,5,6,7,8,9,10) you can find the example with X philosophers. In folder NuSMV there is the same model described in NuSMV.

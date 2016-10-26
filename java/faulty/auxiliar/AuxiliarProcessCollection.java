@@ -9,12 +9,14 @@ public class AuxiliarProcessCollection extends AuxiliarProgramNode {
 	LinkedList<AuxiliarProcess> processList;
 	int totalIntVars;
 	int totalBoolVars;
+    int totalEnumVars;
 	
 	public AuxiliarProcessCollection(){
 		
 		processList = new LinkedList<AuxiliarProcess>();
 		totalIntVars=0;
 		totalBoolVars = 0;
+        totalEnumVars=0;
 	
 	}
 	
@@ -27,6 +29,7 @@ public class AuxiliarProcessCollection extends AuxiliarProgramNode {
     	processList.add(proc);
     	totalIntVars += proc.getNumVarInt();
     	totalBoolVars += proc.getNumVarBool();
+        totalEnumVars += proc.getNumVarEnumerated();
     }
     
     public int getTotalIntVars(){
@@ -36,6 +39,11 @@ public class AuxiliarProcessCollection extends AuxiliarProgramNode {
     public int getTotalBoolVars(){
     	return totalBoolVars;
     }
+    
+    public int getTotalEnumVars(){
+    	return totalEnumVars;
+    }
+    
     
     public LinkedList<AuxiliarProcess> getProcessList(){
     	return processList;

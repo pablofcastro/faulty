@@ -28,24 +28,28 @@ public class ProgramParser {
         Program faultyProg=null;
         try {
             programFile = new FileReader(NameFile);
+           
 
             // Read file
  			parser = new parserFaulty(new scannerFaulty(programFile));
  			AuxiliarProgram program = (AuxiliarProgram)parser.parse().value;
 
+ 			 
+ 			
  			// Check Types
  			Type result = checkTypes(program);
  			if(result == Type.ERROR){
                 for(int i=0; i<errorList.size(); i++){
                     System.out.println(errorList.get(i).getErrorMsg());
-                }
+                }               
             }
-            else{ // If not errors, build the concrete Faulty program
+            else{ // If not errors, build the concrete Faulty program    
+            	
                 faultyProg = buildProgram(program);
             }    
-        } catch (Exception e) {
- 			System.out.println("Program Error.");
- 			
+        } catch (Exception e) {        	
+ 			System.out.println("Program Error." + e.getMessage());
+            e.printStackTrace(System.out);
  		}
         
         return faultyProg;
@@ -64,8 +68,10 @@ public class ProgramParser {
  	 * Build the Concrete Faulty Program
   	 */
  	private static Program buildProgram(AuxiliarProgram prog) {
-        BuilderVisitor builder = new BuilderVisitor(symbolsTable);
+ 		
+        BuilderVisitor builder = new BuilderVisitor(symbolsTable);        
         prog.accept(builder);
+       
         return  builder.getProgram();
     }
 

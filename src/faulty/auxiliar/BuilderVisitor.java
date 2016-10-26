@@ -15,7 +15,10 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	private LinkedList<Channel> globalChannels; 
 	private LinkedList<VarBool> globalBoolVars;
 	private LinkedList<VarInt> globalIntVars;
-	private faulty.Process process;
+	private LinkedList<VarEnum> globalEnumVars;
+    private LinkedList<EnumType> enumeratedTypes;
+    private EnumType currentEnumType;
+    private faulty.Process process;
 	private Branch branch;
 	private Var var;
 	private Code code;
@@ -35,6 +38,9 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	    this.globalChannels = new LinkedList<Channel>();
 	    this.globalBoolVars = new LinkedList<VarBool>();
 	    this.globalIntVars = new LinkedList<VarInt>();
+        this.globalEnumVars = new LinkedList<VarEnum>();
+        this.enumeratedTypes = new LinkedList<EnumType>();
+        this.currentEnumType=null;
 	    this.program = null;
 	    this.process=null;
 	    this.var =null;
@@ -51,22 +57,53 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		
 		this.createProgram(a);
 		
+        // enumerated types
+        for(int i=0;i < a.enumTypes.size();i++){
+            a.enumTypes.get(i).accept(this);
+            EnumType eType = (EnumType)this.getEnumType();
+            this.program.addEnumType(eType);
+            //this.enumeratedTypes.add(eType);
+			this.var =null;
+			this.expr=null;
+        }
+            
+        
 		a.globalVars.accept(this);
 		a.channels.accept(this);
 		a.process.accept(this);
 		this.program = this.getProgram();
 		a.mainProgram.accept(this);
 		this.program = this.getProgram();
+        //System.out.println("-------------------------------------------------------------------------------------  ");
+        //System.out.println("--  " + this.program.toString());
+        //System.out.println("-------------------------------------------------------------------------------------  ");
+        
 	}
+    
+    public void visit(AuxiliarEnumType a){
+        EnumType eType = new EnumType(a.getName(), a.getSize(), a.getNumVars(), program);
+        // enumerated types
+        for(int i=0;i<a.getSize();i++){
+            String constant = a.getCons(i);
+            if (constant!=null){
+                eType.addCons(constant,i);
+            }
+        }
+            
+        this.enumeratedTypes.add(eType);
+        this.currentEnumType = eType;
+    }
+        
 	
 	public void visit(AuxiliarGlobalVarCollection a){
 		LinkedList<AuxiliarVar> boolVars = a.getBoolVars();
 		LinkedList<AuxiliarVar> intVars = a.getIntVars();
+        LinkedList<AuxiliarVar> enumVars = a.getEnumVars();
+        
 		
 		this.isDeclaration =true;
 		
 		for(int i=0;i<boolVars.size();i++){
-			//System.out.println("---- var name: " + boolVars.get(i).getName() + " - tpe : " + boolVars.get(i).getType().toString());
 			boolVars.get(i).accept(this);
 			this.program.addBoolVar((VarBool)this.getVar());
 			this.globalBoolVars.add((VarBool)this.getVar());
@@ -75,15 +112,21 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		}
 		
 		for(int i=0;i<intVars.size();i++){
-			//System.out.println("---- var name: " + intVars.get(i).getName() + " - tpe : " + intVars.get(i).getType().toString());
-			
 			intVars.get(i).accept(this);
 			this.program.addIntVar((VarInt)this.getVar());
 			this.globalIntVars.add((VarInt)this.getVar());
 			this.var =null;
 			this.expr=null;
 		}
-
+        
+        for(int i=0;i<enumVars.size();i++){
+			enumVars.get(i).accept(this);
+			this.program.addEnumVar((VarEnum)this.getVar());
+			this.globalEnumVars.add((VarEnum)this.getVar());
+			this.var =null;
+			this.expr=null;
+		}
+        
 		this.isDeclaration =false;
 	}
 	
@@ -99,7 +142,10 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	public void visit(AuxiliarChannelCollection a){
 		LinkedList<AuxiliarChannel> intChannels = a.getIntChannels();
 		LinkedList<AuxiliarChannel> boolChannels = a.getBoolChannels();
+        LinkedList<AuxiliarChannel> enumChannels = a.getEnumChannels();
+		
 		this.isDeclaration =true;
+		
 		for(int i=0;i<intChannels.size();i++){
 			intChannels.get(i).accept(this);
 			this.program.addIntChannel((IntChannel)this.getChannel());
@@ -111,6 +157,13 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 			this.program.addBoolChannel((BoolChannel)this.getChannel());
 			this.globalChannels.add(this.getChannel());
 		}
+        
+        /*for(int i=0;i<enumChannels.size();i++){ // to be implemeted in future versions
+			enumChannels.get(i).accept(this);
+			this.program.addEnumChannel((EnumChannel)this.getChannel());
+			this.globalChannels.add(this.getChannel());
+		}*/
+        
 		this.type = Type.UNDEFINED;
 		this.channel = null;
 		this.isDeclaration =false;
@@ -121,7 +174,10 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		LinkedList<AuxiliarChannel> channelIds= a.getChannelIds();
 		String processName= a.getName();
 		LinkedList<AuxiliarVar> intVars = a.getVarInt();
-		LinkedList<AuxiliarVar> boolVars = a.getVarBool(); 
+		LinkedList<AuxiliarVar> boolVars = a.getVarBool();
+        LinkedList<AuxiliarVar> enumVars = a.getVarEnum();
+        
+        
 		LinkedList<AuxiliarBranch> branches = a.getBranches();
 		AuxiliarExpression normCondition = a.getNormativeCond(); 
 		AuxiliarExpression initialCond=a.getInitialCond();
@@ -131,20 +187,17 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		int numberBranch = a.getNumBranches();
 		int numberInst = a.getNumInstances();
 		String firstInstanceName = a.getProcessInstanceName(0); //return the name of the first instance
+        LinkedList<AuxiliarParam> declParameters = a.getParamList();
+        LinkedList<AuxiliarExpression> invkParameters = a.getInvkParametersList(firstInstanceName); //return the list of invocation parameters of this intance.
+        
+        
   		
-		System.out.println("\n/////////////////////////////////////////////  PROCESS : " +processName + " instance : "+ firstInstanceName);
-		System.out.println("                               - number Variables : " +numberVar );
-		System.out.println("                               - number Channels : " +numberChan );
-		System.out.println("                               - number Branch : " +numberBranch );
-		System.out.println("                               - number instances : " +numberInst );
-		
 		if(numberChan>0){ // process use some channel
-		    this.process = new faulty.Process(processName,firstInstanceName,numberVar,numberChan,numberBranch,numberInst,this.model,false);
+		    this.process = new faulty.Process(program, processName,firstInstanceName,numberVar,numberChan,numberBranch,numberInst,this.model,false);
 		}
 		else{
-			 this.process = new faulty.Process(processName,firstInstanceName,numberVar,numberChan,numberBranch,numberInst,this.model,true);
+			 this.process = new faulty.Process(program, processName,firstInstanceName,numberVar,numberChan,numberBranch,numberInst,this.model,true);
 		}
-		//public Process(String name, String instName, int numberVar, int numberChan, int numberBranch, int numberInst, BDDModel model, boolean blocking){
 		     
 		this.isDeclaration=false;
 		// Add channels to the process
@@ -166,16 +219,26 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		// Add Bool Vars to the process
 		for(int i=0;i<boolVars.size();i++){
 			boolVars.get(i).accept(this);
-			System.out.println("              --> Local var: " + boolVars.get(i).getName() );
+			//System.out.println("              --> Local var: " + boolVars.get(i).getName() );
 		    this.process.addVarBool((VarBool)this.getVar());
+			this.var =null;
+			this.expr=null;
+		}
+        
+        
+        // Add Enum Vars to the process
+		for(int i=0;i<enumVars.size();i++){
+			enumVars.get(i).accept(this);
+			this.process.addVarEnum((VarEnum)this.getVar());
 			this.var =null;
 			this.expr=null;
 		}
 		
 		
+		
 		//Add the globals Bool vars to the process
 		for(int i=0;i<this.globalBoolVars.size();i++){
-			System.out.println("              --> GLOBAL var: " + globalBoolVars.get(i).getName());
+			//System.out.println("              --> GLOBAL var: " + globalBoolVars.get(i).getName());
 		    this.process.addGlobalVarBool((VarBool)this.globalBoolVars.get(i));
 		}
 		
@@ -183,7 +246,31 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	    for(int i=0;i<this.globalIntVars.size();i++){
 		    this.process.addGlobalVarInt((VarInt)this.globalIntVars.get(i));
 		}
-  
+        
+        //Add the globals Enum vars to the process
+	    for(int i=0;i<this.globalEnumVars.size();i++){
+		    this.process.addGlobalVarEnum((VarEnum)this.globalEnumVars.get(i));
+		}
+        
+        
+        
+        if(declParameters.size()>0){ //process use parameters
+            //Add the boolean parameters of the process
+            LinkedList<ParamBool>  boolParamList = createBoolParamList(declParameters,invkParameters);
+            this.process.setBoolParams(boolParamList);
+            
+            //Add the int parameters of the process
+            LinkedList<ParamInt>  intParamList = createIntParamList(declParameters,invkParameters);
+            this.process.setIntParams(intParamList);
+            
+            
+            //Add the int parameters of the process
+            LinkedList<ParamEnum>  enumParamList = createEnumParamList(declParameters,invkParameters);
+            this.process.setEnumParams(enumParamList);
+
+        }
+        
+        
 		// Add Branches to the process
 		this.isDeclaration=false;
 		for(int i=0;i<branches.size();i++){
@@ -202,16 +289,27 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		
 		this.program.addProcess(this.process); //add the first intance of the process;
 		
-		
+        
 		// add all the instances declarated in the model.
-    	faulty.Process dupProcess;
+    	faulty.Process dupProcess=null;
 		for (int i = 1; i< numberInst; i++){
-			dupProcess = this.process.duplicate(a.getProcessInstanceName(i));
-			this.program.addProcess(dupProcess); 
+			if(declParameters.size()>0){ //process use parameters
+                //Add the boolean parameters of the process
+                LinkedList<ParamBool>  boolParamList = createBoolParamList(declParameters,a.getInvkParametersList(a.getProcessInstanceName(i)));
+                //Add the int parameters of the process
+                LinkedList<ParamInt>  intParamList = createIntParamList(declParameters,a.getInvkParametersList(a.getProcessInstanceName(i)));
+                
+                dupProcess = this.process.duplicate(a.getProcessInstanceName(i),boolParamList, intParamList);
+                
+               
+            }
+            
+            this.program.addProcess(dupProcess);
+            
+            
 		}
-		
+        
 		this.process=null;
-		System.out.println("////////////////////////////////////////////////// END PROCESS ///////////////// ");
 	}
 	
 	public void visit(AuxiliarChannel a){
@@ -220,7 +318,7 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	    Type chT = a.getType();
 	    if (this.isDeclaration) { //needs to add this channel to the program
             if( chT.isINT() ){
-		        chan = new IntChannel(a.getName(),a.getSize(),this.model);
+            	chan = new IntChannel(a.getName(),a.getSize(),this.model);
 		        this.type= Type.INT;
 		    }
 		    else{
@@ -229,15 +327,17 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		    }
 	    }
 	    else{//channel is used in an expression 
+	    	 chT = searchTypeChannel(a.getName()); 
 	    	 chan = searchChannel(a.getName(), this.process);
 	    	 if( chT.isINT() ){
 	    		 this.type= Type.INT;
-			 }
+	    	 }
 			 else{
 			     this.type = Type.BOOL;
 			 }
 	    }
 	    this.channel = chan;
+	   
 	}
 	
 	public void visit(AuxiliarBranch a){
@@ -248,7 +348,7 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		 
 		 guard.accept(this);
 		 BoolExp guardBr = (BoolExp)this.getExpr(); // the guard of the branch
-		 Code codeBr; // the code of the branch
+		 //Code codeBr; // the code of the branch
          LinkedList<Code> listAssignations = new LinkedList<Code>();
 		 for(int i=0; i < assignList.size();i++ ){
 			 assignList.get(i).accept(this);
@@ -266,11 +366,11 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	public void visit(AuxiliarChanAssign a){
 		AuxiliarExpression auxExpr= a.exp;
 		AuxiliarChannel auxChan = a.chanName;
-		Type channelT = this.getType(); 
 		
 		this.isDeclaration=false;
 		auxChan.accept(this);
 		Channel ch = this.getChannel();
+        Type channelT = this.getType(); 
 		this.channel =null;
 		
 		auxExpr.accept(this);
@@ -302,11 +402,13 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 
 	public void visit(AuxiliarVar a){
 		
-		String name =a.getName();
+        
+        String name =a.getName();
 		Type varT = a.getType();
 		Var variable=null;
 		String instName;
-
+        ConsEnum consEnumVar=null;
+        
 		// obtain the instance name to create or search the variable.
 		if(this.process!=null){ //means that is a local vble
 		    instName = this.process.getInstName();
@@ -314,30 +416,70 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		else{
 			instName =new String("global");
 		}
-		
+        
 		if(this.isDeclaration){ //global or local declaration
-			
+            //System.out.println("VAR Declaration ---------------------------------------  ");
+            
 			if(varT.isINT()){
-				variable = new VarInt(name,instName, this.getModel() );
+                //System.out.println("VAR INT --- name= "+name+" - instName= "+instName);
+                variable = new VarInt(name,instName, this.getModel() );
 			}
 			if(varT.isBOOLEAN()){
-			    variable = new VarBool(name, instName, this.getModel() );			
+                //System.out.println("VAR BOOLEAN --- name= "+name+" - instName= "+instName);
+                variable = new VarBool(name, instName, this.getModel() );			
 		    }
-			this.var = variable;
-		}else{ //Variable used in an Expression 
+            
+            if(varT.isEnumerated()){
+                //System.out.println("VAR ENUMERATED --- name= "+name+" - instName= "+instName+" - EnumName= "+ a.getEnumName());
+			    variable = new VarEnum(name, instName, this.getModel(), this.getProgram(), a.getEnumName() );
+		    }
 			
-			//search as local or global variable 
+			this.var = variable;
+            //System.out.println(" --------------------------------------------------------------  ");
+            
+		}else{ //Variable used in an Expression
+           // System.out.println("VAR use ---------------------------------------  ");
+           // System.out.println("VAR name=" + name + " - type: " + varT.toString() + " enumName: " + a.getEnumName());
+            
+            
+            //search as local or global variable 
 			variable = this.searchVar(name, varT ,this.process);
-			
-			this.var = variable;
+            
+            if (variable!=null){
+                this.var = variable;
+            }
+            else{//enumerated constant
+                //System.out.println("enumerated constant" + name + " - type: " + varT.toString() + " enumName: " + a.getEnumName());
+                
+                //variable = new VarEnum(this.getModel(), this.getProgram(), a.getEnumName());
+                //((VarEnum)variable).addEnumValue(a.getEnumType().getConsId(name));
+                
+                consEnumVar = new ConsEnum(name, a.getEnumName(), this.getProgram());
+
+            }
+            
+            
 			//copy the variable to be used in an expression.
 			if(varT.isINT()){
-				this.expr= (IntExp)variable;
-
-			}
+                this.expr= (IntExp)variable;
+            }
 			if(varT.isBOOLEAN()){
-				this.expr= (BoolExp)variable;
-		    }
+            	this.expr= (BoolExp)variable;
+            }
+            if(varT.isEnumerated()){
+                
+                if (variable ==null){ // Enumerated constanst
+            	this.expr= (EnumExp)consEnumVar;
+                    //System.out.println(" ENUMERATED constant --- = ");
+                }else{
+                    this.expr = (EnumExp)variable;
+                    //System.out.println(" ENUMERATED var --- = ");
+                    
+                }
+                
+            }
+            //System.out.println(" --------------------------------------------------------------  ");
+            
 
 		}
 		
@@ -422,18 +564,39 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	}
 	public void visit(AuxiliarEqBoolExp a){
 		boolean createBiimp = a.getCreateBiimp();
+        boolean isEnumerated = a.isEnumerated();
 		
-		if(!createBiimp){ // both operands are of type INT
-		    a.int1.accept(this);
-		    IntExp op1 = (IntExp)this.getExpr();
-		    Type op1T =this.getType();
+		if(!createBiimp){ // both operands are of type INT or enumerated
+		    
+            if(!isEnumerated){
+                 a.int1.accept(this);
+            
+		         IntExp op1 = (IntExp)this.getExpr();
+		         Type op1T =this.getType();
 		
-		    a.int2.accept(this);
-		    IntExp op2 = (IntExp)this.getExpr();
-		    Type op2T =this.getType();
-		
-		    this.expr =  new LessBoolExp(op1,op2);
-            this.type = Type.BOOL;
+		         a.int2.accept(this);
+		         IntExp op2 = (IntExp)this.getExpr();
+		         Type op2T =this.getType();
+    
+                 this.expr =  new EqBoolExp(op1,op2);
+                 this.type = Type.BOOL;
+            }
+            else{ //both operands are enumerated
+                a.int1.accept(this);
+                
+                EnumExp op1 = (EnumExp)this.getExpr();
+                Type op1T =this.getType();
+                
+                a.int2.accept(this);
+                EnumExp op2 = (EnumExp)this.getExpr();
+                Type op2T =this.getType();
+                
+                
+                
+                EnumType typeEq = this.getProgram().getEnum(a.getEnumType());
+                this.expr =  new EqEnumExp(op1,op2,typeEq);
+                this.type = Type.BOOL;
+            }
 		}
 		else{ // both operands are of type BOOL , so needs to create an equivalence.
 			
@@ -486,7 +649,7 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		IntExp op2 = (IntExp)this.getExpr();
 		Type op2T =this.getType();
 		
-		this.expr =  new NegIntExp(op1,op2,this.getModel());
+		this.expr =  new DivIntExp(op1,op2,this.getModel());
         this.type = Type.INT;
 
 		
@@ -500,7 +663,7 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 		IntExp op2 = (IntExp)this.getExpr();
 		Type op2T =this.getType();
 		
-		this.expr =  new NegIntExp(op1,op2,this.getModel());
+		this.expr =  new MultIntExp(op1,op2,this.getModel());
         this.type = Type.INT;
 
 	
@@ -544,6 +707,17 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
 	public void visit(AuxiliarProcessDecl a){
 		
 	}
+    
+    
+    public void visit(AuxiliarParam a){
+		
+	}
+    
+    
+    public void visit(AuxiliarInvkProcess a){
+		
+	}
+    
 	
 	/**
 	 * Return the type involved in the object.
@@ -554,9 +728,13 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
     	AuxiliarMain main = a.mainProgram; //needs to know the total variables involved in the program
     	int numberIntVars=0;
     	int numberBoolVars=0;
+        //int numberEnumVars=0;
     	int numberBoolChannels= a.channels.getNumBoolChannels(); 
     	int numberIntChannels=  a.channels.getNumIntChannels();
-    	int maxLengthChannels = a.channels.getMaxLengthChannels();
+    	int numberEnumChannels=  a.channels.getNumEnumChannels();
+        int maxLengthChannels = a.channels.getMaxLengthChannels();
+        int maxEnumSize = a.getMaxEnumSize();
+        
     	AuxiliarGlobalVarCollection gVars = a.globalVars;
     	
     	AuxiliarProcessCollection processCollection  =a.process;
@@ -564,27 +742,31 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
     	//obtain el total number of global variables of the program
     	numberBoolVars = gVars.getTotalGlobalBoolVars();
     	numberIntVars = gVars.getTotalGlobalIntVars();
-    	
-    	LinkedList<String> listProcessIntances = main.getProcessInvk();
+    	//numberEnumVars = gVars.getTotalGlobalEnumVars();
+        
+        LinkedList<AuxiliarEnumType> auxEnumList = a.getAuxiliarEnumList();
+        LinkedList<EnumType>  temporalEnumList = new LinkedList<EnumType>(); //Temporal List used to calculates the correct size of the new program
+        EnumType eType;
+        AuxiliarEnumType auxET;
+        for(int i = 0; i<auxEnumList.size();i++){
+            auxET = auxEnumList.get(i);
+            eType = new EnumType(auxET.getName(), auxET.getSize(), auxET.getNumVars());
+            temporalEnumList.add(eType);
+        
+        }
+        
+    	LinkedList<AuxiliarInvkProcess> listProcessIntances = main.getProcessInvk();
     	AuxiliarProcess proc;
     	for(int i=0; i < listProcessIntances.size();i++ ){
-    		proc= processCollection.getProcess(main.getProcessType(listProcessIntances.get(i))); //search the declarated process object 
+    		proc= processCollection.getProcess(main.getProcessType(listProcessIntances.get(i).getInstanceName())); //search the declarated process object
     		if(proc!=null){
     			numberIntVars += proc.getNumVarInt();
     			numberBoolVars += proc.getNumVarBool();
+    			//numberEnumVars += proc.getNumVarEnumerated();
     		}
     	}
-    	numberBoolVars=numberBoolVars;
     	
-    	System.out.println("Program Information: ");
-        System.out.println("                    -- numberIntVars: " + numberIntVars);
-        System.out.println("                    -- numberBoolVars: " + numberBoolVars );
-        System.out.println("                    -- numberBoolChannels: " + numberBoolChannels );
-        System.out.println("                    -- numberIntChannels: " + numberIntChannels );
-        System.out.println("                    -- maxLengthChannels: " + maxLengthChannels );
-    	
-    	this.program = new Program (4,numberIntVars,numberBoolVars,numberBoolChannels,numberIntChannels, maxLengthChannels, this.model, true);
-    		
+    	this.program = new Program (4,numberIntVars,numberBoolVars, temporalEnumList, numberBoolChannels, numberIntChannels, maxLengthChannels, this.model, true);  	
     }
     
     /**
@@ -634,6 +816,12 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
     	return this.type;
     }
     
+    private EnumType getEnumType(){
+    	return this.currentEnumType;
+    }
+    
+    
+    
     private Expression getExpr(){
     	return this.expr;
     }
@@ -660,6 +848,25 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
     }
     
     /**
+     * @param name Name of the channel  
+     * @return Return the type of channel defined in the process, Type.UNDEFINED otherwise.
+     */
+    private Type searchTypeChannel(String name){
+    	 TableLevel globalDecls = table.getLevelSymbols(0); 
+    	 AuxiliarChannel chan =null;
+    	 
+    	 if(globalDecls.existChannel(name)){
+    		 chan = globalDecls.getChannel(name);
+    	 }
+    	
+    	 if(chan!=null){
+    		 return  chan.getType();
+    	 }else{
+    		 return Type.UNDEFINED;
+    	 }	 
+    }
+    
+    /**
      * 
      * @param name Name of the channel  
      * @return Return the channel defined in the program, null otherwise.
@@ -679,26 +886,31 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
     	return ch;
     }
 
+
+
+    
+    
     /**
      * Precondition: var !=null
      * @param name Name of the var  
      * @param proc Process where will be searh the variable definition.
-     * @return Return the channel defined in the process, null otherwise.
+     * @return Return the variable defined in the process, null otherwise.
      */
     private Var searchVar(String name, Type t, faulty.Process proc){
     	
-    	
-		//System.out.println("   ...... Searching Var: " + name + " - Type: " + t.toString() + " in process: " + proc.getName() + " instance: " + proc.getInstName());
-        
-		Var variable =null;
+       Var variable =null;
 		
-    	if (t.isBOOLEAN()){
+       if (t.isBOOLEAN()){
     		LinkedList<VarBool> globalVarBoolList = proc.getGlobalBoolVars();
     		LinkedList<VarBool> varBoolList = proc.getBoolVars();
     		variable =searchVarBoolName(name,varBoolList);
-    		if(variable ==null){
+    		if(variable ==null){//global variable
     			variable = searchVarBoolName(name,globalVarBoolList);
-    		}
+                if(variable ==null){//parameter
+                    LinkedList<ParamBool> declParameters = proc.getBoolPars();
+                    variable = searchParBoolName(name, declParameters);
+                }
+            }
     	}
     	
         if (t.isINT()){
@@ -706,10 +918,31 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
         	LinkedList<VarInt> varIntList = proc.getIntVars();
         	
         	variable =searchVarIntName(name,varIntList);
-    		if(variable ==null){
+    		if(variable ==null){//global variable
     			variable = searchVarIntName(name,globalVarIntList);
-    		}
+                if(variable ==null){//parameter
+                    LinkedList<ParamInt> declParameters = proc.getIntPars();
+                    variable = searchParIntName(name, declParameters);
+                }
+            }
+        
     	}
+        
+        if (t.isEnumerated()){
+        	LinkedList<VarEnum> globalVarEnumList = proc.getGlobalEnumVars();
+        	LinkedList<VarEnum> varEnumList = proc.getEnumVars();
+        	
+            variable =searchVarEnumName(name,varEnumList);
+    		if(variable ==null){//global variable
+    			variable = searchVarEnumName(name,globalVarEnumList);
+                if(variable ==null){//parameter
+                    LinkedList<ParamEnum> declParameters = proc.getEnumPars();
+                    variable = searchParEnumName(name, declParameters);
+                }
+            }
+            
+    	}
+        
         return variable;
     }
     
@@ -744,6 +977,181 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
     	return variable;
     	
     }
+    
+    private Var searchVarEnumName(String name, LinkedList<VarEnum> list){
+    	Var variable =null;
+    	int i = 0;
+    	boolean found =false;
+    	while( i < list.size() && !found){
+    		if(list.get(i).getName().equals(name)){
+    			found =true;
+    			variable = list.get(i);
+    		}
+    	    i++;
+    	}
+    	return variable;
+    	
+    }
+    
+    
+    
+    /**
+     * @param name: Name of the parameter
+     * @param declPar: List of parameters used in the declaration
+     * @return Returns the parameter with the name received, if it exist, null otherwise.
+     */
+    
+    private Var searchParIntName(String name, LinkedList<ParamInt> declPar){
+    	Var ref =null;
+    	int i = 0;
+    	boolean found =false;
+        ParamInt  par = null;
+    	while( i < declPar.size() && !found){
+            par = declPar.get(i);
+    		if(par.getName().equals(name)){
+    			found =true;
+    			//ref = par.getReference(); //return the reference
+                ref = par; //return the reference
+                
+    		}
+    	    i++;
+    	}
+        return ref;
+    	
+    }
+    
+    
+    /**
+     * @param name: Name of the parameter
+     * @param declPar: List of parameters used in the declaration
+     * @return Returns the parameter with the name received, if it exist, null otherwise.
+     */
+    private Var searchParBoolName(String name, LinkedList<ParamBool> declPar){
+        Var ref =null;
+    	int i = 0;
+    	boolean found =false;
+        ParamBool  par = null;
+    	while( i < declPar.size() && !found){
+            par = declPar.get(i);
+    		if(par.getName().equals(name)){
+    			found =true;
+    			//ref = par.getReference(); //return the reference
+                ref = par; //return the reference
+                
+    		}
+    	    i++;
+    	}
+        
+       return ref;
+    	
+    }
+    
+    /**
+     * @param name: Name of the parameter
+     * @param declPar: List of parameters used in the declaration
+     * @return Returns the parameter with the name received, if it exist, null otherwise.
+     */
+    private Var searchParEnumName(String name, LinkedList<ParamEnum> declPar){
+        Var ref =null;
+    	int i = 0;
+    	boolean found =false;
+        ParamEnum  par = null;
+    	while( i < declPar.size() && !found){
+            par = declPar.get(i);
+    		if(par.getName().equals(name)){
+    			found =true;
+    			//ref = par.getReference(); //return the reference
+                ref = par; //return the reference
+                
+    		}
+    	    i++;
+    	}
+        
+        return ref;
+    	
+    }
+    
+    
+    
+    
+    /**
+     * Precondition: dParam.size = iParam.size
+     * @param dParam List of parameters used in the declaration
+     * @param iParam List of parameters used in the invocation
+     * @return Returns the list of boolean parameters used in this process instance. 
+     */
+    private LinkedList<ParamBool>  createBoolParamList(LinkedList<AuxiliarParam> dParam , LinkedList<AuxiliarExpression> iParam){
+        
+        LinkedList<ParamBool> pBool = new LinkedList<ParamBool>();
+        
+		for(int i=0;i<dParam.size();i++){
+			AuxiliarParam declPar = dParam.get(i);
+			AuxiliarVar invkPar= (AuxiliarVar)iParam.get(i);
+            
+            if(declPar.getType().isBOOLEAN()){
+                VarBool ref = (VarBool)this.searchVarBoolName(invkPar.getName(),this.globalBoolVars); //return the reference to the global var with that name.
+                pBool.add(new ParamBool(declPar.getDeclarationName(), ref));
+            }
+        }
+        
+        
+        return pBool;
+        
+    
+    }
+    
+    
+    /**
+     * Precondition: dParam.size = iParam.size
+     * @param dParam List of parameters used in process declaration
+     * @param iParam List of parameters used in process invocation
+     * @return Return the list of integer parameters used in this process instance.
+     */
+    private LinkedList<ParamInt>  createIntParamList(LinkedList<AuxiliarParam> dParam , LinkedList<AuxiliarExpression> iParam){
+       
+        
+        LinkedList<ParamInt> pInt = new LinkedList<ParamInt>();
+        
+		for(int i=0;i<dParam.size();i++){
+			AuxiliarParam declPar = dParam.get(i);
+            AuxiliarVar invkPar= (AuxiliarVar)iParam.get(i);
+            
+            if(declPar.getType().isINT()){
+                VarInt ref = (VarInt)this.searchVarIntName(invkPar.getName(),this.globalIntVars); //return the reference to the global var with that name.
+                pInt.add(new ParamInt(declPar.getDeclarationName(), ref));
+            }
+        }
+        return pInt;
+        
+        
+    }
 
+    
+    /**
+     * Precondition: dParam.size = iParam.size
+     * @param dParam List of parameters used in process declaration
+     * @param iParam List of parameters used in process invocation
+     * @return Return the list of enumerates parameters used in this process instance.
+     */
+    private LinkedList<ParamEnum>  createEnumParamList(LinkedList<AuxiliarParam> dParam , LinkedList<AuxiliarExpression> iParam){
+        
+        
+        LinkedList<ParamEnum> pEnum = new LinkedList<ParamEnum>();
+        
+		for(int i=0;i<dParam.size();i++){
+			AuxiliarParam declPar = dParam.get(i);
+            AuxiliarVar invkPar= (AuxiliarVar)iParam.get(i);
+            
+            if(declPar.getType().isEnumerated()){
+                VarEnum ref = (VarEnum)this.searchVarEnumName(invkPar.getName(),this.globalEnumVars); //return the reference to the global var with that name.
+                pEnum.add(new ParamEnum(declPar.getDeclarationName(), ref));
+            }
+        }
+        return pEnum;
+        
+        
+    }
+
+    
     
 }

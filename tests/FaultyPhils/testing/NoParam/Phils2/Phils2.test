@@ -1,0 +1,42 @@
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+
+Process Phil1{
+   
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork0 && fork1 && !crash;
+   Normative: !crash; 
+
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork0 && !hasL && !crash  -> fork0 = false, hasL = true;
+   hungry && hasL && fork1 && !crash -> fork1 = false, hasR = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork0 = fork0, fork1 = fork1, eating = false, thinking = true;
+   true -> crash=true;   
+   //crash -> crash =true;      
+}
+
+Process Phil2{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork0 && fork1 && !crash;
+   Normative: !crash; 
+   
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork1 && !hasR  && !crash -> fork1 = false, hasR = true;
+   hungry && hasR && fork0 && !crash-> fork0 = false, hasL = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork0 = fork0, fork1 = fork1, eating = false, thinking = true;
+   true -> crash=true;
+   //crash -> crash=true;
+}
+
+
+Main(){
+ phil1:Phil1;
+ phil2:Phil2;
+
+ run phil1();
+ run phil2();
+}

@@ -57,6 +57,7 @@ terminal CHANNEL;
 terminal PUT;
 terminal GET;
 terminal GLOBAL;
+terminal ENUM;
   
 
 terminal Integer INTEGER;
@@ -76,18 +77,26 @@ non terminal LinkedList<AuxiliarVar> declList;
 non terminal LinkedList<AuxiliarVar> decl;
 non terminal LinkedList<String> varDecls;
 non terminal AuxiliarProcess process, bodyProcess;
+non terminal LinkedList<AuxiliarParam> paramList;
+non terminal AuxiliarParam param;
 non terminal AuxiliarProcessCollection processList;
 non terminal AuxiliarChannelCollection channelList;
 non terminal LinkedList<AuxiliarVar> globalDecl;
 non terminal AuxiliarGlobalVarCollection globalVarList;
 non terminal AuxiliarChannel chanDecl;
 non terminal AuxiliarProgram specification;
-non terminal LinkedList<String> processInvk;
-non terminal String invk;
+non terminal LinkedList<AuxiliarInvkProcess> processInvk;
+non terminal AuxiliarInvkProcess invk;
 non terminal LinkedList<AuxiliarProcessDecl> proc, processDecl;
 non terminal AuxiliarMain program, body;
 non terminal Type type;
 non terminal AuxiliarProgram mainSpecification;
+non terminal LinkedList<AuxiliarExpression> invkParamList;
+non terminal AuxiliarExpression invkParam;
+non terminal LinkedList<String> constantDecls;
+non terminal AuxiliarEnumType enumDecl;
+non terminal LinkedList<AuxiliarEnumType> enumList;
+
 
 precedence left GT,LT,DOUBLE_EQUAL,AND,OR;
 precedence left PLUS, MINUS;
@@ -102,22 +111,82 @@ mainSpecification ::= specification:prog {: RESULT = prog;
                                          :}
                     ;
 
-specification ::=  globalVarList:vList SEMICOLON channelList:cList SEMICOLON processList:pList program:main  {: AuxiliarProgram prog = new AuxiliarProgram(vList,cList,pList, main);
-                                                                                                                RESULT = prog;
-                                                                                                             :}
-                  | globalVarList:vList SEMICOLON  processList:pList program:main  {: AuxiliarProgram prog = new AuxiliarProgram(vList,pList, main);
-                                                                                      RESULT = prog;
-                                                                                   :}
-                  | channelList:cList SEMICOLON processList:pList program:main  {: AuxiliarProgram prog = new AuxiliarProgram(cList,pList, main);
+specification ::=  enumList:eList SEMICOLON globalVarList:vList SEMICOLON channelList:cList SEMICOLON processList:pList program:main  
+                                                                                                {: // EnumTypes + GlobalVars + Channels
+                                                                                                   AuxiliarProgram prog = new AuxiliarProgram(eList,vList,cList,pList, main);
+                                                                                                   RESULT = prog;
+                                                                                                :}
+                  | globalVarList:vList SEMICOLON channelList:cList SEMICOLON processList:pList program:main  
+                                                                                                {: // GlobalVars + Channels
+                                                                                                   AuxiliarProgram prog = new AuxiliarProgram(vList,cList,pList, main);
+                                                                                                   RESULT = prog;
+                                                                                                :}
+                  | enumList:eList SEMICOLON globalVarList:vList SEMICOLON  processList:pList program:main  
+                                                                                                {: // EnumTypes + GlobalVars
+                                                                                                   AuxiliarProgram prog = new AuxiliarProgram(eList,vList,pList, main);
+                                                                                                   RESULT = prog;
+                                                                                                :}
+                  
+                  | globalVarList:vList SEMICOLON  processList:pList program:main  
+                                                                                 {: // GlobalVars
+                                                                                    AuxiliarProgram prog = new AuxiliarProgram(vList,pList, main);
+                                                                                    RESULT = prog;
+                                                                                 :}
+
+                  | enumList:eList SEMICOLON channelList:cList SEMICOLON processList:pList program:main  
+                                                                                {: // EnumTypes + Channels
+                                                                                   AuxiliarProgram prog = new AuxiliarProgram(eList, cList,pList, main);
                                                                                    RESULT = prog;
                                                                                 :}
-                                                                                
-                  |  processList:pList program:main  {:  AuxiliarProgram prog = new AuxiliarProgram(pList, main);
+                  
+                  | channelList:cList SEMICOLON processList:pList program:main  {: // Channels
+                                                                                   AuxiliarProgram prog = new AuxiliarProgram(cList,pList, main);
+                                                                                   RESULT = prog;
+                                                                                :}
+                  
+                  |  enumList:eList SEMICOLON processList:pList program:main  
+                                                                    {:  // EnumTypes
+                                                                        AuxiliarProgram prog = new AuxiliarProgram(eList, pList, main);
+                                                                        RESULT = prog;
+                                                                    :}
+                                                                
+                  |  processList:pList program:main  {:  // not EnumTypes & not GlobalVars & not Channels
+                                                         AuxiliarProgram prog = new AuxiliarProgram(pList, main);
                                                          RESULT = prog;
                                                      :}
                ;
+
+enumList::=   enumDecl:enumT  {: LinkedList<AuxiliarEnumType> listE = new LinkedList<AuxiliarEnumType>();
+                                 listE.add(enumT);
+                                 RESULT = listE;  
+                              :}
+              | enumList:listE SEMICOLON  enumDecl:enumT  {: listE.add(enumT);
+                                                            RESULT = listE;
+                                                         :}
+              ;
+
+
  
- globalVarList ::=  globalDecl:listD {:  
+enumDecl ::= ENUM ID:name EQUAL LBRACE constantDecls:constList RBRACE {: AuxiliarEnumType  enumT = new AuxiliarEnumType(name, constList.size() );
+                                                                         for (int i = 0; i < constList.size(); i++){
+                                                                              enumT.addCons(constList.get(i),i);
+                                                                         }
+                                                                         RESULT = enumT;
+                                                                      :}
+          ;
+
+
+constantDecls ::=  ID:i  {:  LinkedList<String> list = new LinkedList<String>();
+                             list.add(i);
+                             RESULT = list; 
+                         :}      
+            | constantDecls:list COMMA ID:i {: list.add(i);
+                                               RESULT = list;
+                                            :}
+
+                ;
+
+globalVarList ::=  globalDecl:listD {:  
                                          AuxiliarGlobalVarCollection list = new AuxiliarGlobalVarCollection();
                                          AuxiliarVar var;
                                          for (int i = 0; i < listD.size(); i++){
@@ -126,7 +195,12 @@ specification ::=  globalVarList:vList SEMICOLON channelList:cList SEMICOLON pro
                                                 list.addGlobalIntVar(var);
                                             }
                                             else{
-                                                list.addGlobalBoolVar(var);
+                                                if(var.getType().isBOOLEAN()){
+                                                    list.addGlobalBoolVar(var);
+                                                }
+                                                else{
+                                                    list.addGlobalEnumVar(var);
+                                                }
                                             }
                                          }
                                          RESULT = list; 
@@ -138,7 +212,12 @@ specification ::=  globalVarList:vList SEMICOLON channelList:cList SEMICOLON pro
                                                                            list.addGlobalIntVar(var);
                                                                        }
                                                                        else{
-                                                                           list.addGlobalBoolVar(var);
+                                                                           if(var.getType().isBOOLEAN()){
+                                                                               list.addGlobalBoolVar(var);
+                                                                           }
+                                                                           else{
+                                                                               list.addGlobalEnumVar(var);
+                                                                           }
                                                                        }
                                                                     }
                                                                     RESULT = list;
@@ -157,13 +236,22 @@ globalDecl ::= GLOBAL varDecls:listNames COLON type:t {:  LinkedList<AuxiliarVar
                                                              }
                                                           }
                                                           else{
-                                                 
-                                                              for (int i = 0; i < listNames.size(); i++){
-                                                                  v = new AuxiliarVar(listNames.get(i), Type.BOOL);
-                                                                  list.add(v);
+                                                              if ( t.isBOOLEAN() ){
+                                                                  for (int i = 0; i < listNames.size(); i++){
+                                                                     v = new AuxiliarVar(listNames.get(i), Type.BOOL);
+                                                                     list.add(v);
+                                                                  }
+                                                              }
+                                                              else{
+                                                                  for (int i = 0; i < listNames.size(); i++){
+                                                                     v = new AuxiliarVar(listNames.get(i), t);
+                                                                     list.add(v);
+                                                                  }
+
                                                               }
                                                           }
-        	                                              RESULT = list;
+
+        	                                           RESULT = list;
                                                       :}
        ;
 
@@ -174,8 +262,12 @@ channelList ::= chanDecl:c {:     AuxiliarChannelCollection list = new AuxiliarC
                                       list.addBoolChannel(c);
                                   }
                                   else{
-                                        list.addIntChannel(c);
-                                      
+                                       if(c.getType().isINT()){
+                                           list.addIntChannel(c);
+                                       }
+                                       else{
+                                           list.addEnumChannel(c);
+                                       }
                                   }
                                  
                                   RESULT = list; 
@@ -185,19 +277,28 @@ channelList ::= chanDecl:c {:     AuxiliarChannelCollection list = new AuxiliarC
                                                              list.addBoolChannel(c);
                                                           }
                                                           else{
-                                                              list.addIntChannel(c);
+                                                              if(c.getType().isINT()){
+                                                                  list.addIntChannel(c);
+                                                              }else{
+                                                                  list.addEnumChannel(c);
+                                                              }
                                                           }
                                                           RESULT = list; 
                                                        :}
               ;
               
 chanDecl ::= CHANNEL ID:name LBRACKET INTEGER:size RBRACKET OF type:t  {:  
-                                                                           if (t.equals("INT")){
+                                                                           if (t.isINT()){
                                                                                RESULT = new AuxiliarChannel( name, size , Type.INT);
                                                                            }
                                                                            else{
-                                                                               RESULT = new AuxiliarChannel( name, size, Type.BOOL);
+                                                                               if (t.isBOOLEAN()){
+                                                                                   RESULT = new AuxiliarChannel( name, size, Type.BOOL);
+                                                                               }
+                                                                               else{
+                                                                                   RESULT = new AuxiliarChannel( name, size, t);
                                                                                
+                                                                               }
                                                                            }
                                                                         :}
             ;
@@ -207,19 +308,69 @@ processList  ::= process:p  {:
                                   list.addProcess(p);
                                   RESULT = list; 
                             :}
+
               | processList:list process:p  {: list.addProcess(p);
                                                RESULT = list; 
                                             :}
               ;
 
 process ::= PROCESS ID:name USES varDecls:listC bodyProcess:proc {: proc.setName(name);
-                                                                    proc.setChannelIds(listC);
-                                                                    RESULT = proc;  
-                                                                  :}
+                                                                                     proc.setChannelIds(listC);
+                                                                                     RESULT = proc;  
+                                                                                  :}
+           | PROCESS ID:name LPARENT paramList:listP RPARENT USES varDecls:listC bodyProcess:proc {: proc.setName(name);
+                                                                                                     proc.setChannelIds(listC);
+                                                                                                     proc.setParamList(listP);
+                                                                                                     RESULT = proc;
+                                                                                                  :}
+
+           | PROCESS ID:name LPARENT paramList:listP RPARENT  bodyProcess:proc                  {: proc.setName(name);
+                                                                                                     proc.setParamList(listP);
+                                                                                                     RESULT = proc;
+                                                                                                  :}
+
+
+
            | PROCESS ID:name bodyProcess:proc {: proc.setName(name);
-                                                 RESULT = proc;
-                                              :}
+                                                                 RESULT = proc;
+                                                              :}
            ;
+
+paramList ::= param:p {:
+                             LinkedList<AuxiliarParam> list = new LinkedList<AuxiliarParam>();
+                             list.add(p);
+                             RESULT = list; 
+                      :}  
+            | paramList:list COMMA param:p  {:  
+                                                list.add(p);
+                                                RESULT = list;
+                                            :}
+            
+            ;
+    
+                
+param ::= ID:name COLON type:t {:  AuxiliarParam p;
+                                             
+                                   if ( t.isINT() ){
+                                      p = new AuxiliarParam(name, Type.INT);
+                                                  
+                                   }
+                                   else{
+                                      if ( t.isBOOLEAN() ){
+                                          p = new AuxiliarParam(name, Type.BOOL);
+                                      }
+                                      else{
+                                         p = new AuxiliarParam(name, t);
+                                      }
+                                   }
+                                                    
+                                   RESULT = p;
+                               :}
+       ;
+
+
+
+
 
 bodyProcess::= LBRACE declList:listD  SEMICOLON initialCond:init SEMICOLON normCond:norm SEMICOLON  branchList:listB SEMICOLON RBRACE {: AuxiliarProcess proc = new AuxiliarProcess(init,norm,listD,listB);
                                                                                                                                          RESULT = proc;
@@ -266,11 +417,20 @@ decl ::= varDecls:listNames COLON type:t {:  LinkedList<AuxiliarVar> list = new 
                                                   }
                                               }
                                               else{
+                                                 if ( t.isBOOLEAN() ){
                                                  
-                                                 for (int i = 0; i < listNames.size(); i++){
-                                                     v = new AuxiliarVar(listNames.get(i), Type.BOOL);
-                                                    list.add(v);
-                                                 }
+                                                    for (int i = 0; i < listNames.size(); i++){
+                                                        v = new AuxiliarVar(listNames.get(i), Type.BOOL);
+                                                        list.add(v);
+                                                     }
+                                                  }
+                                                  else{
+                                                     for (int i = 0; i < listNames.size(); i++){
+                                                        v = new AuxiliarVar(listNames.get(i), t ); // Enumerated!
+                                                        list.add(v);
+                                                     }
+
+                                                  }
                                               }
         	                                    
                                               
@@ -291,6 +451,10 @@ varDecls ::= ID:i  {:  LinkedList<String> list = new LinkedList<String>();
 
 type ::=   INT    {: RESULT = Type.INT; :}
          | BOOL   {: RESULT = Type.BOOL; :}
+         | ID:name  {: Type t = Type.ENUMERATED;
+                       t.setStringValue(name);
+                       RESULT = t; 
+                    :}
          ;
             
             
@@ -433,10 +597,10 @@ processDecl ::= proc:lp {:  LinkedList<AuxiliarProcessDecl> listProcess = new Li
                                                           :}
               ;
 
-proc ::= varDecls:listNames COLON ID:type {:  LinkedList<AuxiliarProcessDecl> listProcess = new LinkedList<AuxiliarProcessDecl>();
+proc ::= varDecls:listNames COLON ID:typeProc {:  LinkedList<AuxiliarProcessDecl> listProcess = new LinkedList<AuxiliarProcessDecl>();
                                               AuxiliarProcessDecl p;
                                               for (int i = 0; i < listNames.size(); i++){
-                                                    p= new AuxiliarProcessDecl( listNames.get(i) , type);
+                                                    p= new AuxiliarProcessDecl( listNames.get(i) , typeProc);
                                                     listProcess.add(p);
                                                    
                                                }
@@ -446,20 +610,51 @@ proc ::= varDecls:listNames COLON ID:type {:  LinkedList<AuxiliarProcessDecl> li
        ;
       
 
-processInvk ::= invk:nameProc {:  
-                                 LinkedList<String> listInvk = new LinkedList<String>();
-                                 listInvk.add(nameProc);
+processInvk ::= invk:infoProc {:
+                                 LinkedList<AuxiliarInvkProcess> listInvk = new LinkedList<AuxiliarInvkProcess>();
+                                 listInvk.add(infoProc);
                                  RESULT = listInvk;
                               :}
-              |   processInvk:listInvk SEMICOLON invk:nameProc {: listInvk.add(nameProc);
+              |   processInvk:listInvk SEMICOLON invk:infoProc {: listInvk.add(infoProc);
                                                                   RESULT = listInvk;
                         
                                                                :}
               ;
 
-invk ::= RUN ID:id LPARENT RPARENT {: 
-                                      RESULT = id;
-                                   :} ;
- 
+invk ::= RUN ID:id LPARENT RPARENT {:
+                                      RESULT = new AuxiliarInvkProcess(id);
+                                   :}
+| RUN ID:id LPARENT invkParamList:listP RPARENT {:
+                                                    RESULT = new AuxiliarInvkProcess(id,listP);
+                                                :} 
+;
 
-        
+
+invkParamList ::= invkParam:par {:
+                                    LinkedList<AuxiliarExpression> listInvk = new LinkedList<AuxiliarExpression>();
+                                    listInvk.add(par);
+                                    RESULT = listInvk;
+                           :}
+|   invkParamList:listInvk COMMA	 invkParam:par {: listInvk.add(par);
+                                                 RESULT = listInvk;
+    
+                                              :}
+;
+
+
+
+invkParam::= /*INTEGER:v  {:  AuxiliarConsIntExp value = new AuxiliarConsIntExp(v);
+                            RESULT = value;
+                        :}
+           | TRUE {:    AuxiliarConsBoolExp value = new AuxiliarConsBoolExp(true);
+                        RESULT = value;
+                  :}
+           | FALSE {:  AuxiliarConsBoolExp value = new AuxiliarConsBoolExp(false);
+                       RESULT = value;
+                   :}*/
+           | ID:id {:  AuxiliarVar value = new AuxiliarVar(id);
+                       RESULT= value;
+                    :}
+
+
+;

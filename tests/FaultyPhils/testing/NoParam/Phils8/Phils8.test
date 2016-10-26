@@ -1,0 +1,166 @@
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+Global fork2 : BOOL;
+Global fork3 : BOOL;
+Global fork4 : BOOL;
+Global fork5 : BOOL;
+Global fork6 : BOOL;
+Global fork7 : BOOL;
+
+// FIRST RIGHT
+Process Phil0{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork0 && fork1 && !crash;
+   Normative: !crash; 
+
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork1 && !hasR && !crash  -> fork1 = false, hasR = true;
+   hungry && hasR && fork0 && !crash -> fork0 = false, hasL = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating  && !crash -> fork0 = !fork0, fork1 = !fork1, eating = false, thinking = true; 
+   true -> crash=true;
+   crash -> crash=true;       
+}
+
+// FIRST LEFT
+Process Phil1{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork1 && fork2 && !crash;
+   Normative: !crash; 
+   
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork1 && !hasL && !crash  -> fork1 = false, hasL = true;
+   hungry && hasL && fork2 && !crash -> fork2 = false, hasR = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork0 = !fork0, fork1 = !fork1, eating = false, thinking = true;
+   true -> crash=true;
+   crash->crash=true;
+    
+}
+
+// FIRST RIGHT
+Process Phil2{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork2 && fork3 && !crash;
+   Normative: !crash; 
+   
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork3 && !hasR && !crash  -> fork3 = false, hasR = true;
+   hungry && hasR && fork2 && !crash -> fork2 = false, hasL = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork2 = !fork2, fork3 = !fork3, eating = false, thinking = true;
+   true -> crash = true;
+   crash -> crash=true;
+    
+}
+
+// FIRST LEFT
+Process Phil3{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork3 && fork4 && !crash;
+   Normative: !crash; 
+   
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork3 && !hasL && !crash  -> fork3 = false, hasL = true;
+   hungry && hasL && fork4 && !crash -> fork4 = false, hasR = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork4 = !fork4, fork3 = !fork3, eating = false, thinking = true;
+   true -> crash=true;
+   crash -> crash=true;
+    
+}
+
+// FIRST RIGHT
+Process Phil4{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork4 && fork5 && !crash;
+   Normative: !crash; 
+   
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork5 && !hasR && !crash  -> fork5 = false, hasR = true;
+   hungry && hasR && fork4 && !crash-> fork4 = false, hasL = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork5 = !fork5, fork4 = !fork4, eating = false, thinking = true;
+   true -> crash=true;
+   crash -> crash=true;
+    
+}
+
+// FIRST LEFT
+Process Phil5{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork5 && fork6 && !crash;
+   Normative: !crash; 
+   
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork5 && !hasL && !crash  -> fork5 = false, hasL = true;
+   hungry && hasL && fork6 && !crash -> fork6 = false, hasR = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork6 = !fork6, fork5 = !fork5, eating = false, thinking = true;
+   true -> crash=true;
+   crash -> crash=true;
+    
+}
+
+// FIRST RIGHT
+Process Phil6{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork6 && fork7 && !crash;
+   Normative: !crash; 
+   
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork6 && !hasR && !crash  -> fork6 = false, hasR = true;
+   hungry && hasR && fork7 && !crash -> fork7 = false, hasL = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork7 = !fork7, fork6 = !fork6, eating = false, thinking = true;
+   true -> crash=true;
+   crash -> crash=true;
+    
+}
+
+// FIRST LEFT
+Process Phil7{
+   thinking, hungry, eating, hasL, hasR, crash: BOOL;
+   Initial: thinking && !eating && !hungry && !hasL && !hasR && fork7 && fork0 && !crash;
+   Normative: !crash; 
+   
+   thinking && !crash -> hungry = true, thinking = false;
+   thinking && !crash -> hungry = false, thinking = true;
+   hungry && fork7 && !hasL && !crash  -> fork7 = false, hasL = true;
+   hungry && hasL && fork0 && !crash -> fork0 = false, hasR = true;
+   hungry && hasL && hasR && !crash -> eating = true, hungry = false;
+   eating && !crash -> fork7 = !fork7, fork0 = !fork0, eating = false, thinking = true;
+   true -> crash=true;
+   crash -> crash=true;
+}
+
+
+
+
+Main(){
+ phil0:Phil0;
+ phil1:Phil1;
+ phil2:Phil2;
+ phil3:Phil3;
+ phil4:Phil4;
+ phil5:Phil5;
+ phil6:Phil6;
+ phil7:Phil7;
+
+ run phil0();
+ run phil1();
+ run phil2();
+ run phil3();
+ run phil4();
+ run phil5();
+ run phil6();
+ run phil7();
+
+}

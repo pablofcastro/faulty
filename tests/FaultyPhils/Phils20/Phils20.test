@@ -1,0 +1,112 @@
+// This version of the faulty philosophers using enums for the states
+
+
+Enum state = {thinking, hungry, eating, error};
+
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+Global fork2 : BOOL;
+Global fork3 : BOOL;
+Global fork4 : BOOL;
+Global fork5 : BOOL;
+Global fork6 : BOOL;
+Global fork7 : BOOL;
+Global fork8 : BOOL;
+Global fork9 : BOOL;
+Global fork10 : BOOL;
+Global fork11 : BOOL;
+Global fork12 : BOOL;
+Global fork13 : BOOL;
+Global fork14 : BOOL;
+Global fork15 : BOOL;
+Global fork16 : BOOL;
+Global fork17 : BOOL;
+Global fork18 : BOOL;
+Global fork19 : BOOL;
+
+Process OddPhil(forkL: BOOL, forkR:BOOL){
+   
+   //s0, s1, hasL, hasR: BOOL;
+   s : state;
+   hasL, hasR : BOOL;
+   Initial: (s==thinking) && !hasL && !hasR && forkR && forkL;
+   Normative: !(s == error); 
+
+   s==thinking -> s=hungry; 
+   s==thinking -> s=thinking;
+   s==hungry && forkL && !hasL && !hasR  -> forkL=false, hasL=true; 
+   s==hungry && !forkL && !hasL && !hasR -> s=hungry;
+   s==hungry && hasL && forkR && !hasR -> forkR = false, hasR=true;
+   s==hungry && hasL && !forkR && !hasR -> forkL = true, hasL=false; 
+   s==hungry && hasL && hasR -> s=eating; 
+   s==eating -> s=thinking, forkL=true, forkR=true, hasR=false, hasL=false;
+   true -> s=error;   
+}
+
+Process EvenPhil(forkL: BOOL, forkR:BOOL){
+   
+   //s0, s1, hasL, hasR: BOOL;
+   s : state;
+   hasL, hasR : BOOL;
+   Initial: s==thinking  && !hasL && !hasR && forkR && forkL;
+   Normative: !(s == error); 
+
+   s==thinking -> s=hungry; 
+   s==thinking -> s=thinking;
+   s==hungry && forkR && !hasL && !hasR  -> forkR=false, hasR=true; 
+   s==hungry && !forkR && !hasR && !hasL -> s=hungry;
+   s==hungry && hasR && forkL && !hasL -> forkL = false, hasL=true;
+   s==hungry && hasR && !forkL && !hasL -> forkR = true, hasR=false; 
+   s==hungry && hasL && hasR -> s=eating; 
+   s==eating -> s=thinking, forkL=true, forkR=true, hasR=false, hasL=false;
+   true -> s=error; 
+}
+
+
+
+Main(){
+ phil1:OddPhil;
+ phil2:EvenPhil;
+ phil3:OddPhil;
+ phil4:EvenPhil;
+ phil5:OddPhil;
+ phil6:EvenPhil;
+ phil7:OddPhil;
+ phil8:EvenPhil;
+ phil9:OddPhil;
+ phil10:EvenPhil;
+ phil11:OddPhil;
+ phil12:EvenPhil;
+ phil13:OddPhil;
+ phil14:EvenPhil;
+ phil15:OddPhil;
+ phil16:EvenPhil;
+ phil17:OddPhil;
+ phil18:EvenPhil;
+ phil19:OddPhil;
+ phil20:EvenPhil;
+
+ run phil1(fork0, fork1);
+ run phil2(fork1, fork2);
+ run phil3(fork2, fork3);
+ run phil4(fork3, fork4);
+ run phil5(fork4, fork5);
+ run phil6(fork5, fork6);
+ run phil7(fork6, fork7);
+ run phil8(fork7, fork8);
+ run phil9(fork8, fork9);
+ run phil10(fork9, fork10);
+ run phil11(fork10, fork11);
+ run phil12(fork11, fork12);
+ run phil13(fork12, fork13);
+ run phil14(fork13, fork14);
+ run phil15(fork14, fork15);
+ run phil16(fork15, fork16);
+ run phil17(fork16, fork17);
+ run phil18(fork17, fork18);
+ run phil19(fork18, fork19);
+ run phil20(fork19, fork0);
+
+
+
+}

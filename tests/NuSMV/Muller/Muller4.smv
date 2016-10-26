@@ -1,0 +1,57 @@
+MODULE Circuit(x,y,z)
+
+ASSIGN
+   init(x) := TRUE;
+   init(y) := TRUE;
+   init(z) := TRUE;
+   
+
+   next(x) :=
+	case
+	   (x=z)&(x=y) : {x, !x};
+	   (x=z)&!(y=z)   : !x;
+	   TRUE        : x;	
+        esac;
+   next(y) :=
+	case
+          (y=z)&(y=x) : {y, !y};
+          (y=z)&!(x=z) : !y;
+          TRUE : y;
+	esac;
+   next(z) := (next(x)&next(y)) | next(x)&z | next(y)&z;
+
+DEFINE
+   n := x=y;		
+
+MODULE Join(z1, z2)
+VAR
+  z3: boolean;
+
+ASSIGN
+   init(z3) := TRUE;  
+
+   next(z3) := ((z1 & z2) | (z2 & z3) | (z1 & z3) );
+  
+ 
+        
+
+MODULE main
+VAR 
+  i1 : boolean;
+  i2 : boolean;
+  i3 : boolean;
+  i4 : boolean;
+  o1 : boolean;
+  o2 : boolean; 
+  c1 : process Circuit(i1,i2,o1);
+  c2 : process Circuit(i3,i4,o2);
+  j1 : process Join(o1, o2);
+
+SPEC
+--P1:
+--  !E[c1.n U c1.n & (E[(c1.x | c1.y) & c1.n U !c1.z & (c1.x | c1.y) & EG(c1.n)])];
+
+--P2:
+AG(!c1.n -> AF(c1.n))
+
+  

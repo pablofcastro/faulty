@@ -1,0 +1,15 @@
+//( c1.x & c1.y & global.z ) -> ( A( global.z U (!c1.x & !c1.y & !global.z) ));
+
+//R( global.z U (!c1.x & !c1.y) );
+//A(Xc1.z);
+
+//A(c1.z U !c1.x & !c1.y );
+
+//E(true U (c1.z & !c1.x & !c1.y));
+
+//O(c1.z U false ~> c1.z W (!c1.x & !c1.y));
+//O((false U c1.z) ~> (c1.z U (!c1.x & !c1.y)));
+
+//O(false U (c1.x & c1.y) | (!c1.x & !c1.y));
+//R(false U E(true U ((c1.x & c1.y & global.z) | (!c1.x & !c1.y & !global.z))));
+R(true U ((c1.x & c1.y & global.z) | (!c1.x & !c1.y & !global.z)));

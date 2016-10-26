@@ -1,0 +1,3 @@
+//O(global.z0 U !c1.x0 & !c1.x1);
+//c1.x0;
+R(false U E(true U ( (c1.x0 & c1.x1 & global.z0) | (!c1.x0 & !c1.x1 & !global.z0))));

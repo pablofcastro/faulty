@@ -33,10 +33,10 @@ public class IntChannel extends Channel{
 		oc = new BDD[size];
 		oc_ = new BDD[size];
 		this.model = model;
-		
+	
 		// We request the needed BDD variables
 		for (int i = 0; i < size; i++){
-			for (int j = 0; i < Program.intSize; i++){
+			for (int j = 0; j < Program.intSize; j++){
 				els[i][j] = Program.myFactory.ithVar(Program.declaredVars);
 				Program.declaredVars++;
 				model.addVar("chan-"+name+"["+i+"]"+"["+j+"]", Type.BOOL);
@@ -44,6 +44,7 @@ public class IntChannel extends Channel{
 			//	Program.declaredVars++;
 			//	model.addVar("chan-"+name+"["+i+"]"+"["+j+"]_", Type.BOOL);
 			}
+			
 		}
 		
 		for (int i = 0; i < size; i++){
@@ -70,6 +71,8 @@ public class IntChannel extends Channel{
 	//	empty_ = Program.myFactory.ithVar(Program.declaredVars);
     // 	Program.declaredVars++;
     //	model.addVar("chan-"+name+"-empty_", Type.BOOL);
+	
+		
 	}
 
 	/**
@@ -78,7 +81,7 @@ public class IntChannel extends Channel{
 	public void initPrimes(){
 		// We request the needed BDD variables for the primes values
 				for (int i = 0; i < size; i++){
-					for (int j = 0; i < Program.intSize; i++){
+					for (int j = 0; j < Program.intSize; j++){
 						els_[i][j] = Program.myFactory.ithVar(Program.declaredVars+els[i][j].var());
 						Program.declaredVars_++;
 						model.addVar("chan-"+name+"["+i+"]"+"["+j+"]_", Type.BOOL);
@@ -117,7 +120,7 @@ public class IntChannel extends Channel{
 		
 		// We request the needed BDD variables
 		for (int i = 0; i < size; i++){
-			for (int j = 0; i < Program.intSize; i++){
+			for (int j = 0; j < Program.intSize; j++){
 				els[i][j] = Program.myFactory.ithVar(Program.declaredVars);
 				Program.declaredVars++;
 				model.addVar("chan-"+name+"["+i+"]"+"["+j+"]", Type.BOOL);
@@ -151,6 +154,7 @@ public class IntChannel extends Channel{
 		empty_ = Program.myFactory.ithVar(Program.declaredVars);
      	Program.declaredVars++;
      	model.addVar("chan-"+name+"-empty_", Type.BOOL);
+     	
 	}
     
 	/**
@@ -405,6 +409,16 @@ public class IntChannel extends Channel{
 		return monotony;
 	}
 	
-	
+	@Override
+	public String toString(){
+	    
+	    String channelInfo = new String("       Channel ");
+		
+		String  chanString= name; 
+		String sizeS = (new Integer(size)).toString();
+		channelInfo= channelInfo.concat(chanString).concat("[").concat(sizeS).concat("] of INT");
+		channelInfo= channelInfo.concat("\n\n");
+	 	return channelInfo;
+	}
 
 }// end class

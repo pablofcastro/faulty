@@ -1,0 +1,118 @@
+-- An implementation of the (faulty) dinner philosophers,
+
+MODULE EvenPhil(lfork, rfork)
+VAR
+	state : {thinking, hungry, eating};
+        hasR : boolean;
+        hasL: boolean;
+INIT
+  state=thinking & !hasR & !hasL; 
+
+ASSIGN
+     next(state) := case
+                    state = thinking & !hasL & !hasR : {thinking, hungry};
+                    state = hungry & hasL & hasR: eating;
+                    state = eating : thinking;
+		    TRUE : state;
+                   esac;
+
+     next(lfork) := case 
+                     state = hungry & lfork : !lfork;
+                     state = eating : TRUE;
+                     TRUE : lfork;
+                    esac;
+
+     next(rfork) := case 
+                    state = hungry & hasL & rfork : FALSE;
+                    state = eating : TRUE;
+                    TRUE : rfork;
+                   esac; 
+    
+     next(hasL) := case
+                   state = hungry & lfork : TRUE;
+                   state = eating : FALSE;
+                   TRUE : hasL;
+                   esac;
+
+     next(hasR) := case
+                   state=hungry & hasL & rfork : TRUE;
+                   state=eating : FALSE;
+                   TRUE : hasR;
+                  esac;
+
+
+MODULE OddPhil(lfork, rfork)
+VAR
+	state : {thinking, hungry, eating};
+        hasR : boolean;
+        hasL: boolean;
+INIT
+    state=thinking & !hasR & !hasL; 
+
+ASSIGN
+
+     init(state) := thinking;
+     init(hasR) := FALSE;
+     init(hasL) := FALSE;
+     next(state) := case
+                    state = thinking & !hasL & !hasR : {thinking, hungry};
+                    state = hungry & hasL & hasR: eating;
+                    state = eating : thinking;
+		    TRUE : state;
+                   esac;
+
+     next(rfork) := case 
+                     state = hungry & rfork : !rfork;
+                     state = eating : TRUE;
+                     TRUE : rfork;
+                    esac;
+     next(lfork) := case 
+                    state = hungry & hasR & lfork : FALSE;
+                    state = eating : TRUE;
+                    TRUE : lfork;
+                   esac; 
+    
+     next(hasR) := case
+                   state = hungry & rfork : TRUE;
+                   state = eating : FALSE;
+                   TRUE : hasR;
+                   esac;
+     next(hasL) := case
+                   state=hungry & hasR & lfork : TRUE;
+                   state=eating : FALSE;
+                   TRUE : hasL;
+                  esac;
+DEFINE
+
+
+MODULE main
+VAR
+  fork0 : boolean;
+  fork1 : boolean;
+  fork2 : boolean;
+  fork3: boolean;
+  fork4: boolean;
+  fork5: boolean;
+  fork6: boolean;
+  fork7: boolean;
+  fork8: boolean;
+  fork9: boolean;
+  fork10: boolean;
+  phil0: process EvenPhil(fork10,fork0);
+  phil1: process OddPhil(fork0,fork1);
+  phil2: process EvenPhil(fork1, fork2);
+  phil3: process OddPhil(fork2, fork3);
+  phil4: process EvenPhil(fork3, fork4);
+  phil5: process OddPhil(fork4, fork5);
+  phil6: process EvenPhil(fork5, fork6);
+  phil7: process OddPhil(fork6, fork7);
+  phil8: process EvenPhil(fork7, fork8);
+  phil9: process OddPhil(fork8, fork9);
+  phil10: process EvenPhil(fork9, fork10);
+
+
+SPEC
+  AG(phil0.state = hungry -> AF(phil0.state = eating))
+
+
+

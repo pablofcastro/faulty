@@ -1,5 +1,6 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
 
 /**
@@ -14,7 +15,7 @@ public class ConsIntExp implements IntExp{
      * @param	i	the integer
      */
     public ConsIntExp(int i){
-        bits = new BDD[Program.intSize];
+    	bits = new BDD[Program.intSize];
         int j = Program.intSize-1;
         while(j >= 0){
             if (i % 2 == 0){          	
@@ -82,4 +83,34 @@ public class ConsIntExp implements IntExp{
     public ConsIntExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner){
     	return this;
     }
+    
+    /**
+     * The duplicate of a Constant is itself, this version takes into account the parameters
+     * @param instName
+     * @return	a reference to this
+     */
+    public ConsIntExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner){
+    	return this;
+    }
+    
+    
+    /**
+     * 
+     * @param instName
+     * @param dups
+     * @param owner
+     * @return
+     */
+    public ConsIntExp duplicate(String instName, HashMap<Var, Var> dups, Process owner){
+    	return this;
+    }
+    
+    
+    @Override
+    public String toString(){
+        String consInfo = new String("anINTEGER");
+	 	return consInfo;
+	}
+
+
 }

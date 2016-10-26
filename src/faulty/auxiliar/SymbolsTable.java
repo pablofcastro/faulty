@@ -66,6 +66,20 @@ public class SymbolsTable {
 			return false;
 		}
 	}
+    
+    
+    /**
+	 * Adds a parameter in the given level.
+	 */
+	public boolean addSymbol(AuxiliarParam par) {
+		if (!exists(par.getDeclarationName(),currentLevel)) { //if already not exist an element with the same id at the given level.
+			table.get(currentLevel).addParam(par);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	
 	/**
 	 * Adds a process in the given level.
@@ -79,6 +93,18 @@ public class SymbolsTable {
 		}
 	}
 
+    /**
+	 * Adds a enumerated type in the given level.
+	 */
+	public boolean addSymbol(AuxiliarEnumType eType) {
+		if (!existsEnumeratedType(eType.getName(),currentLevel)) {
+			table.get(currentLevel).addEnumeratedType(eType);
+			return true;
+		} else {
+			return false;
+		}
+	}
+    
 
 
 	/**
@@ -126,12 +152,31 @@ public class SymbolsTable {
 		return table.get(level).existVar(name);
 	}
 
+    /**
+	 * Returns true if a parameter with the same id already exists at the given level.
+	 */
+	private boolean existsParam(String name,int level) {
+		
+		return table.get(level).existParam(name);
+	}
+
+    
+    
 	/**
 	 * Returns true if an process with the same id already exists at the given level. 
 	 */
 	private boolean existsProcess(String name,int level) {
 		
 		return table.get(level).existProcess(name);
+	}
+
+    
+    /**
+	 * Returns true if a Enumerated Type with the same name already exists at the given level.
+	 */
+	private boolean existsEnumeratedType(String name,int level) {
+		
+		return table.get(level).existEnumeratedType(name);
 	}
 
 
@@ -151,6 +196,16 @@ public class SymbolsTable {
 		return this.getLevelSymbols(level).getVar(id);
 	}
 	
+    /**
+	 * Search a parameter by id, and returns it if it exists. Otherwise returns null
+	 */
+	public AuxiliarParam searchParam(String id,int level) {
+		
+		return this.getLevelSymbols(level).getParam(id);
+	}
+	
+    
+    
 	/**
 	 * Search a process by id, and returns it if it exists. Otherwise returns null
 	 */
@@ -158,6 +213,15 @@ public class SymbolsTable {
 		
 		return this.getLevelSymbols(level).getProcess(id);
 	}
+    
+    /**
+	 * Search a enumerated Type by id, and returns it if it exists. Otherwise returns null
+	 */
+	public AuxiliarEnumType searchEnumeratedType(String id,int level) {
+		
+		return this.getLevelSymbols(level).getEnumeratedType(id);
+	}
+
 
 	
 }

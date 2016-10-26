@@ -1,0 +1,24 @@
+Global z:BOOL;
+
+Process P1{
+	x: BOOL;
+	Initial: x==true;
+	Normative: true;
+		x==true -> x=!x;
+		x==false -> x=!x;
+}
+
+Process P2{
+  	y: BOOL;
+	Initial: y==true;
+	Normative: true;
+		y==true -> y = !y, z = !z;
+		y==false -> y = !y; 
+}
+                 
+Main(){
+  	p1:P1;
+	p2:P2;
+	run p1();
+	run p2();
+}

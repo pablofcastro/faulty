@@ -1,5 +1,6 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
 
 
@@ -34,6 +35,15 @@ public class LessBoolExp implements BoolExp{
     }
     
     /**
+     * 
+     * @return
+     */
+    public LinkedList<Var> getVars(){
+    	LinkedList<Var> result = new LinkedList<Var>();
+    	return result;
+    }
+    
+    /**
      * Returns the list of channels participating in the comparison
      * @return the list of channel
      */
@@ -48,5 +58,30 @@ public class LessBoolExp implements BoolExp{
     	LessBoolExp result = new LessBoolExp((IntExp) int1.duplicate(instName, boolMap, intMap, owner), (IntExp) int2.duplicate(instName, boolMap, intMap, owner));
     	return result;
     	
+    }
+    
+    public LessBoolExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner){
+    	LessBoolExp result = new LessBoolExp((IntExp) int1.duplicate(instName, boolMap, intMap, boolPars, intPars, owner), (IntExp) int2.duplicate(instName, boolMap, intMap, boolPars, intPars, owner));
+    	return result;
+    	
+    }
+    
+    public LessBoolExp duplicate(String instName, HashMap<Var, Var> dups, Process owner){
+    	LessBoolExp result = new LessBoolExp((IntExp) int1.duplicate(instName, dups, owner), (IntExp) int2.duplicate(instName, dups, owner));
+    	return result;
+    	
+    }
+    
+    @Override
+    public String toString(){
+        
+        String lessInfo = new String(" ");
+    	
+    	String  exp1String= int1.toString(); 
+    	String  exp2String= int2.toString(); 
+    	
+    	lessInfo= lessInfo.concat(exp1String).concat("<").concat(exp2String);
+        
+     	return lessInfo;
     }
 }

@@ -18,7 +18,8 @@ public abstract class LogicalOp implements FormulaElement{
      * If formula = !f1, returns !;
      * If formula = f1 & f2, returns &;
      * If formula = f1 | f2, returns |;
-     * If formula = f1 -> f2, returns ->;   
+     * If formula = f1 -> f2, returns ->; 
+     * If formula = f1 == f2, returns ==;
      */
 	@Override
 	public String toString(){
@@ -29,8 +30,12 @@ public abstract class LogicalOp implements FormulaElement{
      * 
      * @return Returns the first expression of the formula.
      * 
-     * If formula = X f1, returns f1;
-     * If formula = f1 U f2, returns f1;
+     * If formula = !f1, returns f1;
+     * If formula = f1 & f2, returns f1;
+     * If formula = f1 | f2, returns f1;
+     * If formula = f1 -> f2, returns f1;
+     * If formula = f1 == f2, returns f1;
+     *
      */
     public FormulaElement getExpr1(){
     	return this.expr1;

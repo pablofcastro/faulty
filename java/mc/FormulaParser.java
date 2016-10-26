@@ -7,6 +7,7 @@ import formula.*;
 import parserFormula.*;
 import java_cup.runtime.*;
 import faulty.auxiliar.*;
+import faulty.*;
 
 /**
  * This class represents the compiler.
@@ -17,11 +18,12 @@ public class FormulaParser {
     private static SymbolsTable symbolsTable;
     private static FileReader formulaFile;
     private static LinkedList<faulty.auxiliar.Error> listError;
-
+    private static Program model;
 	
-    public FormulaParser(SymbolsTable table){
-        formulaFile=null;
-        symbolsTable = table;
+    public FormulaParser(SymbolsTable table, Program mod){
+        this.formulaFile=null;
+        this.symbolsTable = table;
+        this.model =mod;
     }
     
     public FormulaElement parse(String NameFile){
@@ -39,15 +41,16 @@ public class FormulaParser {
  				Type result = checkTypes(formulaDCTL);
  				
  				if(result == Type.ERROR){
- 					for(int i=0;i<listError.size();i++){
+                    for(int i=0;i<listError.size();i++){
  						System.out.println(listError.get(i).getErrorMsg()); 
  					}
+                    formulaDCTL=null; // set formula as null to stop the modelchecking due prescense of errors.
  				}
  			}
  			
         }
         catch (Exception e) {
-             System.out.println("Formula compilation fail.");
+             System.out.println("Formula Error");
         }
     
         return formulaDCTL;
@@ -57,7 +60,7 @@ public class FormulaParser {
  	 * Check types
  	 */
  	private static Type checkTypes(FormulaElement property) {
-        formula.TypeCheckerVisitor typeV = new formula.TypeCheckerVisitor(symbolsTable);
+        formula.TypeCheckerVisitor typeV = new formula.TypeCheckerVisitor(symbolsTable, model);
         property.accept(typeV);
         Type result = typeV.getType();
         listError = typeV.getErrorList();

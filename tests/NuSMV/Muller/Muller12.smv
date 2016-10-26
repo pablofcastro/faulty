@@ -1,0 +1,78 @@
+MODULE Circuit(x,y,z)
+ASSIGN
+   init(x) := TRUE;
+   init(y) := TRUE;
+   init(z) := TRUE;
+   
+
+   next(x) :=
+	case
+	   (x=z)&(x=y) : {x, !x};
+	   (x=z)&!(y=z)   : !x;
+	   TRUE        : x;	
+        esac;
+   next(y) :=
+	case
+          (y=z)&(y=x) : {y, !y};
+          (y=z)&!(x=z) : !y;
+          TRUE : y;
+	esac;
+
+   next(z) := (next(x)&next(y) | next(x)&z | next(y)&z);
+   
+DEFINE
+   n := x=y;	
+
+MODULE Join(z1, z2, z3)
+
+
+ASSIGN
+   init(z3) := TRUE;
+  
+   next(z3) := ((z1 & z2) | (z2 & z3) | (z1 & z3) );
+    
+        
+
+MODULE main
+VAR 
+  i1 : boolean;
+  i2 : boolean;
+  i3 : boolean;
+  i4 : boolean;
+  i5 : boolean;
+  i6 : boolean;
+  i7 : boolean;
+  i8 : boolean;
+  i9 : boolean;
+  i10 : boolean;
+  i11 : boolean;
+  i12 : boolean;
+  o1 : boolean;
+  o2 : boolean;
+  o3 : boolean;
+  o4 : boolean;
+  o5 : boolean;
+  o6 : boolean; 
+  o7 : boolean;
+  o8 : boolean;
+  o9 : boolean;
+  o10 : boolean;
+  o11 : boolean;
+  c1 : process Circuit(i1,i2,o1);
+  c2 : process Circuit(i3,i4,o2);
+  c3 : process Circuit(i5,i6,o3);
+  c4 : process Circuit(i7,i8,o4);
+  c5 : process Circuit(i9,i10, o5);
+  c6 : process Circuit(i11, i12, o6);
+  j1 : process Join(o1, o2, o7);
+  j2 : process Join(o3, o4, o8);
+  j3 : process Join(o5, o6, o9);
+  j4 : process Join(o7, o8, o10);
+  j5 : process Join(o9, o10, o11);
+
+SPEC
+--P1:
+--  !E[c1.n U c1.n & (E[(c1.x | c1.y) & c1.n U !c1.z & (c1.x | c1.y) & EG(c1.n)])];
+
+--P2:
+ AG(!c1.n -> AF(c1.n))

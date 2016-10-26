@@ -1,0 +1,51 @@
+
+Global s:BOOL;
+
+Process Process1{
+
+nc : BOOL;
+c : BOOL;
+w : BOOL;
+d : BOOL;
+
+//Initial : c == false && nc == true && w == false && d == false;
+Initial: !c && nc && !w && !d;
+Normative : d == false;
+
+nc == true && d == false -> w = true, nc = false;
+w == true && s == false && d == false  -> w = false, c = true, s = true;
+c == true && d == false -> c = false, nc = true, s = false;
+d == false -> d = true;
+d == true -> d = true;
+d == true -> d = false; 
+}
+
+Process Process2{
+
+nc : BOOL;
+c : BOOL;
+w : BOOL;
+d : BOOL;
+
+Initial : c == false && nc == true && w == false && d == false;
+Normative : d == false;
+
+nc == true && d == false -> w = true, nc = false;
+w == true && s == false && d == false -> w = false, c = true, s = true;
+c == true && d == false -> c = false, nc = true, s = false;
+d == false -> d = true;
+d == true -> d = true;
+d == true -> d = false;
+	
+}
+
+Main(){
+
+p1:Process1;
+p2:Process2;
+
+run p1();
+run p2();
+
+}
+

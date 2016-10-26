@@ -1,0 +1,4 @@
+//Property P5 in the paper
+// it holds for any other philosopher
+
+P(true U phil1.s==eating);

@@ -39,7 +39,7 @@ public class SatVisitor implements FormulaVisitor {
 	public void visit(Variable v) {
 		String name = v.toString();
 		int id = model.getVarID(name);
-		sat = model.getFactory().ithVar(id); //gets the state where the var is true
+		sat = model.getFactory().ithVar(id); //gets the state where the var is true		
 
 	}
 
@@ -75,6 +75,17 @@ public class SatVisitor implements FormulaVisitor {
 		i.getExpr2().accept(this);
 		sat = sat_np.or(this.getSat());
 	}
+    
+    
+    /**
+	 * 
+	 * @param c		the comparison ==
+	 */
+	@Override
+	public void visit(EqComparison e) {
+		
+	}
+
 
 	/**
 	 * Calculates the sat of a conjunction
@@ -420,8 +431,7 @@ public class SatVisitor implements FormulaVisitor {
 	 * @param o		the formula
 	 */
 	public void visit(OW o){
-		//Semantics  O(sUt) = !E(n U n ^ ((!s ^!t) v (!t ^ E(!t ^ n U n ^ !s ^EG(n) )))))
-		
+		//Semantics O(sWt) = !E(n U n ^ E(!t ^ n U !s ^!t ^ EGn)) 
 		int varNum = model.getFactory().varNum();
 		BDD mod = model.getTransitions();
 		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
@@ -430,16 +440,22 @@ public class SatVisitor implements FormulaVisitor {
 		FormulaElement expr1 = o.getExpr1();
 		expr1.accept(this);
 		BDD s = this.sat.and(mod);
+
 		FormulaElement expr2 = o.getExpr2();
 		expr2.accept(this);
 		BDD t = this.sat.and(mod);
+		
 		// we calculate the result using its CTL semantics
 		// the negations are calculated taking into account the model
 		BDD nots = s.not().and(mod);
-		BDD nott = t.not().and(mod);
+		BDD nott = t.not().and(mod);		
 		// get the normative states
 		BDD ns = model.getNormative();
-		sat = EUntil(ns, ns.and(nots).and(nott).or(nott.and(EUntil(nott.and(ns),nots.and(nott).and(EG(ns)))))).not().and(mod);
+		//Post(ns).printSet();
+		//EUntil(ns, ns.and(nots.and(nott))).printSet();//.or(nott.and(EUntil(nott.and(ns),nots.and(nott).and(EG(ns))))))).printSet();
+		
+		sat = EUntil(ns, ns.and(EUntil(nott.and(ns),nots.and(nott).and(EG(ns))))).not();		
+		
 	}
 	
 	/**
@@ -907,6 +923,7 @@ public class SatVisitor implements FormulaVisitor {
 		BDD n =   model.getNormative();
 		
 		BDD X = model.getFactory().one();
+		//BDD X = model.getFactory().zero();
 		BDD X_old = model.getFactory().zero();
 		while (!X.biimp(X_old).isOne()){
 			X_old = X;
@@ -914,7 +931,7 @@ public class SatVisitor implements FormulaVisitor {
 			BDD Y_old = model.getFactory().one();
 			while (!Y.biimp(Y_old).isOne()){
 				Y_old = Y;
-				Y = t.and(X).or(s.and(WeakPrevious(n.and(Y))));
+				Y = t.and(X).or(s.and(NWeakPrevious(n.and(Y))));
 			}
 			X = n.and(Y);
 		}
@@ -972,6 +989,43 @@ public class SatVisitor implements FormulaVisitor {
 	public void visit(RW r){
 		//TBD
 	}
+    
+    
+    @Override
+	public void visit(RWW e) {
+    }
+	
+    @Override
+	public void visit(RWU e) {
+    }
+    
+	@Override
+	public void visit(RWX e) {
+    }
+    
+    @Override
+	public void visit(RUW e) {
+    }
+    
+    @Override
+	public void visit(RXW e) {
+    }
+    
+    @Override
+	public void visit(RUU e) {
+    }
+    
+    @Override
+	public void visit(RXX e) {
+    }
+    
+    @Override
+	public void visit(RXU e) {
+    }
+	
+    @Override
+	public void visit(RUX e) {
+    }
 	
 	public void visit(AX a){
 		FormulaElement expr1 = a.getExpr1();
@@ -1331,6 +1385,7 @@ public class SatVisitor implements FormulaVisitor {
         BDD mod = model.getTransitions();
 		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
         p = p.and(mod); // get those states that hold p
+       
         return EWuntil(p,model.getFactory().zero());
     }
     
@@ -1345,6 +1400,7 @@ public class SatVisitor implements FormulaVisitor {
         BDD mod = model.getTransitions();
 		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
         q = q.and(mod); // get those states that hold q
+               
         BDD result = model.getFactory().zero();
         BDD result_old = model.getFactory().one();
         // this loop calculates the least fixed point
@@ -1364,7 +1420,9 @@ public class SatVisitor implements FormulaVisitor {
         BDD mod = model.getTransitions();
 		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
         p = p.and(mod); // get those states that hold p
-        BDD result = WeakPrevious(p); // the result is the weak previous
+       
+        BDD result = WeakPrevious(p); // the result is the weak previous       
+        
         return result;
     }
 
@@ -1373,12 +1431,13 @@ public class SatVisitor implements FormulaVisitor {
      * @param p: the first formula of AXp
      */
     private BDD AX(BDD p){
-        int varNum = model.getFactory().varNum();
-        BDD mod = model.getTransitions();
-		mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
-        p = p.and(mod); // get those states that hold p
-        BDD result = StrongPrevious(p); // the result is the strong previous
-        return result;
+    //    int varNum = model.getFactory().varNum();
+    //    BDD mod = model.getTransitions();
+	//	mod = addExists(varNum/2, varNum, mod ,model.getFactory()); // obtain all states of the model.
+    //    p = p.and(mod); // get those states that hold p
+    //    BDD result = StrongPrevious(p); // the result is the strong previous
+   //     return result;
+    	  return EX(p.not()).not();
     }
     
     
@@ -1436,6 +1495,7 @@ public class SatVisitor implements FormulaVisitor {
         //rename each variable: v' -> v
 	    mod = mod.replaceWith(pairs);	       
 	    mod = model.getTransitions().and(mod);
+	   
         return addExists(varNum/2, varNum, mod ,model.getFactory());
 
 	}

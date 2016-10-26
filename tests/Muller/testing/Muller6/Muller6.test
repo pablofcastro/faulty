@@ -1,0 +1,62 @@
+
+Global z0:BOOL;
+Global z1:BOOL;
+Global z2:BOOL;
+
+
+Process Circuit1{
+	x0,x1: BOOL;
+	Initial: x0 && x1 && z0;
+	Normative: x0==x1;
+		x0==z0 && x1==z0 -> x0=!x0, x1=!x1, z0=((!x0) && (!x1) || (!x0)&&z0 || (!x1)&&z0);
+		x0==z0 && x1==z0 -> x0=!x0, z0=((!x0) && x1 || (!x0)&&z0 || x1&&z0);
+                x0==z0 && x1==z0 -> x1=!x1, z0=(x0 && (!x1) || x0&&z0 || (!x1)&&z0);
+	   	!(x0==z0) && x1==z0 -> x1=!x1, z0=(x0 && (!x1) || x0&&z0 || (!x1)&&z0);
+                 x0==z0 && !(x1==z0) -> x0=!x0, z0=((!x0) && x1 || (!x0)&&z0 || x1&&z0);
+}
+
+
+Process Circuit2{
+	x0,x1: BOOL;
+	Initial: x0 && x1 && z1;
+	Normative: x0==x1;
+		x0==z1 && x1==z1 -> x0=!x0, x1=!x1, z1=((!x0) && (!x1) || (!x0)&&z1 || (!x1)&&z1);
+		x0==z1 && x1==z1 -> x0=!x0, z1=((!x0) && x1 || (!x0)&&z1 || x1&&z1);
+                x0==z1 && x1==z1 -> x1=!x1, z1=(x0 && (!x1) || x0&&z1 || (!x1)&&z1);
+	   	!(x0==z1) && x1==z1 -> x1=!x1, z1=(x0 && (!x1) || x0&&z1 || (!x1)&&z1);
+                 x0==z1 && !(x1==z1) -> x0=!x0, z1=((!x0) && x1 || (!x0)&&z1 || x1&&z1);
+}
+
+
+Process Circuit3{
+	x0,x1: BOOL;
+	Initial: x0 && x1 && z2;
+	Normative: x0==x1;
+		x0==z2 && x1==z2 -> x0=!x0, x1=!x1, z2=((!x0) && (!x1) || (!x0)&&z2 || (!x1)&&z2);
+		x0==z2 && x1==z2 -> x0=!x0, z2=((!x0) && x1 || (!x0)&&z2 || x1&&z2);
+                x0==z2 && x1==z2 -> x1=!x1, z2=(x0 && (!x1) || x0&&z2 || (!x1)&&z2);
+	   	!(x0==z2) && x1==z2 -> x1=!x1, z2=(x0 && (!x1) || x0&&z2 || (!x1)&&z2);
+                 x0==z2 && !(x1==z2) -> x0=!x0, z2=((!x0) && x1 || (!x0)&&z2 || x1&&z2);
+}
+
+
+//Process Join{
+//
+//	Initial: z2;
+//	Normative: z2;
+//		!(z2== (z0 && z1 || z0&&z2 || z1&&z2)) -> z2 = !z2;
+//} 
+
+Main(){
+	c1: Circuit1;
+	c2: Circuit2;
+        c3: Circuit3;
+       // c4: Circuit1;
+	//join: Join;
+	run c1();
+	run c2();
+        run c3();
+	//run join();
+}
+
+

@@ -1,0 +1,61 @@
+// This version of the faulty philosophers use only two bits to codify the state
+// of a philosopher, this reduces the state space of the examples
+// a enumeration type will be added in next versions of the tool
+// !s0!s1 : thinking
+// !s0 s1: hungry
+// s0!s1: eating
+// s0s1: faulty
+
+Enum state = {thinking, hungry, eating, error};
+
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+
+
+Process OddPhil(forkL: BOOL, forkR:BOOL){
+   
+   //s0, s1, hasL, hasR: BOOL;
+   s : state;
+   hasL, hasR : BOOL;
+   Initial: (s==thinking) && !hasL && !hasR && forkR && forkL;
+   Normative: !(s == error); 
+
+   s==thinking -> s=hungry; 
+   s==thinking -> s=thinking;
+   s==hungry && forkL && !hasL && !hasR  -> forkL=false, hasL=true; 
+   s==hungry && !forkL && !hasL && !hasR -> s=hungry;
+   s==hungry && hasL && forkR && !hasR -> forkR = false, hasR=true;
+   s==hungry && hasL && !forkR && !hasR -> forkL = true, hasL=false; 
+   s==hungry && hasL && hasR -> s=eating; 
+   s==eating -> s=thinking, forkL=true, forkR=true, hasR=false, hasL=false;
+   true -> s=error;   
+}
+
+Process EvenPhil(forkL: BOOL, forkR:BOOL){
+   
+   //s0, s1, hasL, hasR: BOOL;
+   s : state;
+   hasL, hasR : BOOL;
+   Initial: s==thinking  && !hasL && !hasR && forkR && forkL;
+   Normative: !(s == error); 
+
+   s==thinking -> s=hungry; 
+   s==thinking -> s=thinking;
+   s==hungry && forkR && !hasL && !hasR  -> forkR=false, hasR=true; 
+   s==hungry && !forkR && !hasR && !hasL -> s=hungry;
+   s==hungry && hasR && forkL && !hasL -> forkL = false, hasL=true;
+   s==hungry && hasR && !forkL && !hasL -> forkR = true, hasR=false; 
+   s==hungry && hasL && hasR -> s=eating; 
+   s==eating -> s=thinking, forkL=true, forkR=true, hasR=false, hasL=false;
+   true -> s=error; 
+}
+
+
+
+Main(){
+ phil1:OddPhil;
+ phil2:EvenPhil;
+
+ run phil1(fork1, fork0);
+ run phil2(fork0, fork1);
+}

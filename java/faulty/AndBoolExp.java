@@ -1,5 +1,6 @@
 package faulty;
 import java.util.*;
+
 import net.sf.javabdd.*;
 /**
  *  A class to represent the "and" of two boolean expressions
@@ -26,6 +27,13 @@ public class AndBoolExp implements BoolExp{
         return exp1.getBDD().and(exp2.getBDD());
     }
     
+    public LinkedList<Var> getVars(){
+    	LinkedList<Var> result = new LinkedList<Var>();
+    	result.addAll(exp1.getVars());
+    	result.addAll(exp2.getVars());
+    	return result;
+    }
+    
     /**
      * Return the list of channel occurring in the expression
      * @return the list of channels
@@ -37,11 +45,60 @@ public class AndBoolExp implements BoolExp{
     	return result;
     }
     
+    /**
+     * 
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param owner
+     * @return
+     */
     public Expression duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner){
     	AndBoolExp result = new AndBoolExp((BoolExp) exp1.duplicate(instName, boolMap, intMap, owner), (BoolExp) exp2.duplicate(instName, boolMap, intMap, owner));
     	return result;
     	
     }
     
+    /**
+     * Another version of duplicate taking into account parameters
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param boolPars
+     * @param intPars
+     * @param owner
+     * @return
+     */
+    public Expression duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner){
+    	AndBoolExp result = new AndBoolExp((BoolExp) exp1.duplicate(instName, boolMap, intMap, boolPars, intPars, owner), (BoolExp) exp2.duplicate(instName, boolMap, intMap, boolPars, intPars, owner));
+    	return result;	
+    }
     
+    /**
+     * 
+     * @param instName
+     * @param dups
+     * @param owner
+     * @return
+     */
+    public Expression duplicate(String instName, HashMap<Var, Var> dups,  Process owner){
+    	AndBoolExp result = new AndBoolExp((BoolExp) exp1.duplicate(instName, dups, owner), (BoolExp) exp2.duplicate(instName, dups, owner));
+    	return result;	
+    }
+    
+    @Override
+  	public String toString(){
+    
+        String andInfo = new String(" ");
+		
+		String  exp1String= exp1.toString(); 
+		String  exp2String= exp2.toString(); 
+		
+		andInfo= andInfo.concat(exp1String).concat(" && ").concat(exp2String);
+        
+	 	return andInfo;
+	
+		
+    }
+
 }

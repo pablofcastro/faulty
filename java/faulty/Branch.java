@@ -1,5 +1,6 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
 
 /**
@@ -8,7 +9,7 @@ import java.util.*;
 *  it contains a reference to its process, a guard and a code, the code
 *  to be executed when the guard is true
 **/
-public class Branch{
+public class Branch {
 
 	String instName; // a name of the instance to which this branch belongs
     BoolExp guard; // the guard of the branch
@@ -61,6 +62,37 @@ public class Branch{
     }
     
     /**
+     * Another duplicate but with params
+     * @param instName
+     * @param mapBool
+     * @param mapInt
+     * @param boolPars
+     * @param intPars
+     * @param owner
+     * @return
+     */
+    public Branch duplicate(String instName, HashMap<VarBool, VarBool> mapBool,HashMap<VarInt,VarInt> mapInt, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner){    	
+    	Branch result = new Branch(instName, (BoolExp) guard.duplicate(instName, mapBool, mapInt, boolPars, intPars, owner), code.duplicate(instName, mapBool, mapInt, boolPars, intPars, owner), isFaulty, owner);
+    	return result;
+    }
+    
+    /**
+     * Another duplicate but with params
+     * @param instName
+     * @param mapBool
+     * @param mapInt
+     * @param boolPars
+     * @param intPars
+     * @param owner
+     * @return
+     */
+    public Branch duplicate(String instName, HashMap<Var, Var> dups,Process owner){    	
+    	
+    	Branch result = new Branch(instName, (BoolExp) guard.duplicate(instName, dups, owner), code.duplicate(instName, dups, owner), isFaulty, owner);
+    	return result;
+    }
+    
+    /**
      * Returns the symbolic representation of the branch, it produces a 
      * BDD respresenting the command Guard -> Command
      * @return a BDD representation of the branch
@@ -105,7 +137,7 @@ public class Branch{
     		//BDD result = (notStuck.imp(branch_exec.and(myProcess.getStuck_Map().get(this).not()))).and(notStuck.not().imp(myProcess.getStuck_Map().get(this).and(code.skipBDD())));        
     	}
     	else{
-    		result = guard.getBDD().and(code.getBDD());
+    		result = guard.getBDD().and(code.getBDD());  		
     	}
     	
     	
@@ -128,7 +160,61 @@ public class Branch{
      * @return a list of the vars appearing in the branch
      */
     public LinkedList<Var> getVars(){
-    	return code.getVars();
+    	LinkedList<Var> result = new LinkedList<Var>();
+    	result.addAll(code.getVars());    	
+    	result.addAll(guard.getVars()); // check this
+    	return result;
+    	//return code.getVars();
     }
+    
+    /**
+     * 
+     * @return	the list of vars in the code
+     */
+    public LinkedList<Var> getCodeVars(){
+    	LinkedList<Var> result = new LinkedList<Var>();
+    	result.addAll(code.getVars());
+    	return result;
+    }
+    
+    /**
+     * 
+     * @return	the list of vars in the guard
+     */
+    public LinkedList<Var> getGuardVars(){
+    	LinkedList<Var> result = new LinkedList<Var>();
+    	result.addAll(guard.getVars()); // check this
+    	return result;
+    }
+    
+    public LinkedList<Integer> getPrimedIds(){
+    	LinkedList<Integer> result = new LinkedList<Integer>();
+    	LinkedList<Var> vars = this.getVars();
+    	for (int i=0; i < vars.size(); i++ ){
+    		result.addAll(vars.get(i).getPrimedIds());
+    	}
+    	return result;
+    }
+    
+    
+    @Override
+  	public String toString(){
+    
+        String branchInfo = new String("");
+		String spaces = new String ("            ");
+		
+		
+		String  guardString= new String("   "+ guard.toString()); 
+		String  CodeString= new String("    --> "+code.toString()); 
+		String  faultyString= new String("       ( isFaulty: "+isFaulty+", myProcess: "+ myProcess.getName() + ", instanceName: "+ myProcess.getInstName() +")\n"); 
+	        
+		
+		branchInfo= branchInfo.concat(guardString).concat(CodeString).concat(faultyString);
+        
+		return branchInfo;
+	
+		
+    }
+    
 
 }// end of class

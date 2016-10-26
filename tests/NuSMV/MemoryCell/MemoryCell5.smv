@@ -1,0 +1,44 @@
+-- This is an implementation of a Memory with five bits,
+-- some of them may be faulty
+MODULE Memory
+VAR
+   b0: boolean; -- first bit
+   b1: boolean; -- second bit
+   b2: boolean; -- third bit 
+   b3: boolean; -- fourth bit
+   b4: boolean; --
+   w: boolean;
+   r: boolean;
+
+INIT
+   b0 & b1 & b2 & b3 & b4 & w & r
+
+TRANS
+   next(w)=FALSE  & next(b0)=FALSE & next(b1)=FALSE & next(b2)=FALSE & next(b3)=FALSE & next(b4)=FALSE & next(r)=FALSE
+   |
+   next(w)=TRUE  & next(b0)=TRUE & next(b1)=TRUE & next(b2)=TRUE & next(b3)=TRUE & next(b4)=TRUE & next(r)=TRUE
+   |
+   next(b0)=!b0 & next(b1)=b1 & next(b2)=b2 & next(b3)=b3 & next(b4)=b4 & next(w)=w & (next(r)= (!b0&b1&b2)|(!b0&b2&b3)|(!b0&b3&b4)|(!b0&b1&b3)|(!b0&b1&b4)|(b1&b3&b4)|(b1&b2&b4)|													(b2&b3&b4)|(b1&b2&b3)|(!b0&b2&b4))
+   |
+   next(b0)=b0 & next(b1)=!b1 & next(b2)=b2 & next(b3)=b3 & next(b4)=b4 & next(w)=w & (next(r)= (b0&!b1&b2)|(b0&b2&b3)|(b0&b3&b4)|(b0&!b1&b3)|(b0&!b1&b4)|(!b1&b3&b4)|(!b1&b2&b4)|													(b2&b3&b4)|(!b1&b2&b3)|(b0&b2&b4))	   
+   |
+   next(b0)=b0 & next(b1)=b1 & next(b2)=!b2 & next(b3)=b3 & next(b4)=b4 & next(w)=w & (next(r)= (b0&b1&!b2)|(b0&!b2&b3)|(b0&b3&b4)|(b0&b1&b3)|(b0&b1&b4)|(b1&b3&b4)|(b1&!b2&b4)|													(!b2&b3&b4)|(b1&!b2&b3)|(b0&!b2&b4)) 
+   |
+   next(b0)=b0 & next(b1)=b1 & next(b2)=b2 & next(b3)=!b3 & next(b4)=b4 & next(w)=w & (next(r)= (b0&b1&b2)|(b0&b2&!b3)|(b0&!b3&b4)|(b0&b1&!b3)|(b0&b1&b4)|(b1&!b3&b4)|(b1&b2&b4)|													(b2&!b3&b4)|(b1&b2&!b3)|(b0&b2&b4)) 
+   |
+   next(b0)=b0 & next(b1)=b1 & next(b2)=b2 & next(b3)=b3 & next(b4)=!b4 & next(w)=w & (next(r)= (b0&b1&b2)|(b0&b2&b3)|(b0&b3&!b4)|(b0&b1&b3)|(b0&b1&!b4)|(b1&b3&!b4)|(b1&b2&!b4)|													(b2&b3&!b4)|(b1&b2&b3)|(b0&b2&!b4))
+  
+ 
+DEFINE
+   n := b0=b1 & b1=b2 & b2=b3 & b3=b4;
+
+MODULE main
+VAR 
+  m1 : process Memory();
+
+SPEC
+--P3:
+ !E[m1.n U (m1.n & !m1.w & m1.r & EG m1.n)]; 
+--P4  
+ !EF(!m1.n & E[m1.r & !m1.n U m1.n & ((m1.r & !m1.w)|(!m1.r & m1.w))])
+  

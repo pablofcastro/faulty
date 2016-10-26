@@ -1,0 +1,5 @@
+( O( global.z0 W (!c1.x0 & !c1.x1) ) ) & ( O( global.z1 W (!c2.x2 & !c2.x3) ) ) ;
+
+//O( global.z0 W (!c1.x0 & !c1.x1) );
+
+O( global.z1 W (!c2.x2 & !c2.x3) );

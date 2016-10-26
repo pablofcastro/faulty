@@ -1,5 +1,6 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
 
 
@@ -57,8 +58,19 @@ public class VarAssign implements Code{
      * @reutrn hte list of vars 
      */
     public LinkedList<Var> getVars(){
-    	LinkedList<Var> result = new LinkedList<Var>();
-    	result.add(var);
+    	LinkedList<Var> result = new LinkedList<Var>();    
+    	// if it is a reference we must add the reference to the list
+    	if (var.isReference()){
+    		if (var.getType().equals("bool"))
+    			result.add(((ParamBool) var).getReference());
+    		if (var.getType().equals("int"))
+    			result.add(((ParamInt) var).getReference());
+    		if (var.getType().equals("enum"))
+    			result.add(((ParamEnum) var).getReference());
+    	}
+    	else{ // otherwise we add the var
+    		result.add(var);
+    	}
     	return result;
     }
     
@@ -96,13 +108,43 @@ public class VarAssign implements Code{
     }
     
     /**
-     *It duplicates the curent code calling recursively to its components
+     *It duplicates the current code calling recursively to its components
      * @return a reference to a duplicate
      */
     public Code duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, Process owner){
     	
     	VarAssign result = new VarAssign(var.duplicate(instName, boolMap, intMap, owner), exp.duplicate(instName, boolMap, intMap, owner));
     	return result;
+    }
+    
+    public Code duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> boolPars, HashMap<ParamInt, ParamInt> intPars, Process owner){ 	
+    	VarAssign result = new VarAssign(var.duplicate(instName, boolMap, intMap, boolPars, intPars, owner), exp.duplicate(instName, boolMap, intMap, boolPars, intPars, owner));
+    	return result;
+    }
+    
+    /**
+     * 
+     * @param instName
+     * @param dups
+     * @param owner
+     * @return
+     */
+    public Code duplicate(String instName, HashMap<Var, Var> dups, Process owner){ 	
+    	VarAssign result = new VarAssign(var.duplicate(instName, dups, owner), exp.duplicate(instName, dups, owner));
+    	return result;
+    }
+    
+    
+    
+    
+    @Override
+    public String toString(){
+        String assignInfo = new String("");
+    	String  varString= var.toString(); 
+    	String exprString = exp.toString();
+    	assignInfo= assignInfo.concat(varString).concat(" = ").concat(exprString);
+    	
+     	return assignInfo;
     }
     
 }

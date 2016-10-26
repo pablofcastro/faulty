@@ -1,0 +1,2 @@
+O(global.z W (!c1.x & !c1.y));
+//O(false U (c1.x & c1.y)| (!c1.x & !c1.y));

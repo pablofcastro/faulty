@@ -1,0 +1,46 @@
+Enum state = {ready, executing, success, error};
+Enum ph = {ph0, ph1};
+Global state0 : state;
+Global state1 : state;
+Global state2 : state;
+Global php0 : ph; // phase for process0
+Global php1 : ph; // phase for process1
+Global php2 : ph; // phase for process2
+Process P(myState : state, myPhase : ph, otherState0 : state, otherState1 : state, otherPhase0 : ph, otherPhase1 : ph){
+    Initial: (myState == ready) && (myPhase == ph0);
+    Normative: !(myState == error);
+
+
+//CPB1
+    myState==ready && ((otherState0==ready) && (otherState1==ready) ) || ((otherState0==executing) || (otherState1==executing))-> myState=executing;
+
+//CPB2
+    myState==executing && (!(otherState0==ready) && !(otherState1==ready)) || ((otherState0==success) || (otherState1==success))->myState = success;
+
+//CPB3
+    myState==success && (!(otherState0==executing) && !(otherState1==executing)) && otherState0== ready && otherPhase0==ph0 -> myState = ready, myPhase=ph0;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing)) && otherState1== ready && otherPhase1==ph0 -> myState = ready, myPhase=ph0;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing)) && otherState0== ready && otherPhase0==ph1 -> myState = ready, myPhase=ph1;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing)) && otherState1== ready && otherPhase1==ph1 -> myState = ready, myPhase=ph1;
+    myState==success && myPhase == ph0 && ((otherState0==success) && (otherState1==success))-> myPhase = ph1;
+    myState==success && myPhase == ph1 && ((otherState0==success) && (otherState1==success))-> myPhase = ph0;
+
+//CB4
+    myState==error && (!(otherState0==executing) && !(otherState1==executing))&& (otherState0== ready) && (otherPhase0==ph0)  -> myState = ready, myPhase = ph0;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing))&& (otherState1== ready) && (otherPhase1==ph0)  -> myState = ready, myPhase = ph0;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing))&& (otherState0== ready) && (otherPhase0==ph1)  -> myState = ready, myPhase = ph1;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing))&& (otherState1== ready) && (otherPhase1==ph1)  -> myState = ready, myPhase = ph1;
+    myState==error && ((otherState0==success) && (otherState1==success))&& (otherPhase0==ph1)  -> myState = ready, myPhase = ph1;
+    myState==error && ((otherState0==success) && (otherState1==success))&& (otherPhase1==ph1)  -> myState = ready, myPhase = ph1;
+    myState==error && ((otherState0==success) && (otherState1==success))&& (otherPhase0==ph0)  -> myState = ready, myPhase = ph0;
+    myState==error && ((otherState0==success) && (otherState1==success))&& (otherPhase1==ph0)  -> myState = ready, myPhase = ph0;
+    true -> myState = error;
+}
+Main(){
+    p0:P;
+    p1:P;
+    p2:P;
+    run p0(state0, php0, state1, state2, php1, php2);
+    run p1(state1, php1, state0, state2, php0, php2);
+    run p2(state2, php2, state0, state1, php0, php1);
+}

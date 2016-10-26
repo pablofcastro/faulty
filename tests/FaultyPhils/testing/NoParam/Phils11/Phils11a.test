@@ -1,0 +1,231 @@
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+Global fork2 : BOOL;
+Global fork3 : BOOL;
+Global fork4 : BOOL;
+Global fork5 : BOOL;
+Global fork6 : BOOL;
+Global fork7 : BOOL;
+Global fork8 : BOOL;
+Global fork9 : BOOL;
+Global fork10 : BOOL;
+
+
+// FIRST LEFT
+Process Phil1{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork0 && fork1;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork0 && !hasl && !hasr  -> fork0=false, hasl=true; 
+   !s0 && s1 && !fork0 && !hasl && !hasr -> s0=s0, s1=s1;
+   !s0 && s1 && hasl && fork1 && !hasr -> fork1=false, hasr=true; 
+   !s0 && s1 && hasl && !fork1 && !hasr -> fork0=true, hasl=false; 
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork0=true, fork1=true, hasl=false, hasr=false;
+   true -> s0=true, s1=true;   
+   
+}
+
+//FIRST RIGHT
+Process Phil2{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork1 && fork2;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork2 && !hasr  -> fork2=false, hasr=true; 
+   !s0 && s1 && !fork2 && !hasr -> s0=s0, s1=s1;
+   !s0 && s1 && hasr && fork1 -> fork1=false, hasl=true; 
+   !s0 && s1 && hasr && !fork1 -> fork2=true, hasr=false; 
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork1=true, fork2=true, hasl=false, hasr=false;
+   true -> s0=true, s1=true;  
+}
+
+// FIRST LEFT
+Process Phil3{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork2 && fork3;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork2 && !hasl  -> fork2=false, hasl=true; 
+   !s0 && s1 && !fork2 && !hasl  -> s0=s0, s1=s1; 
+   !s0 && s1 && hasl && fork3-> fork3=false, hasr=true;  
+   !s0 && s1 && hasl && !fork3-> fork2=true, hasl=false;  
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork3=true, fork2=true, hasl=false, hasr=false;
+   true -> s0=true, s1=true;
+}
+
+
+
+//FIRST RIGHT
+Process Phil4{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork3 && fork4;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork4 && !hasr  -> fork4=false, hasr=true; 
+   !s0 && s1 && !fork4 && !hasr  -> s0=s0, s1=s1; 
+   !s0 && s1 && hasr && fork3 -> fork3=false, hasl=true;  
+   !s0 && s1 && hasr && !fork3 -> fork4=true, hasr=false;
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork4=true, fork3=true, hasr=false, hasl=false;
+   true -> s0=true, s1=true;  
+}
+
+// FIRST LEFT
+Process Phil5{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork4 && fork5;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork4 && !hasl  -> fork4=false, hasl=true; 
+   !s0 && s1 && !fork4 && !hasl  -> s0=s0, s1=s1; 
+   !s0 && s1 && hasl && fork5-> fork5=false, hasr=true;  
+   !s0 && s1 && hasl && !fork5-> fork4=true, hasl=false;  
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork4=true, fork5=true, hasl=false, hasr=false;
+   true -> s0=true, s1=true;
+}
+
+//FIRST RIGHT
+Process Phil6{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork5 && fork6;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork6 && !hasr  -> fork6=false, hasr=true; 
+   !s0 && s1 && !fork6 && !hasr  -> s0=s0, s1=s1; 
+   !s0 && s1 && hasr && fork5 -> fork5=false, hasl=true;  
+   !s0 && s1 && hasr && !fork5 -> fork6=true, hasr=false;
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork5=true, fork6=true, hasr=false, hasl=false;
+   true -> s0=true, s1=true;  
+}
+
+// FIRST LEFT
+Process Phil7{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork6 && fork7;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork6 && !hasl  -> fork6=false, hasl=true; 
+   !s0 && s1 && !fork6 && !hasl  -> s0=s0, s1=s1; 
+   !s0 && s1 && hasl && fork7-> fork7=false, hasr=true;  
+   !s0 && s1 && hasl && !fork7-> fork6=true, hasl=false;  
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork6=true, fork7=true, hasl=false, hasr=false;
+   true -> s0=true, s1=true;
+}
+
+//FIRST RIGHT
+Process Phil8{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork7 && fork8;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork8 && !hasr  -> fork8=false, hasr=true; 
+   !s0 && s1 && !fork8 && !hasr  -> s0=s0, s1=s1; 
+   !s0 && s1 && hasr && fork7 -> fork7=false, hasl=true;  
+   !s0 && s1 && hasr && !fork7 -> fork8=true, hasr=false;
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork8=true, fork7=true, hasr=false, hasl=false;
+   true -> s0=true, s1=true;  
+}
+
+// FIRST LEFT
+Process Phil9{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork8 && fork9;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork8 && !hasl  -> fork8=false, hasl=true; 
+   !s0 && s1 && !fork8 && !hasl  -> s0=s0, s1=s1; 
+   !s0 && s1 && hasl && fork9-> fork9=false, hasr=true;  
+   !s0 && s1 && hasl && !fork9-> fork8=true, hasl=false;  
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork8=true, fork9=true, hasl=false, hasr=false;
+   true -> s0=true, s1=true;
+}
+
+//FIRST RIGHT
+Process Phil10{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork9 && fork10;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork10 && !hasr  -> fork10=false, hasr=true; 
+   !s0 && s1 && !fork10 && !hasr  -> s0=s0, s1=s1; 
+   !s0 && s1 && hasr && fork9 -> fork9=false, hasl=true;  
+   !s0 && s1 && hasr && !fork9 -> fork10=true, hasr=false;
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork9=true, fork10=true, hasr=false, hasl=false;
+   true -> s0=true, s1=true;  
+}
+
+// FIRST LEFT
+Process Phil11{
+   s0, s1, hasl, hasr: BOOL;
+   Initial: !s0 && !s1  && !hasl && !hasr && fork10 && fork0;
+   Normative: !(s0 && s1); 
+
+   !s0 && !s1 -> s0=false, s1=true; 
+   !s0 && !s1 -> s0=false, s1=false; 
+   !s0 && s1 && fork10 && !hasl  -> fork10=false, hasl=true; 
+   !s0 && s1 && !fork10 && !hasl  -> s0=s0, s1=s1; 
+   !s0 && s1 && hasl && fork0-> fork0=false, hasr=true;  
+   !s0 && s1 && hasl && !fork0-> fork10=true, hasl=false;  
+   !s0 && s1 && hasl && hasr -> s0=true, s1=false; 
+   s0 && !s1 -> s0=false, s1=false, fork10=true, fork0=true, hasl=false, hasr=false;
+   true -> s0=true, s1=true;
+}
+
+
+Main(){
+ phil1:Phil1;
+ phil2:Phil2;
+ phil3:Phil3;
+ phil4:Phil4;
+ phil5:Phil5;
+ phil6:Phil6;
+ phil7:Phil7;
+ phil8:Phil8;
+ phil9:Phil9;
+ phil10:Phil10;
+ phil11:Phil11;
+
+ run phil1();
+ run phil2();
+ run phil3();
+ run phil4();
+ run phil5();
+ run phil6();
+ run phil7();
+ run phil8();
+ run phil9();
+ run phil10();
+ run phil11();
+ 
+
+}

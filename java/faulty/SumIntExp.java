@@ -1,6 +1,8 @@
 package faulty;
 import net.sf.javabdd.*;
+
 import java.util.*;
+
 import mc.*;
 import mc.VarInfo.Type;
 
@@ -106,5 +108,48 @@ public class SumIntExp implements IntExp{
     	SumIntExp result = new SumIntExp((IntExp) exp1.duplicate(instName, boolMap, intMap, owner), (IntExp) exp2.duplicate(instName, boolMap, intMap, owner), model);
     	return result;
     }
+    
+    /**
+     * 
+     * @param instName
+     * @param boolMap
+     * @param intMap
+     * @param pbools
+     * @param pints
+     * @param owner
+     * @return
+     */
+    public SumIntExp duplicate(String instName, HashMap<VarBool, VarBool> boolMap, HashMap<VarInt, VarInt> intMap, HashMap<ParamBool, ParamBool> pbools, HashMap<ParamInt, ParamInt> pints, Process owner){
+    	SumIntExp result = new SumIntExp((IntExp) exp1.duplicate(instName, boolMap, intMap, pbools, pints, owner), (IntExp) exp2.duplicate(instName, boolMap, intMap, pbools, pints, owner), model);
+    	return result;
+    }
+    
+    /**
+     * 
+     * @param instName
+     * @param dups
+     * @param owner
+     * @return
+     */
+    public SumIntExp duplicate(String instName, HashMap<Var, Var> dups, Process owner){
+    	SumIntExp result = new SumIntExp((IntExp) exp1.duplicate(instName, dups, owner), (IntExp) exp2.duplicate(instName, dups, owner), model);
+    	return result;
+    }
+    
+    
+   
+    @Override
+    public String toString(){
+        
+        String multInfo = new String(" ");
+    	
+    	String  exp1String= exp1.toString(); 
+    	String  exp2String= exp2.toString(); 
+    	
+    	multInfo= multInfo.concat(exp1String).concat(" + ").concat(exp2String);
+        
+     	return multInfo;
+    }
+
     
 }

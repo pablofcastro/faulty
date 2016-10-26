@@ -22,14 +22,13 @@ public void syntax_error(Symbol s){
 
 
 terminal String EXIST, FORALL, PERMISSION, OBLIGATION, RECOVERY, LPAREN, RPAREN, NEXT, UNTIL,WEAK, TRUE, FALSE,
-                NEG, IMPLIES, IMPLIESTEMP, SEMI, ID, AND, OR;
+                NEG, IMPLIES, IMPLIESTEMP, SEMI, ID, AND, OR, COMPARISON;
 
-non terminal FormulaElement formula, path_form, path_form_extra, state_form, log_operation, conjunction, implication, negation, primary ;
+non terminal FormulaElement formula, path_form, state_form, log_operation, conjunction, implication, comparison,negation, primary;
 non terminal  String  quantifier;
 precedence left OR;
 precedence left AND;
 precedence left IMPLIES;
-
 precedence left UNTIL,WEAK;
 precedence right NEXT;
 precedence right NEG;
@@ -42,18 +41,15 @@ formula ::= state_form:s SEMI {: RESULT = s;
          ; 
 
 path_form ::= NEXT:n state_form:s {: RESULT = new Next(n, s); :}
-           |  state_form:p UNTIL:u state_form:q {: RESULT = new Until(u, p, q); :}
-           
-           ;          
+           | state_form:p UNTIL:u state_form:q {: RESULT = new Until(u, p, q); :}
+           | state_form:p WEAK:w state_form:q {: RESULT = new Weak(w, p, q); :}
+         
+       ;
 
 state_form ::= log_operation:l {: RESULT = l; :} 
             |   quantifier:q LPAREN path_form:p IMPLIESTEMP:i path_form:r  RPAREN {: RESULT = AuxiliarMethods.rewriteFormula(q, p, r);  :} 
-            |   quantifier:q LPAREN path_form_extra:p RPAREN  {: RESULT = AuxiliarMethods.rewriteFormula(q,p);  :}       
+            |   quantifier:q LPAREN path_form:p RPAREN  {: RESULT = AuxiliarMethods.rewriteFormula(q,p);  :}       
 	    ;
-
-path_form_extra ::= path_form:p  {: RESULT = p; :}
-                  | state_form:p WEAK:w state_form:q  {: RESULT = new Weak(w,p,q ); :}
-                  ;
 
 log_operation ::= conjunction:c {: RESULT = c; :} 
             | log_operation:p OR:o conjunction:q {: RESULT = new Disjunction(o, p, q);  :}	
@@ -63,9 +59,14 @@ conjunction ::= implication:i {: RESULT = i; :}
 	    | conjunction:p AND:a implication:q {: RESULT = new Conjunction(a, p, q);  :}
 	    ;
 
-implication::= negation:n {: RESULT = n; :} 
-           | implication:p IMPLIES:i negation:q {: RESULT = new Implication(i, p, q);  :}
+implication ::= comparison:c {: RESULT = c; :} 
+            | implication:p IMPLIES:i comparison:q {: RESULT = new Implication(i, p, q);  :}
            ;
+
+
+comparison ::= negation:n  {: RESULT = n; :}
+	   | negation:p COMPARISON:c negation:q {: RESULT = new EqComparison(c, p ,q);  :}
+	   ; 
 
 negation ::= primary:p {: RESULT = p; :} 
            | NEG:n negation:p {: RESULT = new Negation( n , p);  :}  

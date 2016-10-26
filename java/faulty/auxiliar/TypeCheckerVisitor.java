@@ -13,7 +13,8 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 	private Type type;
 	private LinkedList<Error> listError;
 	private SymbolsTable table;
-	
+    private AuxiliarEnumType currentEnumeratedType;
+    
 	/**
 	 * Basic constructor
 	 */
@@ -21,39 +22,68 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		type = Type.UNDEFINED;
 	    listError = new LinkedList<Error>();
 	    table = new SymbolsTable();
+        currentEnumeratedType=null;
 	}
 	
 	
 	public void visit(AuxiliarProgram a){
 		
-		
+		 
+		//Type eType = Type.ERROR;
+		Type eType = Type.UNDEFINED;
+		AuxiliarEnumType enumT;
+        for(int i=0;i< a.enumTypes.size();i++){
+            
+			enumT =a.enumTypes.get(i);
+			enumT.accept(this);
+		    eType= this.getType();
+        }
+        
+       
+        
 		a.globalVars.accept(this);
 		Type globalT = this.getType();
 		
 		a.channels.accept(this);
 		Type chT = this.getType();
-		
-		
-		a.process.accept(this);
+						
+		a.process.accept(this);		
 		Type procT= this.getType();
 		
 		a.mainProgram.accept(this);
 		Type mainT = this.getType();
 		
-		if(globalT!= Type.ERROR && chT!=Type.ERROR  && procT!=Type.ERROR && mainT!= Type.ERROR ){
+		if(globalT!= Type.ERROR && chT!=Type.ERROR  && procT!=Type.ERROR && mainT!= Type.ERROR && eType!=Type.ERROR){
 			type = chT;
+            
+            calculatesEnumVars(a); // Calculates and set in each enum type the number of instances of this type of the program.
+            
+            
 		}
 		else{
-			type =Type.ERROR;
+			type =Type.ERROR;			
 		}
-		
 		
 	}
     
+    public void visit(AuxiliarEnumType a){
+        
+        boolean added =table.addSymbol(a);
+        //System.out.println("----------------> enum declaration " + a.getName() + " const 0 "+ a.getCons(0) + " - size = "+ a.getSize());
+        
+        if(!added){
+            type = Type.ERROR;
+            listError.add(new Error("ErrorType - The Enumerated Type " + a.getName() + ", already exist."));
+        }
+        
+    }
+    
 	public void visit(AuxiliarGlobalVarCollection a){
 		
-		LinkedList<AuxiliarVar> boolVars = a.boolVars;
-		LinkedList<AuxiliarVar> intVars = a.intVars;
+		LinkedList<AuxiliarVar> boolVars = a.getBoolVars();
+		LinkedList<AuxiliarVar> intVars = a.getIntVars();
+        LinkedList<AuxiliarVar> enumVars = a.getEnumVars();
+		
 		AuxiliarVar var;
 		
 		boolean correct =true;
@@ -61,7 +91,6 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		for(int i=0;i<boolVars.size();i++){
 			var =boolVars.get(i);
 			var.accept(this);
-			//table.addSymbol(var);
 			if (this.getType() == Type.ERROR){
 				correct=false;
 			}
@@ -69,11 +98,19 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		for(int i=0;i<intVars.size();i++){
 			var =intVars.get(i);
 			var.accept(this);
-			//table.addSymbol(var);
 			if (this.getType() == Type.ERROR){
 				correct=false;
 			}
 		}
+        
+        for(int i=0;i<enumVars.size();i++){
+			var =enumVars.get(i);
+            var.accept(this);
+			if (this.getType() == Type.ERROR){
+				correct=false;
+			}
+		}
+		
 		
 		if (correct){
 			this.type = Type.INT; 	// by default type global vars is int, otherwise ERROR.
@@ -82,24 +119,28 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 			this.type=Type.ERROR;
 		}
 	    
-	
+	    
+        
     }
 	
-	public void visit(AuxiliarProcessCollection a){
+	public void visit(AuxiliarProcessCollection a){		
 		LinkedList<AuxiliarProcess> processList = a.getProcessList();
 	
 		boolean correctType = true; 
 		
 		for(int i=0; i<processList.size(); i++){
-			processList.get(i).accept(this);
+		
+			processList.get(i).accept(this);			
 			if (this.getType()==Type.ERROR){
 				correctType = false;
 			}
 		}
 		
+        
 		if (correctType){
 			this.type = Type.INT; 	// by default type correct process list is int, otherwise ERROR.
-		}
+        
+        }
 		else{
 			this.type=Type.ERROR;
 		}
@@ -107,6 +148,7 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 	public void visit(AuxiliarChannelCollection a){
         LinkedList<AuxiliarChannel> boolChannelList = a.getBoolChannels();
         LinkedList<AuxiliarChannel> intChannelList = a.getIntChannels();
+		LinkedList<AuxiliarChannel> enumChannelList = a.getEnumChannels();
 		
 		Type chT;
 		boolean correctType = true;
@@ -118,8 +160,7 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 			if ( chT == Type.ERROR){
 				correctType=false;
 			}
-			//table.addSymbol(boolChannelList.get(i));
-		}
+        }
 
 		for(int i=0; i<intChannelList.size(); i++){
 			intChannelList.get(i).accept(this);
@@ -127,8 +168,17 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 			if ( chT == Type.ERROR){
 				correctType=false;
 			}
-			//table.addSymbol(intChannelList.get(i));
-		}	
+        }
+        
+        
+        for(int i=0; i<enumChannelList.size(); i++){
+			enumChannelList.get(i).accept(this);
+			chT = this.getType();
+			if ( chT == Type.ERROR){
+				correctType=false;
+			}
+        }
+		
 		
 		if(correctType){
 			type = Type.INT;// by defaault type correct channel list is int
@@ -140,14 +190,30 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 	}
 	
 	public void visit(AuxiliarProcess a){
+		
 		LinkedList<AuxiliarBranch> branches = a.getBranches();
 		LinkedList<AuxiliarChannel> usedChannels = a.getChannelIds();
 		AuxiliarExpression ini=a.getInitialCond();
 		AuxiliarExpression norm=a.getNormativeCond();
 		LinkedList<AuxiliarVar> varB = a.getVarBool();
 		LinkedList<AuxiliarVar> varI = a.getVarInt();
+        LinkedList<AuxiliarVar> varE = a.getVarEnum();
+        
+        LinkedList<AuxiliarParam> paramList = a.getParamList();
+
 		boolean correct =true;
 		table.incrementLevel();
+        
+        
+        //Parameters
+		for(int i=0;i<paramList.size();i++){
+			paramList.get(i).accept(this);
+			Type parT= this.getType();
+			if ( parT == Type.ERROR){
+				correct=false;
+			}
+		}
+		
 		
 		
 		//BOOL variables
@@ -167,7 +233,18 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 				correct=false;
 			}
 		}
+        
+        //ENUM variables
+		for(int i=0;i<varE.size();i++){
+			varE.get(i).accept(this);
+			Type varT= this.getType();
+			if ( varT == Type.ERROR){
+				correct=false;
+			}
+		}
+        
 		
+       
 		//initial Condition
 		ini.accept(this);
 		Type iniT = this.getType();
@@ -175,12 +252,16 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 			correct = false;
 		}
 		
+		
+		
 		// Normative condition
 		norm.accept(this);
 		Type normT = this.getType();
 		if ( normT == Type.ERROR){
 			correct = false;
 		}
+		
+		
 		
 		// USED channels
 		for(int i=0;i<usedChannels.size();i++){
@@ -201,7 +282,6 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		}
 		
 		if(!correct){
-			//System.out.println("---------- SOME ERROR IN PROCESS" + a.getName());
 			this.type =Type.ERROR;
 		}
 		else{
@@ -224,7 +304,13 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		if(a.isDeclaration()){
 
 			//System.out.println("DECLARATION" +a.getName() + "--- Size:" + a.getSize() + "-- Type :" + a.getType().toString() );
-			if(origT.isBOOLEAN() || origT.isINT() ){ // Complete declaration channel 
+			if(origT.isBOOLEAN() || origT.isINT() || origT.isEnumerated()){ // Complete declaration channel
+                
+                if(origT.isEnumerated()){ // Indicates an error
+                    type = Type.ERROR;
+                    listError.add(new Error("FUTURE FEATURE -  Current version does not support Channels of enumerated types."));
+			        
+                }
 				
 				//System.out.println("---COMPLETE DECLARATION ------" +a.getName() + "--- Size:" + a.getSize() + "-- Type :" + a.getType().toString() );
 				boolean result= table.addSymbol(a);
@@ -249,8 +335,14 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 				if(ch!=null){
 					//System.out.println("+++++++++++++++++++ > added in level:" +table.getLevel() +" Channel: "+ ch.getName() + "type" + ch.getType().toString() + " -- size :" + ch.getSize());
 					a=ch;
-					table.addSymbol(ch);
-					type = ch.getType();
+					boolean added = table.addSymbol(ch);
+                    if(!added){
+                        type = Type.ERROR;
+		    	        listError.add(new Error("ErrorType - Channel Declaration " + a.getName() + " already exist."));
+                    }
+					else{
+                        type = ch.getType();
+                    }
 				}
 				else{
 					type = Type.ERROR;
@@ -299,8 +391,6 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 			this.type = Type.BOOL;
 		}
 		else{
-			
-			System.out.println("ERROR in BRANCH");
 			this.type =Type.ERROR;
 		}
 	}
@@ -308,20 +398,26 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 	
 	public void visit(AuxiliarChanAssign a){
 		
-		AuxiliarChannel var = a.chanName;
-		var.accept(this);
+		AuxiliarChannel channel = a.chanName;
+		channel.accept(this);
 		Type chT = this.getType();
 		
 		AuxiliarExpression expr = a.exp;
+        if(chT.isEnumerated()){ //if is enumerated search in the first level de types declarated.
+            
+            TableLevel initialLevel = table.getLevelSymbols(0);
+            currentEnumeratedType = initialLevel.getEnumeratedType(channel.getEnumName());//set the enumerated type information of the current assignation
+            
+        }
+        
 		expr.accept(this);
 		Type exprT = this.getType();
 		
-		if( (chT.isBOOLEAN() && exprT.isBOOLEAN()) || (chT.isINT() && exprT.isINT() ) ){
-		    type = chT;
+		if( (chT.isBOOLEAN() && exprT.isBOOLEAN()) || (chT.isINT() && exprT.isINT() ) || (chT.isEnumerated() && exprT.isEnumerated()) ){
+			type = chT;
 		}
 	    else{
-	    	System.out.println("ERROR PUT OPERATION");
-		    type = Type.ERROR;
+	    	type = Type.ERROR;
 		    listError.add(new Error("ErrorType: PUT operation, channel :" + a.chanName.getName() ));
 		}
 	}
@@ -330,12 +426,31 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		AuxiliarVar var = a.var;
 		var.accept(this);
 		Type varT = this.getType();
+        String enumExp1 = null;
+        String enumExp2 = null;
+        //System.out.println(" -------------------Visiting AuxiliarVarAssign------ Var= " + var.getName() + "-- Type:"  + var.getEnumName() + " --------- \n");
+        
+        
+        Type exprT;
+        AuxiliarExpression expr = a.exp;
+		if(varT.isEnumerated()){ //if is enumerated search in the first level de types declarated.
+            
+            TableLevel initialLevel = table.getLevelSymbols(0);
+            currentEnumeratedType = initialLevel.getEnumeratedType(var.getEnumName());//set the enumerated type information of the current assignation
+            enumExp1 = var.getEnumName();
+        }
+        expr.accept(this);
+        exprT = this.getType();
+        if(exprT.isEnumerated()){
+            enumExp2 = currentEnumeratedType.getName();
+        }
+            
+        //System.out.println(" ------------------ Visiting AuxiliarVarAssign------ expr= " + "-- TypEEEEEE: "  + exprT + " --------- \n");
+            
+        
 		
-		AuxiliarExpression expr = a.exp;
-	    expr.accept(this);
-		Type exprT = this.getType();
-		
-		if( (varT.isBOOLEAN() && exprT.isBOOLEAN()) || (varT.isINT() && exprT.isINT() ) ){
+        
+		if( (varT.isBOOLEAN() && exprT.isBOOLEAN()) || (varT.isINT() && exprT.isINT() ) || ((varT.isEnumerated() && exprT.isEnumerated() && ( enumExp1.equals(enumExp2)) )) ){
 			type = varT;
 		}
 		else{
@@ -346,35 +461,98 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 
 	public void visit(AuxiliarVar a){
 		Type origT = a.getType();
-		
-		//if(origT.isBOOLEAN() && origT.isINT()){ //declaration
-		if(a.isDeclaration()){
-		    table.addSymbol(a);
-			type=origT;
+        if(a.isDeclaration()){
+            
+            
+            if(origT.isEnumerated()){
+                
+                TableLevel initialLevel = table.getLevelSymbols(0);
+                AuxiliarEnumType enumT = initialLevel.getEnumeratedType(a.getEnumName()); //search the enumerated type.
+                if(enumT!=null){
+                    a.setEnumType(enumT); //set the complete information of the type.
+                    //System.out.println("VISITING var  declaration " + a.getName() + " type "+ a.getEnumName() + " -- etype " + enumT.getName() + " - size = "+ enumT.getSize());
+                }
+                else{
+                    type = Type.ERROR;
+                    listError.add(new Error("ErrorType - Var Declaration " + a.getName() + ", Type " + a.getEnumName() + " not found."));
+                }
+                
+            }
+            
+            
+		    boolean added =table.addSymbol(a);
+            if(!added){
+                type = Type.ERROR;
+                listError.add(new Error("ErrorType - Var Declaration " + a.getName() + " already exist."));
+            }
+            else{
+                type=origT;
+            }
 		}
 		else{ //type is undefined or error
 			if (origT.isUndefined() ){
 				
-			    AuxiliarVar var=null;
-			    int i= table.getLevel();
+                int i= table.getLevel();
+                boolean found=false;
 			    
-			    boolean found=false;
-			    //search the variable in the symbol table
-			    while(i >= 0 && !found){
-			    	var = table.searchVar(a.getName(), i);
-			    	if(var!=null){
-				    	//System.out.println("encontro vble" + var.getName() + "level table : " + i + " - type: " +var.getType().toString() );
-				        found = true;
-					    type = var.getType();
-					    a.setType(var.getType());
-				        a = var;
-				    }
-				    else{
-					    type = Type.ERROR;
-			    	    listError.add(new Error("ErrorType - Variable " + a.getName() + " not found"));
+                //Checks that not be a parameter.
+                AuxiliarParam param = table.searchParam(a.getName(), i);
+                if(param!=null){
+                	
+                    found = true;
+                    type = param.getType();
+                    a.setType(param.getType());
+                    a.setEnumName(param.getEnumName());
+                    TableLevel initialLevel = table.getLevelSymbols(0);
+                    this.currentEnumeratedType = initialLevel.getEnumeratedType(param.getEnumName()); // bug fixed, CECI: CHECK THIS OUT                                                
+                }
+                else{
+                
+			        AuxiliarVar var=null;			       
+			        //search the variable in the symbol table
+			        while(i >= 0 && !found){
+                        var = table.searchVar(a.getName(), i);
+                        
+			    	    if(var!=null){
+                            found = true;
+					        type = var.getType();
+					        a.setType(var.getType());
+                            a.setEnumName(var.getEnumName());
+                            //System.out.println("----------------> Var Founded = " + a.getName() + " -- in Enumerated Type " + var.getEnumName() + "Type: " + var.getType().getStringValue() );
+                            
+                            TableLevel initialLevel = table.getLevelSymbols(0);
+                            this.currentEnumeratedType = initialLevel.getEnumeratedType(var.getEnumName());//set the enumerated type information of the current assignation o comparison
+                            a = var;
+				        }
+				        i--;
 			        }
-				    i--;
-			    }
+                    
+                    if(!found){//search if its a constant of the current enumerated type
+                        //System.out.println("----------------> VAR Not found -----Searching constant = " + this.currentEnumeratedType );
+
+                        if(this.currentEnumeratedType!=null){
+                            //System.out.println("----------------> Searching constant = " + a.getName() + " -- in Enumerated Type " + this.currentEnumeratedType.getName() );
+
+                            found = this.currentEnumeratedType.existConstant(a.getName());
+                            if(found){
+                                //System.out.println("----------------> Exist constant!!" + a.getName()  );
+
+                                type= Type.ENUMERATED;
+                                a.setType(type);
+                                a.setEnumName(this.currentEnumeratedType.getName());
+                                a.setEnumType(this.currentEnumeratedType);//set the complete information if the enumerated type.
+                                
+                            }
+                        }
+                    }
+                    
+                    if(!found){
+                        type = Type.ERROR;
+                        listError.add(new Error("ErrorType - Variable or Parameter or Constant = " + a.getName() + ", not found"));
+                    }
+
+                }
+			    
 	        }
 			else{// type is ERROR
 			    type = Type.ERROR;
@@ -383,12 +561,15 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		
 		//System.out.println("----------------> FINAL vble" + a.getName() + " -- type: " + a.getType().toString() );
         
+        
+        
 }
 	
 
 	
 	public void visit(AuxiliarAndBoolExp a){
-		a.exp1.accept(this);
+		
+		a.exp1.accept(this);	
 		Type typeExp1 = this.getType();
 		a.exp2.accept(this);
 		Type typeExp2 = this.getType();
@@ -398,7 +579,7 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 	    else{
 	    	type = Type.ERROR;
 	    	listError.add(new Error("ErrorType - Conjunction operation: Expected types Boolean."));
-	    }
+	    }	
 	}
 	public void visit(AuxiliarBiimpBoolExp a){
 		a.exp1.accept(this);
@@ -471,12 +652,25 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 	    }
 	}
 	public void visit(AuxiliarEqBoolExp a){
+       		
 		a.int1.accept(this);
 		Type typeExp1 = this.getType();
+		
+        String tEnum1 = null;
+        String tEnum2 = null;
+        if(typeExp1.isEnumerated()){ //if is enumerated search in the first level of declarated types.        	
+        	tEnum1 = this.currentEnumeratedType.getName();
+        }
+       
 		a.int2.accept(this);
 		Type typeExp2 = this.getType();
-		//System.out.println("operation type First Op " + typeExp1.toString() + "type second op " +  typeExp2.toString() );
+        if(typeExp2.isEnumerated()){ //if is enumerated search in the first level of declarated types.
+            tEnum2 = this.currentEnumeratedType.getName();
+        }
+       
+        //System.out.println("operation type First Op " + typeExp1.toString() + "type second op " +  typeExp2.toString() );
 		
+        
 	    if(typeExp1.isINT() && typeExp2.isINT() ){
 	    	//System.out.println(" ------> INT first op" + typeExp1.toString() + "type second op " +  typeExp2.toString() );
     		
@@ -489,10 +683,24 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		    	type= Type.BOOL;
 		    }
 		    else{
-		    	//System.out.println(" ------> ERROR first op" + typeExp1.toString() + "type second op " +  typeExp2.toString() );
-	    		
-		    	type = Type.ERROR;
-		    	listError.add(new Error("ErrorType - == operator: Expected the same types for Comparation."));
+                
+                if(typeExp1.isEnumerated() && typeExp2.isEnumerated() ){
+                    
+                    if(tEnum1.equals(tEnum2)){
+                       // System.out.println(" ------> ENUMERATED first op" + typeExp1.toString() + "type second op " +  typeExp2.toString() + "EnumType:" + tEnum2);
+                        a.setIsEnumerated(true); //mark that comparation involves 2 enum expressions.
+                        a.setEnumType(tEnum2);
+                        type= Type.BOOL;
+                    }else{
+                        type = Type.ERROR;
+                        listError.add(new Error("ErrorType - == operator: Expected the same enumerated types for Comparation."));
+                    }
+                }
+                else{
+                    //System.out.println(" ------> ERROR first op" + typeExp1.toString() + "type second op " +  typeExp2.toString() );
+                    type = Type.ERROR;
+                    listError.add(new Error("ErrorType - == operator: Expected the same types for Comparation."));
+                }
 		    }	 
 	    }
 	}
@@ -562,7 +770,7 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 	    chan.accept(this);
 		Type chT = this.getType();
 		a.setChannel( table.searchChannel(chan.getName(), table.getLevel() ));
-		if(chT.isBOOLEAN() || chT.isINT()){
+		if(chT.isBOOLEAN() || chT.isINT() || chT.isEnumerated()){
 			this.type= chT;
 		   /* System.out.println("Chan Access - complete channel information :  TYPE : " + chT.toString());
 		    System.out.println("--------------------------------");
@@ -579,36 +787,194 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		
 	}
 	
-	public void visit(AuxiliarMain a){
+    public void visit(AuxiliarParam a){
+        	
+        Type origT = a.getType();
+        String paramName = a.getDeclarationName();
+		
+		if(a.isDeclaration()){			
+            if(origT.isEnumerated()){
+               
+                TableLevel initialLevel = table.getLevelSymbols(0);
+                AuxiliarEnumType enumT = initialLevel.getEnumeratedType(a.getEnumName()); //search the enumerated type.
+                
+                if(enumT!=null){
+                    a.setEnumType(enumT); //set the complete information of the type.
+                    //System.out.println("Parameter declaration " + paramName + " type "+ a.getEnumName() + " -- etype " + enumT.getName() + " - size = "+ enumT.getSize());
+                    
+                }
+                else{
+                    
+                    type = Type.ERROR;
+                    listError.add(new Error("ErrorType - Parameter " + paramName + " type :"+ a.getEnumName()+  " not found."));
+                
+                }
+            }
+		    boolean added = table.addSymbol(a);
+            
+            if (!added){ //Already exist an element with the same id at this level.
+                type = Type.ERROR;
+                listError.add(new Error("ErrorType - Parameter " + paramName + " : Ambiguous statement - already exist a Channel or Variable with the same name."));
+            }
+            else{
+			    type=origT;
+            }
+		}		
+		/*else{ //type is undefined or error   - TODO:CHECK IF IT IS NEEDED.(solo visita el parametro en la declaracion)
+            System.out.println("//////////////////////////////////Parameter USEEEEEEEE ");
+            
+			if (origT.isUndefined() ){
+				
+			    AuxiliarParam par=null;
+			    int level= table.getLevel();
+                
+			    par = table.searchParam(paramName, level);
+                if(par!=null){
+				    type = par.getType();
+                    a.setEnumName(par.getEnumName());
+					a.setType(par.getType());
+				    a = par;
+                    System.out.println("Parameter useeeee " + paramName + " type "+ a.getEnumName() );
+                    
+                }
+			    else{
+			    	type = Type.ERROR;
+		    	    listError.add(new Error("ErrorType - Parameter " + paramName + " not found"));
+		        }
+                
+	        }
+			else{// type is ERROR
+			    type = Type.ERROR;
+			}
+		}*/
+        
+    }
+    
+    
+	
+    public void visit(AuxiliarInvkProcess a){
+        
+        Type procT;
+		TableLevel initialLevel = table.getLevelSymbols(0);
+        AuxiliarVar gVar =null;
+        String varName;
+        
+        LinkedList<AuxiliarExpression> invkParam = a.getInvkValues();
+        for(int i=0; i< invkParam.size();i++){
+            gVar = (AuxiliarVar)invkParam.get(i); //Obtain the name of the variable used in the process invocation.
+            varName = gVar.getName();
+            gVar = initialLevel.getVar(varName); // Search the global vble with that name
+            
+            if (gVar==null) {
+                type = Type.ERROR;
+                listError.add(new Error("ErrorType - Main Program - Invocation of process: "+ a.getInstanceName() +"  - Variable: " + varName +" - not found ."));
+            }
+            else{
+                invkParam.set(i,gVar); //replace the parameter by the reference of the global variable.
+            }
+        }
+        
+    }
+    
+    
+    
+    public void visit(AuxiliarMain a){
 
 		LinkedList<AuxiliarProcessDecl> pDecl = a.processDecl;
-		LinkedList<String> pInvk = a.processInvk;
+		LinkedList<AuxiliarInvkProcess> pInvk = a.getProcessInvk();
+        
 		Type procT;
-		type = Type.INT; //By default all correct process are INT type, otherwise ERROR.
+		this.type = Type.INT; //By default all correct process are INT type, otherwise ERROR.
 		
 		for(int i=0; i< pDecl.size();i++){
 			pDecl.get(i).accept(this);
 			procT = this.getType();
-			if(procT == Type.ERROR){
-				type = procT;
-				listError.add(new Error("ErrorType - Main Program - Process Declarations Error."));
-			}
-		}
+        }
 		
 		if(!a.isCorrectInvk()){
-			type = Type.ERROR;
-			listError.add(new Error("ErrorType - Main Program in process Invocation - Process instance not Found ."));
+			
+			listError.add(new Error("ErrorType -  Process Invocation - Process instance not Found ."));
 		}
+		else{
+		    TableLevel initialLevel = table.getLevelSymbols(0);
+		    AuxiliarProcess proc = null;
+            AuxiliarInvkProcess infoInvoc;
+            String procNam;
+		    for(int i=0; i<pInvk.size(); i++ ){
+                procNam = pInvk.get(i).getInstanceName();
+			    proc = initialLevel.getProcess(a.getProcessType(procNam));
+			    if(proc !=null){
+                    infoInvoc = pInvk.get(i);
+                    infoInvoc.accept(this);
+                    procT = this.getType();
+                    
+                    if (procT!=Type.ERROR){
+                        
+                        //Parameter vs InvocationsParameters - Check number of parameters
+                        LinkedList<AuxiliarParam> paramList = proc.getParamList();
+                        LinkedList<AuxiliarExpression>  invkParametersList= infoInvoc.getInvkValues();
+                        
+                        if(invkParametersList.size() != paramList.size()){ //TODO: Pensar chequear esto antes de llamar al Visitor de AusiliarinvkProcess.
+                            listError.add(new Error("ErrorType - Invocation of process: "+ procNam +" - The number of parameters does not match its definition."));
+                            
+                        }
+                        else{
+                            
+                            for(int j=0;j<paramList.size();j++){
+                                AuxiliarParam par= paramList.get(j);
+                                String declName = par.getDeclarationName();
+                                
+                                Type declT= par.getType();
+                               /* System.out.println("Parameter declaration " + declName + " type "+ declT.toString() );
+                                
+                                if(par.getEnumType()!=null && declT.isEnumerated()){
+                                   System.out.println(" enumerated: " +  par.getEnumName()+ " -- etype: " + par.getEnumType().getName() + " - size = "+ par.getEnumType().getSize());
+                                }*/
+                                
+                                AuxiliarVar gVar = (AuxiliarVar)invkParametersList.get(j);
+                                /*System.out.println("Parameter invok: " + gVar.getName() + " type: "+ gVar.getType().toString() );
+                                
+                                if(gVar.getEnumType()!=null && gVar.getType().isEnumerated()){
+                                     System.out.println( " enumerated = " + gVar.getEnumName() + " -- etype " + gVar.getEnumType().getName() + " - size = "+ gVar.getEnumType().getSize()+ " \n\n\n");
+                                }*/
+                                
+                                
+                                if( gVar == null){
+                                    listError.add(new Error("ErrorType1 - Invocation of process : "+ procNam +" - Type of parameters does not match its definition."));
+                                }else{
+                                    
+                                    if( gVar.getType().isEnumerated()){
+                                        if(gVar.getEnumType()== null){
+                                            listError.add(new Error("ErrorType2 - Invocation of process : "+ procNam +" - Type of parameters does not match its definition."));
+                                            
+                                        }
+                                        
+                                        if(!gVar.getEnumName().equals(par.getEnumName())){
+                                            listError.add(new Error("ErrorType3 - Invocation of process : "+ procNam +" - Type of parameters does not match its definition."));
+                                            
+                                        }
+                                            
+                                    
+                                    }else{
+                                       if( gVar.getType()!= declT){
+                                          listError.add(new Error("ErrorType4 - Invocation of process : "+ procNam +" - Type of parameters does not match its definition."));
+                                       }
+                                    }
+                                }
+                                
+                            }
+                        }
+				        proc.addInstanceName(infoInvoc.getInstanceName()); //add the instance name to the auxiliarProcess for later generation of instances.
+                        proc.addInvkParam(infoInvoc); //Add the invocation parameters
+                    }
+                }
+		    }
+        }
 		
-		TableLevel initialLevel = table.getLevelSymbols(0);
-		AuxiliarProcess proc = null;
-		for(int i=0; i<pInvk.size(); i++ ){
-			proc = initialLevel.getProcess(a.getProcessType(pInvk.get(i)));
-			if(proc !=null){
-				proc.addInstanceName(pInvk.get(i)); //add the instance name to the auxiliarProcess for later generation of instances.
-			}
-		}
-		
+        if(listError.size()>0){
+            this.type = Type.ERROR;
+        }
+        
 	}
 	
 	public void visit(AuxiliarProcessDecl a){
@@ -619,7 +985,7 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
         }
         else{
         	type = Type.ERROR;
-			listError.add(new Error("ErrorType - Main Program in process Declaration - Process name not Found ."));        	
+			listError.add(new Error("ErrorType - Main Program - Process Declaration - Process name not Found ."));        	
         }
 	}
 	
@@ -646,5 +1012,57 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
     public LinkedList<Error> getErrorList(){
     	return listError;
     }
+    
+    
+    /**
+	 * Calculates and set in each enumType the number of instances of this type of the program.
+	 * 
+	 */
+    
+    private void calculatesEnumVars(AuxiliarProgram p){
+    
+        AuxiliarEnumType enumT;
+        String eName;
+        int numEnumT;
+        for(int i=0;i< p.enumTypes.size();i++){
+			enumT =p.enumTypes.get(i);
+            eName = enumT.getName();
+            numEnumT= getNumInstances(eName, p.globalVars.getEnumVars(),p.channels.getEnumChannels(), p.process.getProcessList());
+            enumT.setNumVars(numEnumT);
+        }
+        
+	}
+    
+    
+    private int getNumInstances(String eName, LinkedList<AuxiliarVar> globalVarList,LinkedList<AuxiliarChannel> enumChannelList , LinkedList<AuxiliarProcess> processList){
+        
+        int numEnumInstances=0;
+       
+        //calculates the number of global var of this enumType
+        for(int i=0;i<globalVarList.size();i++){
+			AuxiliarVar var =globalVarList.get(i);
+            if(var.getEnumName().equals(eName)){
+                numEnumInstances++;
+            }
+		}
+        
+        //calculates the number of global channel of this enumType
+        for(int i=0;i<enumChannelList.size();i++){
+			AuxiliarChannel ch =enumChannelList.get(i);
+            if(ch.getEnumName().equals(eName)){
+                numEnumInstances= numEnumInstances + ch.getSize();  // TODO: CHECK if is correct set the worst case..
+            }
+		}
+        
+        //calculates the number of var and parameters of this enumType by each process
+        for(int i=0;i<processList.size();i++){
+			AuxiliarProcess proc =processList.get(i);
+            numEnumInstances= numEnumInstances + proc.getNumEnumProcessInstances(eName);
+            
+		}
+        
+        return numEnumInstances;
+    }
+    
 
 }
