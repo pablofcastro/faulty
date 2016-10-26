@@ -1,2 +1,0 @@
-# A simple script for running the faulty model checker
-java -jar $FAULTY/dCTL_checker.jar $1 $2
