@@ -1,0 +1,83 @@
+Enum state = {ready, executing, success, error};
+Enum ph = {ph0, ph1};
+Global state0 : state;
+Global state1 : state;
+Global state2 : state;
+Global state3 : state;
+Global state4 : state;
+Global state5 : state;
+Global state6 : state;
+Global state7 : state;
+Global state8 : state;
+Global state9 : state;
+Global php0 : ph; // phase for process0
+Global php1 : ph; // phase for process1
+Global php2 : ph; // phase for process2
+Global php3 : ph; // phase for process3
+Global php4 : ph; // phase for process4
+Global php5 : ph; // phase for process5
+Global php6 : ph; // phase for process6
+Global php7 : ph; // phase for process7
+Global php8 : ph; // phase for process8
+Global php9 : ph; // phase for process9
+Process P(myState : state, myPhase : ph, otherState0 : state, otherState1 : state, otherState2 : state, otherState3 : state, otherState4 : state, otherState5 : state, otherState6 : state, otherState7 : state, otherState8 : state, otherPhase0 : ph, otherPhase1 : ph, otherPhase2 : ph, otherPhase3 : ph, otherPhase4 : ph, otherPhase5 : ph, otherPhase6 : ph, otherPhase7 : ph, otherPhase8 : ph){
+    Initial: (myState == ready) && (myPhase == ph0);
+    Normative: !(myState == error);
+
+
+//CPB1
+    myState==ready && ((otherState0==ready) && (otherState1==ready)  && (otherState2==ready)  && (otherState3==ready)  && (otherState4==ready)  && (otherState5==ready)  && (otherState6==ready)  && (otherState7==ready)  && (otherState8==ready) ) || ((otherState0==executing) || (otherState1==executing) || (otherState2==executing) || (otherState3==executing) || (otherState4==executing) || (otherState5==executing) || (otherState6==executing) || (otherState7==executing) || (otherState8==executing))-> myState=executing;
+
+//CPB2
+    myState==executing && (!(otherState0==ready) && !(otherState1==ready) && !(otherState2==ready) && !(otherState3==ready) && !(otherState4==ready) && !(otherState5==ready) && !(otherState6==ready) && !(otherState7==ready) && !(otherState8==ready)) || ((otherState0==success) || (otherState1==success) || (otherState2==success) || (otherState3==success) || (otherState4==success) || (otherState5==success) || (otherState6==success) || (otherState7==success) || (otherState8==success))->myState = success;
+
+//CPB3
+    myState==success && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing)) && otherState0== ready -> myState = ready, myPhase=otherPhase0;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing)) && otherState1== ready -> myState = ready, myPhase=otherPhase1;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing)) && otherState2== ready -> myState = ready, myPhase=otherPhase2;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing)) && otherState3== ready -> myState = ready, myPhase=otherPhase3;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing)) && otherState4== ready -> myState = ready, myPhase=otherPhase4;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing)) && otherState5== ready -> myState = ready, myPhase=otherPhase5;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing)) && otherState6== ready -> myState = ready, myPhase=otherPhase6;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing)) && otherState7== ready -> myState = ready, myPhase=otherPhase7;
+    myState==success && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing)) && otherState8== ready -> myState = ready, myPhase=otherPhase8;
+    myState==success && myPhase == ph0 && ((otherState0==success) && (otherState1==success) && (otherState2==success) && (otherState3==success) && (otherState4==success) && (otherState5==success) && (otherState6==success) && (otherState7==success) && (otherState8==success))-> myPhase = ph1;
+    myState==success && myPhase == ph1 && ((otherState0==success) && (otherState1==success) && (otherState2==success) && (otherState3==success) && (otherState4==success) && (otherState5==success) && (otherState6==success) && (otherState7==success) && (otherState8==success))-> myPhase = ph0;
+
+//CB4
+    myState==error && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing))&& (otherState0== ready)   -> myState = ready, myPhase = otherPhase0;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing))&& (otherState1== ready)   -> myState = ready, myPhase = otherPhase1;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing))&& (otherState2== ready)   -> myState = ready, myPhase = otherPhase2;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing))&& (otherState3== ready)   -> myState = ready, myPhase = otherPhase3;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing))&& (otherState4== ready)   -> myState = ready, myPhase = otherPhase4;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing))&& (otherState5== ready)   -> myState = ready, myPhase = otherPhase5;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing))&& (otherState6== ready)   -> myState = ready, myPhase = otherPhase6;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing))&& (otherState7== ready)   -> myState = ready, myPhase = otherPhase7;
+    myState==error && (!(otherState0==executing) && !(otherState1==executing) && !(otherState2==executing) && !(otherState3==executing) && !(otherState4==executing) && !(otherState5==executing) && !(otherState6==executing) && !(otherState7==executing) && !(otherState8==executing))&& (otherState8== ready)   -> myState = ready, myPhase = otherPhase8;
+    myState==error && ((otherState0==success) && (otherState1==success) && (otherState2==success) && (otherState3==success) && (otherState4==success) && (otherState5==success) && (otherState6==success) && (otherState7==success) && (otherState8==success))-> myState = ready, myPhase = otherPhase0;
+    true -> myState = error;
+    true -> myState = myState;	
+
+}
+Main(){
+    p0:P;
+    p1:P;
+    p2:P;
+    p3:P;
+    p4:P;
+    p5:P;
+    p6:P;
+    p7:P;
+    p8:P;
+    p9:P;
+    run p0(state0, php0, state1, state2, state3, state4, state5, state6, state7, state8, state9, php1, php2, php3, php4, php5, php6, php7, php8, php9);
+    run p1(state1, php1, state0, state2, state3, state4, state5, state6, state7, state8, state9, php0, php2, php3, php4, php5, php6, php7, php8, php9);
+    run p2(state2, php2, state0, state1, state3, state4, state5, state6, state7, state8, state9, php0, php1, php3, php4, php5, php6, php7, php8, php9);
+    run p3(state3, php3, state0, state1, state2, state4, state5, state6, state7, state8, state9, php0, php1, php2, php4, php5, php6, php7, php8, php9);
+    run p4(state4, php4, state0, state1, state2, state3, state5, state6, state7, state8, state9, php0, php1, php2, php3, php5, php6, php7, php8, php9);
+    run p5(state5, php5, state0, state1, state2, state3, state4, state6, state7, state8, state9, php0, php1, php2, php3, php4, php6, php7, php8, php9);
+    run p6(state6, php6, state0, state1, state2, state3, state4, state5, state7, state8, state9, php0, php1, php2, php3, php4, php5, php7, php8, php9);
+    run p7(state7, php7, state0, state1, state2, state3, state4, state5, state6, state8, state9, php0, php1, php2, php3, php4, php5, php6, php8, php9);
+    run p8(state8, php8, state0, state1, state2, state3, state4, state5, state6, state7, state9, php0, php1, php2, php3, php4, php5, php6, php7, php9);
+    run p9(state9, php9, state0, state1, state2, state3, state4, state5, state6, state7, state8, php0, php1, php2, php3, php4, php5, php6, php7, php8);
+}
