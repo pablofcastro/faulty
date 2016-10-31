@@ -1,0 +1,2 @@
+O(false U (global.php0 == ph0) & !(global.state0 == ready) ~> (global.php0 == ph0) & !(global.state0 == ready) W (global.php0 == ph1));
+//A(true U (global.php0 == ph0));
