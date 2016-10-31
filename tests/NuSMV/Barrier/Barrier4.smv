@@ -1,0 +1,35 @@
+MODULE P(otherState0, otherState1, otherState2, otherPhase0, otherPhase1, otherPhase2)
+VAR
+    state : {ready, executing, success, error};
+    ph:{ph1, ph2};
+ASSIGN
+next(state) := case
+    state=ready & ((otherState0=ready & otherState1=ready  & otherState2=ready ) | (otherState0=executing | otherState1=executing | otherState2=executing)):{executing, error};
+    state=executing & ((!(otherState0=ready) & !(otherState1=ready) & !(otherState2=ready)) | (otherState0=success & otherState1=success & otherState2=success)):{success, error};
+    state=success & ((!(otherState0=executing) & !(otherState1=executing) & !(otherState2=executing))):{ready, error};
+    state=error & ((!(otherState0=executing) & !(otherState1=executing) & !(otherState2=executing))):{ready, error};
+    TRUE : {state, error};
+esac;
+
+next(ph):=case
+    state=success & ((!(otherState0=executing) & !(otherState1=executing) & !(otherState2=executing)) & (otherPhase0=ph1 & otherState0=ready | otherPhase1=ph1 & otherState1=ready | otherPhase2=ph1 & otherState2=ready)) : ph1;
+    state=success & ((!(otherState0=executing) & !(otherState1=executing) & !(otherState2=executing)) & (otherPhase0=ph2 & otherState0=ready | otherPhase1=ph2 & otherState1=ready | otherPhase2=ph2 & otherState2=ready)) : ph2;
+    state=success & otherState0=success & otherState1=success & otherState2=success & ph = ph1 : ph2;
+    state=success & otherState0=success & otherState1=success & otherState2=success & ph = ph2 : ph1;
+    state=error & !(otherState0=executing) & !(otherState1=executing) & !(otherState2=executing) & otherState0 = ready : otherPhase0;
+    state=error & !(otherState0=executing) & !(otherState1=executing) & !(otherState2=executing) & otherState1 = ready : otherPhase1;
+    state=error & !(otherState0=executing) & !(otherState1=executing) & !(otherState2=executing) & otherState2 = ready : otherPhase2;
+    state=error & otherState0=success & otherState1=success & otherState2=success: otherPhase0;
+    TRUE : ph;
+esac;
+DEFINE
+    n := !(state=error);
+
+MODULE main
+VAR
+    p0: P(p1.state,p2.state,p3.state,p1.ph,p2.ph,p3.ph);
+    p1: P(p0.state,p2.state,p3.state,p0.ph,p2.ph,p3.ph);
+    p2: P(p0.state,p1.state,p3.state,p0.ph,p1.ph,p3.ph);
+    p3: P(p0.state,p1.state,p2.state,p0.ph,p1.ph,p2.ph);
+SPEC
+     AG(!(p1.ph = ph1 & p1.ph=ph2))
