@@ -4,3 +4,4 @@ againt NuSMV.
 FaultyPhils: Example of the Faulty Phils.
 Muller: Example of the Muller Circuit.
 MemoryCell: Example of the Memory Cell with redindant bits.
+Barrier: Example of a Barrier protocol for N processes.
