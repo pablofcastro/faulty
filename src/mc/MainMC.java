@@ -25,6 +25,7 @@ public class MainMC {
        
       //  try{
           if (args.length == 1){ //masking checking
+                Program.masking = true;
                 model = prog.parse(args[0]);
                 
                 if(model!=null){

@@ -56,6 +56,7 @@ public class Program{
 	public static int declaredVars_ = 0; // number of declared BDD for prime vars
 	public static int declaredVars__ = 0;
 	public static int intSize = 4; // the size of ints
+	public static boolean masking = false;
 
 	/**
 	 * Basic constructor for the class, it creates the required lists and a factory for the BDDs
@@ -148,8 +149,10 @@ public class Program{
 		}
 		
 		// first we create a BDDFactory, for this we calculate the number of the state space
-		sizeSpace = (numberIntChannels * 4) + (numberBoolChannels*4) + (numberIntChannels * (4*maxLengthChannels) * intSize) + (4* numberBoolChannels * maxLengthChannels)  + (3*numberIntVars * intSize) + (numberEnumBits) + (3*numberBoolVars);		
-		
+		if (masking)
+			sizeSpace = (numberIntChannels * 4) + (numberBoolChannels*4) + (numberIntChannels * (4*maxLengthChannels) * intSize) + (4* numberBoolChannels * maxLengthChannels)  + (3*numberIntVars * intSize) + (numberEnumBits) + (3*numberBoolVars);		
+		else
+			sizeSpace = (numberIntChannels * 4) + (numberBoolChannels*4) + (numberIntChannels * (4*maxLengthChannels) * intSize) + (4* numberBoolChannels * maxLengthChannels)  + (2*numberIntVars * intSize) + (numberEnumBits) + (2*numberBoolVars);		
 		//System.out.println("Size Space:"+ sizeSpace);
 		// Initialize with reasonable nodes and cache size and Nx2 variables,
 		// if the number of nodes is low then the garbage collector will slow the procedure.
