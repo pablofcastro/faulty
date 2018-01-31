@@ -54,6 +54,7 @@ public class Program{
 
 	public static int declaredVars = 0; // number of declared BDD vars until now
 	public static int declaredVars_ = 0; // number of declared BDD for prime vars
+	public static int declaredVars__ = 0;
 	public static int intSize = 4; // the size of ints
 
 	/**
@@ -147,7 +148,7 @@ public class Program{
 		}
 		
 		// first we create a BDDFactory, for this we calculate the number of the state space
-		sizeSpace = (numberIntChannels * 4) + (numberBoolChannels*4) + (numberIntChannels * (4*maxLengthChannels) * intSize) + (4* numberBoolChannels * maxLengthChannels)  + (2*numberIntVars * intSize) + (numberEnumBits) + (2*numberBoolVars);		
+		sizeSpace = (numberIntChannels * 4) + (numberBoolChannels*4) + (numberIntChannels * (4*maxLengthChannels) * intSize) + (4* numberBoolChannels * maxLengthChannels)  + (3*numberIntVars * intSize) + (numberEnumBits) + (3*numberBoolVars);		
 		
 		//System.out.println("Size Space:"+ sizeSpace);
 		// Initialize with reasonable nodes and cache size and Nx2 variables,
@@ -280,6 +281,37 @@ public class Program{
 			// TBD the same for intChannels
 			return processes_bdd.and(channelsInv);
 	 }
+
+	 public BDD getBisimBDD(){
+		 	// we initialize the scheduler
+			//initScheduler();
+			
+			// init the primes
+		 	if (!generatedPrimes){
+		 		initPrimes();
+		 		generatedPrimes = true;
+		 		initBisimPrimes();
+		 	}
+
+			
+
+			BDD processes_bdd = myFactory.zero();
+			for (int i=0; i < processes.size(); i++){
+				BDD executeProcess = processes.get(i).getBDD().and(skipOthersThan(i).and(skipGlobalVarsNotIn(i)).and(skipChannelsOthersThan(processes.get(i).getChannels()))).and(processExecuted(i));
+				processes_bdd = processes_bdd.or(executeProcess); 
+			}
+	    
+			// we generate the invariants for the channels
+			BDD channelsInv = Program.myFactory.one();
+			for (int i = 0; i < boolChannels.size(); i++){
+				channelsInv = channelsInv.and(boolChannels.get(i).inv());
+			}
+	    	
+			
+			// TBD the same for intChannels
+			return processes_bdd.and(channelsInv);
+	 }
+
 	
 	/**
 	 *  
@@ -544,6 +576,44 @@ public class Program{
 		}
 	}
 	
+
+	/**
+	 * Creates the bisimulation primes for all the program
+	 */
+	public void initBisimPrimes(){
+		
+		// create primes for bool global variables
+		for (int i = 0; i < boolVars.size(); i++){
+			boolVars.get(i).initBisimPrimes();
+		}
+		
+		// create primes for int global variables
+		for (int i = 0; i < intVars.size(); i++){
+			intVars.get(i).initBisimPrimes();
+		}
+		
+		// create primes for int global enum vars
+		for (int i = 0; i < enumVars.size(); i++){
+			enumVars.get(i).initBisimPrimes();			
+		}
+		
+		// create primes for bool channels
+		for (int i = 0; i < boolChannels.size(); i++){
+			boolChannels.get(i).initBisimPrimes();
+		}
+	
+		// create primes for int channels
+		for (int i = 0; i < intChannels.size(); i++){
+			intChannels.get(i).initBisimPrimes();
+		}
+		
+		// create primes for processes
+		for (int i = 0; i < processes.size(); i++){
+			processes.get(i).initBisimPrimes();
+		}
+		
+	}
+
 	/**
 	 * Initializes fairness for every process
 	 */
@@ -726,6 +796,27 @@ public class Program{
 	 */
 	public BDDModel buildModel(){
 		model.setTransitions(this.getBDD());
+		
+		// we calculate the initial condition
+		BDD init =  myFactory.one();
+		for (int i = 0; i < processes.size(); i++){
+			init = init.and(processes.get(i).getInitialCond().getBDD());
+		}
+		
+		// we calculate the normative condition
+		BDD norm =  myFactory.one();
+		for (int i = 0; i < processes.size(); i++){
+			norm = norm.and(processes.get(i).getNormCond().getBDD());
+		}
+		
+		model.setInit(init);
+		model.setNormative(norm);
+		
+		return model;
+	}
+
+	public BDDModel buildBisimModel(){
+		model.setTransitions(this.getBisimBDD());
 		
 		// we calculate the initial condition
 		BDD init =  myFactory.one();

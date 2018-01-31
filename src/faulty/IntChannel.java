@@ -102,6 +102,31 @@ public class IntChannel extends Channel{
 		     	Program.declaredVars_++;
 		    	model.addVar("chan-"+name+"-empty_", Type.BOOL);
 	}
+
+	public void initBisimPrimes(){
+		// We request the needed BDD variables for the primes values
+				for (int i = 0; i < size; i++){
+					for (int j = 0; j < Program.intSize; j++){
+						els_[i][j] = Program.myFactory.ithVar(Program.declaredVars+els[i][j].var());
+						Program.declaredVars_++;
+						model.addVar("chan-"+name+"["+i+"]"+"["+j+"]__", Type.BOOL);
+					}
+				}
+				
+				
+				for (int i = 0; i < size; i++){
+					oc_[i] = Program.myFactory.ithVar(Program.declaredVars+oc[i].var());
+					Program.declaredVars_++;
+					model.addVar("chan-"+name+"-oc["+i+"]__", Type.BOOL);
+				}
+		     
+				full_ = Program.myFactory.ithVar(Program.declaredVars+full.var());
+				Program.declaredVars_++;
+				model.addVar("chan-"+name+"-full__", Type.BOOL);
+				empty_ = Program.myFactory.ithVar(Program.declaredVars+empty.var());
+		     	Program.declaredVars_++;
+		    	model.addVar("chan-"+name+"-empty__", Type.BOOL);
+	}
     
     
     

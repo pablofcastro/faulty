@@ -1,0 +1,1 @@
+java -Xss5m -jar $FAULTY/dCTL_checker.jar $1 

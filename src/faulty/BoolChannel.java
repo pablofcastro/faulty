@@ -94,6 +94,25 @@ public BoolChannel(String name,int size, BDDModel model){
 		     Program.declaredVars_++;
 		     model.addVar("chan_"+name+"_empty_", Type.BOOL);
 	}
+
+	public void initBisimPrimes(){	  
+		     for (int i = 0; i < size; i++){
+		         els_[i] = Program.myFactory.ithVar(Program.declaredVars+els[i].var());
+		         Program.declaredVars_++;
+		         model.addVar("chan-"+name+"["+i+"]__", Type.BOOL);
+		     }
+		     for (int i = 0; i < size; i++){
+		         oc_[i] = Program.myFactory.ithVar(Program.declaredVars+oc[i].var());
+		         Program.declaredVars_++;
+		         model.addVar("chan-"+name+"["+i+"]-oc__", Type.BOOL);
+		     }		    
+		     full_ = Program.myFactory.ithVar(Program.declaredVars+full.var());
+		     Program.declaredVars_++;
+		     model.addVar("chan_"+name+"_full__", Type.BOOL);
+		     empty_ = Program.myFactory.ithVar(Program.declaredVars+empty.var());
+		     Program.declaredVars_++;
+		     model.addVar("chan_"+name+"_empty__", Type.BOOL);
+	}
     
     
     /**

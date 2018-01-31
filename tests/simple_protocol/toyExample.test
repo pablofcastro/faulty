@@ -1,0 +1,68 @@
+
+Process ToyExample{
+       i:BOOL;
+       j:BOOL;
+       k:BOOL;
+       aux:BOOL; //only used for B4.2 violation example 
+       
+       Initial: !i && !j && !k;
+       Normative: !k ;
+
+          // Masking
+           !i && !j && !k-> i=true;
+           i && !j && !k-> j=true;
+           i && j && !k-> i=false, j=false;
+
+           i && !j && !k -> k=true;
+           i && !j && !k -> i=true;
+           i && !j && k -> k=false;
+           i && !j && k -> k=false,j=true; //remove this to make condition B2 false
+           
+           //i && !j && k -> j=true,i=false; //B2 doesnt care for this
+           //i && !j && k -> k=false,j=true,i=false; //remove this to make condition B3 true
+           //i && !j && k -> i=false; //remove this to make condition B4 true
+
+           //Violate B2
+           /*!i && !j && !k-> i=true;
+           i && !j && !k-> j=true;
+           i && j && !k-> i=false, j=false;
+
+           i && !j && !k -> k=true;
+           i && !j && !k -> i=true;
+           i && !j && k -> k=false;*/
+
+           //Violate B3
+
+           /*!i && !j && !k-> i=true;
+           i && !j && !k-> j=true;
+           i && j && !k-> i=false, j=false;
+
+           i && !j && !k -> k=true;
+           i && !j && !k -> i=true;
+           i && !j && k -> j=false; // 101 -> 101
+           i && !j && k -> k=false,j=true;*/
+
+           //Violate B4
+
+           /*!i && !j && !k-> i=true;
+           i && !j && !k-> j=true;
+           i && j && !k-> i=false, j=false;
+
+           i && !j && !k -> k=true;
+           i && !j && !k -> i=true;
+           i && !j && k -> k=false;
+           i && !j && k -> k=false,j=true;
+           //i && !j && k -> j=true,i=false; // 101 -> 011 , remove to make condition B4.1 true
+           //i && !j && k -> aux=true; // 101 -> 1011, remove to make condition B4.2 false*/
+
+
+
+
+           //i && !j && k -> j=false; // 101 -> 101
+}
+
+Main(){
+	p1: ToyExample;
+  //interface p1(i,j);
+	run p1();
+}

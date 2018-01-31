@@ -761,6 +761,41 @@ public class Process {
     		model.addVar(instName+"."+"running"+"_", Type.BOOL);
     	}
     }
+
+    public void initBisimPrimes(){
+        // create primes for int vars
+        
+        for (int i = 0; i < intVars.size(); i++){
+            intVars.get(i).initBisimPrimes();
+        }
+        
+        //create primes for bool vars
+        for (int i = 0; i < boolVars.size(); i++){
+            boolVars.get(i).initBisimPrimes();
+        }
+        
+        //create primes for enum vars
+        for (int i = 0; i < enumVars.size(); i++){
+            enumVars.get(i).initBisimPrimes();
+        }
+        
+        // create primes for the branches
+        if (!disabledBlocking){
+             for (int i = 0; i < branches.size(); i++){
+                BDD stuck_branch_ = Program.myFactory.ithVar(Program.declaredVars + stuck.get(branches.get(i)).var());
+                Program.declaredVars_++;
+                model.addVar("Process"+name+"stuck__", Type.BOOL);
+                stuck_.put(branches.get(i), stuck_branch_);
+             }
+         }
+        
+        // create running prime
+        if (fairness){          
+            running_ = Program.myFactory.ithVar(Program.declaredVars+running.var());
+            Program.declaredVars_++;
+            model.addVar(instName+"."+"running"+"__", Type.BOOL);
+        }
+    }
     
     /**
      * This is a simple method to initialise the info needed to verify

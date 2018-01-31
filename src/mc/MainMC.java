@@ -4,6 +4,7 @@ import java.io.*;
 
 import faulty.*;
 import formula.*;
+import masking.*;
 import net.sf.javabdd.*;
 
 /**
@@ -23,6 +24,27 @@ public class MainMC {
        
        
       //  try{
+          if (args.length == 1){ //masking checking
+                model = prog.parse(args[0]);
+                
+                if(model!=null){
+                  //for debugging purposes
+                  //System.out.println(printModelInformation(model));
+                     if (MaskingRelation.maskingRelation(model) != null) {
+                    //   System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n");
+                         System.out.println("Finished");
+                     }
+                     else{
+                       System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"); 
+               System.out.println("ERROR-Finished");
+                     }
+                      
+                 }
+                 else{
+                    System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n");
+                      System.out.println("Model has errors.");
+                 }                 
+            }
         	if (args.length == 2){
                 model = prog.parse(args[0]);
                 

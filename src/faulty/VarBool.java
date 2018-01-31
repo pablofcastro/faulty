@@ -12,9 +12,11 @@ public class VarBool implements BoolExp, Var{
     String instName; // a name of the instance of the variable
     BDD value; // represents the value expressed captured in a BDD
     BDD value_; // represents the value after an assignment
+    BDD value__;
     BDDModel model;
     int id; // the id of this bool
     int id_; // the id of the primed version 
+    int id__;
     BDD skip; // just a BDD representing a skip, used for efficiency reasons
     boolean initialisedPrime; // a variable to keep track whether the primed has been initialised
     
@@ -66,6 +68,12 @@ public class VarBool implements BoolExp, Var{
     	 }
     }
     
+    public void initBisimPrimes(){
+        value__ = Program.myFactory.ithVar(Program.declaredVars+Program.declaredVars_+value.var()); // it obtains a second bit
+        id__ = Program.declaredVars+Program.declaredVars_+value.var();         
+        Program.declaredVars__++;
+        model.addVar(instName+"."+name+"__", Type.BOOL);
+    }
     
     public BDD getBDD(){
         return value;

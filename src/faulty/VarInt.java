@@ -18,9 +18,11 @@ public class VarInt implements IntExp, Var{
     ConsIntExp value; 
     BDD[] bits; // it has an array of bits representing the variable value's
     BDD[] bits_; // the value of the array after any change (var prime)
+    BDD[] bits__;
     BDDModel model; // a reference to the resulting model 
     LinkedList<Integer> ids; // a list of the ids for the variables appearing here
     LinkedList<Integer> ids_; // a list of the ids for the variables appearing here
+    LinkedList<Integer> ids__;
     boolean initialisedPrime;
     
     /**
@@ -138,6 +140,15 @@ public class VarInt implements IntExp, Var{
     	}
     }
     
+    public void initBisimPrimes(){
+        for (int i = 0; i < Program.intSize; i++){
+            bits__[i] = Program.myFactory.ithVar(Program.declaredVars+Program.declaredVars_+bits[i].var());
+            ids__.add(new Integer(Program.declaredVars+Program.declaredVars_+bits[i].var()));
+            Program.declaredVars__++;
+            model.addVar("Int:"+instName+"."+name+"["+i+"]__", Type.BOOL);
+        }
+    }
+
     /**
      * Returns the array with the bits represented by BDDs
      */
