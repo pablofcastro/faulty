@@ -188,4 +188,53 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
 	     v.visit(this);			
 	}
 
+    public String toJava(){
+        String tEnums,prog,globals,procs,main;
+        prog = "";
+        tEnums = "";
+        for (int i = 0; i < enumTypes.size(); i++){
+            tEnums += "public enum " + enumTypes.get(i).getName() + "{";
+            for (int j = 0; j < enumTypes.get(i).cons.length; j++){
+                tEnums += enumTypes.get(i).getCons(j);
+                if (j == enumTypes.get(i).cons.length-1)
+                    tEnums += "}\n";
+                else
+                    tEnums += ",";
+            } 
+        }
+
+        procs = "";
+        for (int i = 0; i < process.getProcessList().size(); i++){
+            procs += process.getProcessList().get(i).toJava() + "\n\n";
+        }
+
+        globals = "";
+        for (int i = 0; i < globalVars.getBoolVars().size(); i++){
+            AuxiliarVar v = globalVars.getBoolVars().get(i);
+            globals += "public "+v.getType() + " " + v.getName() + ";\n";
+        }
+        for (int i = 0; i < globalVars.getIntVars().size(); i++){
+            AuxiliarVar v = globalVars.getIntVars().get(i);
+            globals += "public "+v.getType() + " " + v.getName() + ";\n";
+        }
+        for (int i = 0; i < globalVars.getEnumVars().size(); i++){
+            AuxiliarVar v = globalVars.getEnumVars().get(i);
+            globals += "public "+v.getType() + " " + v.getName() + ";\n";
+        }
+
+        main = "  public static void main(String[] args){\n";
+        for (int i = 0; i < mainProgram.getProcessDecl().size(); i++){
+            AuxiliarProcessDecl curr = mainProgram.getProcessDecl().get(i);
+            main += "    "+ curr.getType() + " " + curr.getName() + " = new "+curr.getType()+"()"+";\n";
+        }
+        for (int i = 0; i < mainProgram.getProcessDecl().size(); i++){
+            AuxiliarProcessDecl curr = mainProgram.getProcessDecl().get(i);
+            main += "    "+ curr.getName() + ".start();\n";
+        }
+        main += "}\n\n";
+
+        prog += "public class Program {\n\n" + tEnums + globals + procs + main + "}";
+        return prog;
+    }
+
 }

@@ -91,6 +91,9 @@ public class AuxiliarMain extends AuxiliarProgramNode{
 		return processInvk;	
 	}
 	
+	public LinkedList<AuxiliarProcessDecl> getProcessDecl(){
+		return processDecl;
+	}
 	
 	public void accept(AuxiliarFaultyVisitor v){
 	     v.visit(this);			

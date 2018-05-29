@@ -470,6 +470,69 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
 	     v.visit(this);			
 	}
     
+    public String toJava(){
+        String ints,bools,enums,attributes,init,run,start,methods,assigns,prog;
+        ints = "";
+        for (int i = 0; i < intVars.size(); i++){
+            ints += "  int " + intVars.get(i).getName() + ";\n"; 
+        }
+        bools = "";
+        for (int i = 0; i < boolVars.size(); i++){
+            bools += "  boolean " + boolVars.get(i).getName() + ";\n"; 
+        }
+        enums = "";
+        for (int i = 0; i < enumVars.size(); i++){
+            enums += "  "+enumVars.get(i).getEnumType().getName() + " " + enumVars.get(i).getName() + ";\n"; 
+        }
+        attributes = "  Thread t; \n" + ints + bools + enums + "\n";
+        init = "  public " + processName + "() {\n";
+        //TODO: hacer algo con initialCond
+        init += "\n  }\n\n";
+        run = "  public void run(){\n";
+        for (int i = 0; i < branches.size()-1; i++){
+            run += "    if (!action"+i+"())\n";
+        }
+        run +="      action"+(branches.size()-1)+";\n  }\n\n";
+        start = "  public void start (){\n    if (t == null) {\n      t = new Thread(this);\n      t.start ();\n    }\n  }\n\n";
+        methods = "";
+        for (int i = 0; i < branches.size(); i++){
+            assigns = "";
+            //TODO: hacer algo con los guards de cada branch
+            for (int j = 0; j < branches.get(i).getAssignList().size(); j++){
+                AuxiliarVarAssign v = (AuxiliarVarAssign)branches.get(i).getAssignList().get(j);
+                if (v.getExp() instanceof AuxiliarConsBoolExp){
+                    assigns += "      "+v.getVar().getName()+"="+((AuxiliarConsBoolExp)v.getExp()).getValue() + ";\n";
+                }
+                else{
+                    if (v.getExp() instanceof AuxiliarVar)
+                        assigns += "      "+v.getVar().getName()+"="+((AuxiliarVar)v.getExp()).getEnumName()+"."+((AuxiliarVar)v.getExp()).getName() + ";\n";
+                }
+
+            }
+            methods += "  synchronized private boolean action"+i+"(){\n    if ("+cnfToJava(branches.get(i).getGuard())+"){\n" + assigns + "      return true;\n    }\n    else{\n      return false;\n    }\n"+"  }\n\n"; 
+        }
+        methods = init + run + start + methods;
+        prog = "public class " + processName + " implements Runnable { \n\n" + attributes + methods + "}";
+        return prog;
+
+    }
+    
+    private String cnfToJava(AuxiliarExpression e){
+        if (e instanceof AuxiliarConsBoolExp)
+            return ""+((AuxiliarConsBoolExp)e).getValue();
+        if (e instanceof AuxiliarVar)
+            if (((AuxiliarVar)e).getEnumType() != null)
+                return ((AuxiliarVar)e).getEnumName() + "." + ((AuxiliarVar)e).getName();
+            else
+                return ((AuxiliarVar)e).getName();
+        if (e instanceof AuxiliarNegBoolExp)
+            return "!" + cnfToJava(((AuxiliarNegBoolExp)e).exp);
+        if (e instanceof AuxiliarEqBoolExp)
+            return cnfToJava(((AuxiliarEqBoolExp)e).int1) + " == " + cnfToJava(((AuxiliarEqBoolExp)e).int2);
+        if (e instanceof AuxiliarAndBoolExp)
+            return cnfToJava(((AuxiliarAndBoolExp)e).exp1) + " && " + cnfToJava(((AuxiliarAndBoolExp)e).exp2);
+        return "true";
+    }
     
     
 }

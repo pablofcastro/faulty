@@ -29,4 +29,11 @@ public class AuxiliarVarAssign extends AuxiliarCode{
 	     v.visit(this);			
 	}
     
+    public AuxiliarExpression getExp(){
+        return exp;
+    }
+
+    public AuxiliarVar getVar(){
+        return var;
+    }
 }
