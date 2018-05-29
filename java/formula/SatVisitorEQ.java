@@ -27,9 +27,10 @@ public class SatVisitorEQ implements FormulaVisitor{
 	private BDD norm; // A formula representing the normative part of the system
 					 // this can be calculated without generating the BDD for all the system
 	private BDD init; // the initial conditions, this can be calculated from the components, similar to norm
-	private LinkedList<BDDModel> models; // the list of model off all the processes, the idea is to avoid generating
+	private LinkedList<BDDModel> models; // the list of model of all the processes, the idea is to avoid generating
 										 // the complete model as far as possible.
 	private Program program;
+	private HashMap<FormulaElement, BDD> mem; // we uew memoization for generating hte counterexamples
 
 
 	/**
@@ -63,7 +64,9 @@ public class SatVisitorEQ implements FormulaVisitor{
 			i = i.and(current.getIni());			
 		}
 		init = i;
+		mem = new HashMap<FormulaElement, BDD>();
 	}
+	
 
 	/**
 	 * Evaluates a logical variable
@@ -72,8 +75,9 @@ public class SatVisitorEQ implements FormulaVisitor{
 	public void visit(Variable v) {
 		
 		String name = v.toString();
-		int id = model.getVarID(name);		
+		int id = model.getVarID(name);	
 		sat = Program.myFactory.ithVar(id);
+		mem.put(v, sat);
 
 	}
 
@@ -84,7 +88,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 
 	public void visit(Constant c) {
 		sat = c.getValue() ? Program.myFactory.one() : Program.myFactory.zero();
-
+		mem.put(c, sat);
 	}
 	
 	/**
@@ -95,6 +99,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 	public void visit(Negation n) {
 		n.getExpr1().accept(this);		
 		sat = this.getSat().not();
+		mem.put(n, sat);
 	}
 
 	/**
@@ -108,6 +113,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 		BDD sat_np = this.getSat().not();
 		i.getExpr2().accept(this);
 		sat = sat_np.or(this.getSat());
+		mem.put(i, sat);
 	}
     
     /**
@@ -138,6 +144,7 @@ public class SatVisitorEQ implements FormulaVisitor{
                     else{// i >0
                         sat = sat.and(varExpr1.getBit(i).biimp(varExpr2.getBit(i)));
                     }
+                    mem.put(e, sat);
                 }
                 
             }
@@ -154,6 +161,7 @@ public class SatVisitorEQ implements FormulaVisitor{
                     else{// i >0
                         sat = sat.and(expr1.getBit(i).biimp(expr2.getBit(i)));
                     }
+                    mem.put(e, sat);
                 }             
             }
             
@@ -168,6 +176,7 @@ public class SatVisitorEQ implements FormulaVisitor{
                     else{// i >0
                         sat = sat.and(expr1.getBit(i).biimp(expr2.getBit(i)));
                     }
+                    mem.put(e, sat);
                 }                 	
             }
             
@@ -182,6 +191,7 @@ public class SatVisitorEQ implements FormulaVisitor{
                     else{// i >0
                         sat = sat.and(expr1.getBit(i).biimp(expr2.getBit(i)));
                     }
+                    mem.put(e, sat);
                 }                      
             }
             
@@ -193,6 +203,7 @@ public class SatVisitorEQ implements FormulaVisitor{
             e.getExpr2().accept(this);
             BDD sat_expr2 = this.getSat();
             sat = sat_expr1.biimp(sat_expr2);
+            mem.put(e, sat);
         }
     
         /*if(e.isTypeInt()){
@@ -211,6 +222,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 		BDD sat_p = this.getSat();
 		c.getExpr2().accept(this);
 		sat = sat_p.and(this.getSat());
+		mem.put(c, sat);
 	
 	}
 
@@ -223,7 +235,8 @@ public class SatVisitorEQ implements FormulaVisitor{
 		d.getExpr1().accept(this);
 		BDD sat_p = this.getSat();
 		d.getExpr2().accept(this);
-		sat = sat_p.or(this.getSat());	
+		sat = sat_p.or(this.getSat());
+		mem.put(d, sat);
 	}
 	
 	/**
@@ -1217,6 +1230,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 		expr1.accept(this);
 		BDD p = this.sat;
 		sat = AX(p);
+		mem.put(a, sat);
 	}
 	
 	/**
@@ -1231,6 +1245,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 		expr2.accept(this);
 		BDD q = this.sat;
 		sat = AUntil(p, q);
+		mem.put(a, sat);
 	}
 	
 	/**
@@ -1245,6 +1260,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 		expr2.accept(this);
 		BDD q = this.sat;
 		sat = AWuntil(p, q);
+		mem.put(a, sat);
 	}
 	
 	/**
@@ -1258,6 +1274,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 		//p.printSet();
 		
 		sat = EX(p);
+		mem.put(e, sat);
 	}
 	
 	/**
@@ -1272,6 +1289,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 		expr2.accept(this);
 		BDD q = this.sat;
 		sat = EUntil(p, q);
+		mem.put(e, sat);
 	}
 	
 	/**
@@ -1286,6 +1304,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 		expr2.accept(this);
 		BDD q = this.sat;
 		sat = EWuntil(p, q);
+		mem.put(e, sat);
 	}
 	
 	@Override
@@ -1870,6 +1889,704 @@ public class SatVisitorEQ implements FormulaVisitor{
          return result;
     }
     
+    /**
+     * A simple method to generate counterexamples
+     * @param 	f	the formula to which we generate the conuterexample
+     * @param 	actualState	the actual state, at beginning it must be the initial state
+     * @return	true if a trace was found, false othwerwise
+     */
+    public boolean generateWitness(FormulaElement f, BDD actualState, LinkedList<BDD> previous){
+    	//LinkedList<BDD> result = new LinkedList<BDD>();
+    	if (f instanceof Variable){
+    		//f.accept(this);
+    		//BDD p = this.sat;
+    		BDD p = this.mem.get(f);
+    		//previous.addAll(c);
+    		if (p.and(actualState).satCount()>0){
+    			previous.addLast(p.and(actualState));
+    			return true;
+    		}
+    		return false;
+    	}
+    	if (f instanceof Conjunction){
+    		
+    	}
+    	if (f instanceof Disjunction){
+    		FormulaElement p = ((Disjunction) f).getExpr1();
+			FormulaElement q = ((Disjunction) f).getExpr2();
+			LinkedList<BDD> previousQ = new LinkedList<BDD>();
+			LinkedList<BDD> previousP = new LinkedList<BDD>();
+			if (generateWitness(p, actualState, previousP)){
+				previous.addAll(previousP);
+				return true;
+			}
+			if (generateWitness(q, actualState, previousQ)){
+				previous.addAll(previousQ);
+				return true;
+			}
+			return false;
+    	}
+    	if (f instanceof Negation){
+    		// hte idea is to push negations inside
+    		FormulaElement f1 = ((Negation) f).getExpr1();
+    		if (f1 instanceof Variable){
+    			//f.accept(this);
+        		//BDD p = this.sat;
+    			BDD p = this.mem.get(f);
+        		previous.addLast(p.and(actualState));
+        		return true;
+    		}
+    		if (f1 instanceof Conjunction){
+    			return generateWitness(new Disjunction("|",new Negation("!", ((Conjunction) f1).getExpr1()), new Negation("!", ((Conjunction) f1).getExpr2())), actualState, previous);
+    		}
+    		if (f1 instanceof Disjunction){
+    			return generateWitness(new Conjunction("&",new Negation("!", ((Disjunction) f1).getExpr1()), new Negation("!", ((Disjunction) f1).getExpr2())), actualState, previous);
+    		}
+    		if (f1 instanceof Negation){
+    			// if negation of a negation, we remove the two
+    			return generateWitness(((Negation) f1).getExpr1(), actualState, previous);
+    		}
+    		if (f1 instanceof EX){
+    			return generateWitness(new AX("AX",new Negation("!",((EX) f).getExpr1())), actualState, previous);
+    		}
+    		if (f1 instanceof AX){
+    			return generateWitness(new EX("EX",new Negation("!",((EX) f).getExpr1())), actualState, previous);
+    		}
+    		if (f1 instanceof AU){
+    			// assume f = A(p U q)
+    			FormulaElement p = ((AU) f1).getExpr1();
+    			FormulaElement q = ((AU) f1).getExpr2();
+    			return generateWitness(new EW("EW",new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous);
+    		}
+    		if (f1 instanceof EU){
+    			// assume f = A(p U q)
+    			FormulaElement p = ((EU) f1).getExpr1();
+    			FormulaElement q = ((EU) f1).getExpr2();
+    			return generateWitness(new AW("AW", new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous);
+    		}
+    		if (f1 instanceof EW){
+    			// assume f = A(p U q)
+    			FormulaElement p = ((EW) f1).getExpr1();
+    			FormulaElement q = ((EW) f1).getExpr2();
+    			return generateWitness(new AU("AU",new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous);
+    		}
+    		if (f1 instanceof AW){
+    			// assume f = A(p U q)
+    			FormulaElement p = ((AW) f1).getExpr1();
+    			FormulaElement q = ((AW) f1).getExpr2();
+    			return generateWitness(new EU("EU",new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous);
+    		}	
+    	}
+    	if (f instanceof AX){
+    		//((AX) f).getExpr1().accept(this);
+    		//BDD next = this.sat;
+    		BDD next = this.mem.get(((AX) f).getExpr1());
+    		//LinkedList<BDD> succ = generateCounterExamples(f.expr1());
+    		for (int i=0; i<this.models.size();i++){
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			BDDModel bddmodel = models.get(i);
+    			for (int j=0; j<branches.size();j++){
+    				// we remove the non-primed variables
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    					if (guard.and(actualState).satCount()>0 && command.and(next).satCount()>0){
+    						previous.addLast(actualState);	
+    						previous.addLast(next);
+    						return true;
+    					}
+    				}
+    			}
+    		}
+    		return false;	
+    	}
+    	if (f instanceof EX){
+    		//((EX) f).getExpr1().accept(this);
+    		//BDD next = this.sat;
+    		BDD next = this.mem.get(((EX) f).getExpr1());
+    		
+    		//LinkedList<BDD> succ = generateCounterExamples(f.expr1());
+    		for (int i=0; i<this.models.size();i++){
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			BDDModel bddmodel = models.get(i);
+    			for (int j=0; j<branches.size();j++){
+    				// we remove the non-primed variables
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    					if (guard.and(actualState).satCount()>0 && command.and(next).satCount()>0){
+    						previous.addLast(actualState);	
+    						previous.addLast(next);
+    						return true;
+    					}
+    				}
+    			}
+    		}
+    		return false;
+    	}
+    	if (f instanceof AU){
+    		//BDD p = this.accept(f.getExpr1());
+    		//((AU) f).getExpr2().accept(this);
+    		//BDD q = this.sat;
+    		//((AU) f).accept(this);
+    		//BDD puq = this.sat;
+    		BDD p = this.mem.get(((AU) f).getExpr1());
+    		BDD q = this.mem.get(((AU) f).getExpr2());
+    		BDD puq = this.mem.get(f);
+    		
+    		
+    		for (int i=0; i<this.models.size();i++){
+    			BDDModel bddmodel = models.get(i);
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			for (int j=0; j<branches.size();j++){
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);
+    				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    			    
+    					if (actualState.and(q).satCount()>0){
+    						previous.addLast(actualState);
+    						return true;
+    					}
+    					// otherwise, first we have to avoid cycles
+    					boolean cycle = actualState.and(command).satCount() >0;
+    					int k = 0;
+    					while ( k < previous.size() && !cycle){
+    						cycle = previous.get(k).and(command).satCount() >0;
+    						k++;
+    					}
+    					// if no cycle it is a candidate   				
+    					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
+    						previous.addLast(actualState);	
+    						boolean r = generateWitness(f, command, previous);
+    						if (r)
+    							return true;
+    						previous.removeLast(); // the added node is removed
+    					}	
+    				}
+    			}
+    		}
+    		return false; // no path found!
+    	}
+    	if (f instanceof AW){
+    		//((AW) f).getExpr2().accept(this);
+    		//BDD q = this.sat;
+    		//((AW) f).accept(this);
+    		//BDD puq = this.sat;
+    		
+    		BDD q = this.mem.get(((AW) f).getExpr2());
+    		//System.out.println(this.mem.get(f));
+    		BDD puq = this.mem.get(f);
+    		
+    		
+    		for (int i=0; i<this.models.size();i++){
+    			BDDModel bddmodel = models.get(i);
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			for (int j=0; j<branches.size();j++){
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    			   	
+    					// if q holds we are done
+    					if (actualState.and(q).satCount()>0){
+    						previous.addLast(actualState);
+    						return true;
+    					}
+    					// otherwise, first we have to avoid cycles
+    					boolean cycle = actualState.and(command).satCount() >0;
+    					int k = 0;
+    					while ( k < previous.size() && !cycle){
+    						cycle = previous.get(k).and(command).satCount() >0;
+    						k++;
+    					}
+    					if (cycle){
+    						previous.addLast(command); // in this case we obtain a cycle and the property holds in the cycle
+    						return true;
+    					}
+    					// if no cycle it is a candidate
+    					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
+    						previous.addLast(actualState);	
+    						boolean r = generateWitness(f, command, previous);
+    						if (r)
+    							return true;
+    						else
+    							previous.removeLast();
+    					}	
+    				}
+    			}
+    			
+    		}
+    		return false;	
+    	}
+    	if (f instanceof EU){
+    		//((EU) f).getExpr2().accept(this);
+    		//BDD q = this.sat;
+    		//((EU) f).accept(this);
+    		//BDD puq = this.sat;
+    		BDD q = this.mem.get(((EU) f).getExpr2());
+    		BDD puq = this.mem.get(f);
+    		for (int i=0; i<this.models.size();i++){
+    			BDDModel bddmodel = models.get(i);
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			for (int j=0; j<branches.size();j++){
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);
+    				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    			    
+    					if (actualState.and(q).satCount()>0){
+    						previous.addLast(actualState);
+    						return true;
+    					}
+    					// otherwise, first we have to avoid cycles
+    					boolean cycle = actualState.and(command).satCount() >0;
+    					int k = 0;
+    					while ( k < previous.size() && !cycle){
+    						cycle = previous.get(k).and(command).satCount() >0;
+    						if (cycle)
+    							break;
+    						k++;
+    					}
+    					// if no cycle it is a candidate   				
+    					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
+    						previous.addLast(actualState);	
+    						boolean r = generateWitness(f, command, previous);
+    						if (r)
+    							return true;
+    						previous.removeLast(); // the added node is removed
+    					}	
+    				}
+    			}
+    		}
+    		return false; // no path found!
+    	}
+    	if (f instanceof EW){
+    		//((EW) f).getExpr2().accept(this);
+    		//BDD q = this.sat;
+    		//((EW) f).accept(this);
+    		//BDD puq = this.sat;
+    		
+    		BDD q = this.mem.get(((EW) f).getExpr2());
+    		BDD puq = this.mem.get(f);
+    		for (int i=0; i<this.models.size();i++){
+    			BDDModel bddmodel = models.get(i);
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			for (int j=0; j<branches.size();j++){
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    			   	
+    					// if q holds we are done
+    					if (actualState.and(q).satCount()>0){
+    						previous.addLast(actualState);
+    						return true;
+    					}
+    					// otherwise, first we have to avoid cycles
+    					boolean cycle = actualState.and(command).satCount() >0;
+    					int k = 0;
+    					while ( k < previous.size() && !cycle){
+    						cycle = previous.get(k).and(command).satCount() >0;
+    						k++;
+    					}
+    					if (cycle){
+    						previous.addLast(actualState);
+    						previous.addLast(command); // in this case we obtain a cycle and the property holds in the cycle
+    						return true;
+    					}
+    					// if no cycle it is a candidate
+    					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
+    						previous.addLast(actualState);	
+    						boolean r = generateWitness(f, command, previous);
+    						if (r)
+    							return true;
+    						else
+    							previous.removeLast();
+    					}	
+    				}
+    			}
+    			
+    		}
+    		return false;
+    	}
+    	else{
+    		return false;
+    	}
+    }
+    
+    /**
+     * A bounded version of genrateWitness, 
+     * @param 	f	the formula to which we generate the conuterexample
+     * @param 	actualState	the actual state, at beginning it must be the initial state
+     * @param   the maximum size of the witness
+     * @return	true if a trace was found, false othwerwise
+     */
+    public boolean generateBoundedWitness(FormulaElement f, BDD actualState, LinkedList<BDD> previous, int n){
+    	//LinkedList<BDD> result = new LinkedList<BDD>();
+    	if (n==0) // base case witnesses of size 0 do not exists
+    		return false;
+    	if (f instanceof Variable){
+    		//f.accept(this);
+    		//BDD p = this.sat;
+    		BDD p = this.mem.get(f);
+    		//previous.addAll(c);
+    		if (p.and(actualState).satCount()>0){
+    			previous.addLast(p.and(actualState));
+    			return true;
+    		}
+    		return false;
+    	}
+    	if (f instanceof Conjunction){
+    		
+    	}
+    	if (f instanceof Disjunction){
+    		FormulaElement p = ((Disjunction) f).getExpr1();
+			FormulaElement q = ((Disjunction) f).getExpr2();
+			LinkedList<BDD> previousQ = new LinkedList<BDD>();
+			LinkedList<BDD> previousP = new LinkedList<BDD>();
+			if (generateBoundedWitness(p, actualState, previousP, n)){
+				previous.addAll(previousP);
+				return true;
+			}
+			if (generateBoundedWitness(q, actualState, previousQ, n)){
+				previous.addAll(previousQ);
+				return true;
+			}
+			return false;
+    	}
+    	if (f instanceof Negation){
+    		// hte idea is to push negations inside
+    		FormulaElement f1 = ((Negation) f).getExpr1();
+    		if (f1 instanceof Variable){
+    			//f.accept(this);
+        		//BDD p = this.sat;
+    			BDD p = this.mem.get(f);
+        		previous.addLast(p.and(actualState));
+        		return true;
+    		}
+    		if (f1 instanceof Conjunction){
+    			return generateBoundedWitness(new Disjunction("|",new Negation("!", ((Conjunction) f1).getExpr1()), new Negation("!", ((Conjunction) f1).getExpr2())), actualState, previous, n);
+    		}
+    		if (f1 instanceof Disjunction){
+    			return generateBoundedWitness(new Conjunction("&",new Negation("!", ((Disjunction) f1).getExpr1()), new Negation("!", ((Disjunction) f1).getExpr2())), actualState, previous, n);
+    		}
+    		if (f1 instanceof Negation){
+    			// if negation of a negation, we remove the two
+    			return generateBoundedWitness(((Negation) f1).getExpr1(), actualState, previous, n);
+    		}
+    		if (f1 instanceof EX){
+    			return generateBoundedWitness(new AX("AX",new Negation("!",((EX) f).getExpr1())), actualState, previous, n);
+    		}
+    		if (f1 instanceof AX){
+    			return generateBoundedWitness(new EX("EX",new Negation("!",((EX) f).getExpr1())), actualState, previous, n);
+    		}
+    		if (f1 instanceof AU){
+    			// assume f = A(p U q)
+    			FormulaElement p = ((AU) f1).getExpr1();
+    			FormulaElement q = ((AU) f1).getExpr2();
+    			return generateBoundedWitness(new EW("EW",new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous, n);
+    		}
+    		if (f1 instanceof EU){
+    			// assume f = A(p U q)
+    			FormulaElement p = ((EU) f1).getExpr1();
+    			FormulaElement q = ((EU) f1).getExpr2();
+    			return generateBoundedWitness(new AW("AW", new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous, n);
+    		}
+    		if (f1 instanceof EW){
+    			// assume f = A(p U q)
+    			FormulaElement p = ((EW) f1).getExpr1();
+    			FormulaElement q = ((EW) f1).getExpr2();
+    			return generateBoundedWitness(new AU("AU",new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous, n);
+    		}
+    		if (f1 instanceof AW){
+    			// assume f = A(p U q)
+    			FormulaElement p = ((AW) f1).getExpr1();
+    			FormulaElement q = ((AW) f1).getExpr2();
+    			return generateBoundedWitness(new EU("EU",new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous, n);
+    		}	
+    	}
+    	if (f instanceof AX){
+    		//((AX) f).getExpr1().accept(this);
+    		//BDD next = this.sat;
+    		BDD next = this.mem.get(((AX) f).getExpr1());
+    		//LinkedList<BDD> succ = generateCounterExamples(f.expr1());
+    		for (int i=0; i<this.models.size();i++){
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			BDDModel bddmodel = models.get(i);
+    			for (int j=0; j<branches.size();j++){
+    				// we remove the non-primed variables
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    					if (guard.and(actualState).satCount()>0 && command.and(next).satCount()>0){
+    						previous.addLast(actualState);	
+    						previous.addLast(next);
+    						return true;
+    					}
+    				}
+    			}
+    		}
+    		return false;	
+    	}
+    	if (f instanceof EX){
+    		//((EX) f).getExpr1().accept(this);
+    		//BDD next = this.sat;
+    		BDD next = this.mem.get(((EX) f).getExpr1());
+    		
+    		//LinkedList<BDD> succ = generateCounterExamples(f.expr1());
+    		for (int i=0; i<this.models.size();i++){
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			BDDModel bddmodel = models.get(i);
+    			for (int j=0; j<branches.size();j++){
+    				// we remove the non-primed variables
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    					if (guard.and(actualState).satCount()>0 && command.and(next).satCount()>0){
+    						previous.addLast(actualState);	
+    						previous.addLast(next);
+    						return true;
+    					}
+    				}
+    			}
+    		}
+    		return false;
+    	}
+    	if (f instanceof AU){
+    		//BDD p = this.accept(f.getExpr1());
+    		//((AU) f).getExpr2().accept(this);
+    		//BDD q = this.sat;
+    		//((AU) f).accept(this);
+    		//BDD puq = this.sat;
+    		BDD p = this.mem.get(((AU) f).getExpr1());
+    		BDD q = this.mem.get(((AU) f).getExpr2());
+    		BDD puq = this.mem.get(f);
+    		
+    		
+    		for (int i=0; i<this.models.size();i++){
+    			BDDModel bddmodel = models.get(i);
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			for (int j=0; j<branches.size();j++){
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);
+    				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    			    
+    					if (actualState.and(q).satCount()>0){
+    						previous.addLast(actualState);
+    						return true;
+    					}
+    					// otherwise, first we have to avoid cycles
+    					boolean cycle = actualState.and(command).satCount() >0;
+    					int k = 0;
+    					while ( k < previous.size() && !cycle){
+    						cycle = previous.get(k).and(command).satCount() >0;
+    						k++;
+    					}
+    					// if no cycle it is a candidate   				
+    					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
+    						previous.addLast(actualState);	
+    						boolean r = generateBoundedWitness(f, command, previous, n-1);
+    						if (r)
+    							return true;
+    						previous.removeLast(); // the added node is removed
+    					}	
+    				}
+    			}
+    		}
+    		return false; // no path found!
+    	}
+    	if (f instanceof AW){
+    		//((AW) f).getExpr2().accept(this);
+    		//BDD q = this.sat;
+    		//((AW) f).accept(this);
+    		//BDD puq = this.sat;
+    		
+    		BDD q = this.mem.get(((AW) f).getExpr2());
+    		//System.out.println(this.mem.get(f));
+    		BDD puq = this.mem.get(f);
+    		
+    		
+    		for (int i=0; i<this.models.size();i++){
+    			BDDModel bddmodel = models.get(i);
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			for (int j=0; j<branches.size();j++){
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    			   	
+    					// if q holds we are done
+    					if (actualState.and(q).satCount()>0){
+    						previous.addLast(actualState);
+    						return true;
+    					}
+    					// otherwise, first we have to avoid cycles
+    					boolean cycle = actualState.and(command).satCount() >0;
+    					int k = 0;
+    					while ( k < previous.size() && !cycle){
+    						cycle = previous.get(k).and(command).satCount() >0;
+    						k++;
+    					}
+    					if (cycle){
+    						previous.addLast(command); // in this case we obtain a cycle and the property holds in the cycle
+    						return true;
+    					}
+    					// if no cycle it is a candidate
+    					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
+    						previous.addLast(actualState);	
+    						boolean r = generateBoundedWitness(f, command, previous, n-1);
+    						if (r)
+    							return true;
+    						else
+    							previous.removeLast();
+    					}	
+    				}
+    			}
+    			
+    		}
+    		return false;	
+    	}
+    	if (f instanceof EU){
+    		//((EU) f).getExpr2().accept(this);
+    		//BDD q = this.sat;
+    		//((EU) f).accept(this);
+    		//BDD puq = this.sat;
+    		BDD q = this.mem.get(((EU) f).getExpr2());
+    		BDD puq = this.mem.get(f);
+    		for (int i=0; i<this.models.size();i++){
+    			BDDModel bddmodel = models.get(i);
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			for (int j=0; j<branches.size();j++){
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);
+    				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    			    
+    					if (actualState.and(q).satCount()>0){
+    						previous.addLast(actualState);
+    						return true;
+    					}
+    					// otherwise, first we have to avoid cycles
+    					boolean cycle = actualState.and(command).satCount() >0;
+    					int k = 0;
+    					while ( k < previous.size() && !cycle){
+    						cycle = previous.get(k).and(command).satCount() >0;
+    						if (cycle)
+    							break;
+    						k++;
+    					}
+    					// if no cycle it is a candidate   				
+    					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
+    						previous.addLast(actualState);	
+    						boolean r = generateBoundedWitness(f, command, previous, n-1);
+    						if (r)
+    							return true;
+    						previous.removeLast(); // the added node is removed
+    					}	
+    				}
+    			}
+    		}
+    		return false; // no path found!
+    	}
+    	if (f instanceof EW){
+    		//((EW) f).getExpr2().accept(this);
+    		//BDD q = this.sat;
+    		//((EW) f).accept(this);
+    		//BDD puq = this.sat;
+    		
+    		BDD q = this.mem.get(((EW) f).getExpr2());
+    		BDD puq = this.mem.get(f);
+    		for (int i=0; i<this.models.size();i++){
+    			BDDModel bddmodel = models.get(i);
+    			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
+    			for (int j=0; j<branches.size();j++){
+    				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);				
+    				if (guard.and(actualState).satCount()>0){
+    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+    					command = addExists(bddmodel.getInternalVarsIds(), command);
+    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+    					command = command.replaceWith(internalSubs);
+    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    			   	
+    					// if q holds we are done
+    					if (actualState.and(q).satCount()>0){
+    						previous.addLast(actualState);
+    						return true;
+    					}
+    					// otherwise, first we have to avoid cycles
+    					boolean cycle = actualState.and(command).satCount() >0;
+    					int k = 0;
+    					while ( k < previous.size() && !cycle){
+    						cycle = previous.get(k).and(command).satCount() >0;
+    						k++;
+    					}
+    					if (cycle){
+    						previous.addLast(actualState);
+    						previous.addLast(command); // in this case we obtain a cycle and the property holds in the cycle
+    						return true;
+    					}
+    					// if no cycle it is a candidate
+    					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
+    						previous.addLast(actualState);	
+    						boolean r = generateBoundedWitness(f, command, previous, n-1);
+    						if (r)
+    							return true;
+    						else
+    							previous.removeLast();
+    					}	
+    				}
+    			}
+    			
+    		}
+    		return false;
+    	}
+    	else{
+    		return false;
+    	}
+    }
     
     /***
      * @return returns the set of states
@@ -1921,21 +2638,6 @@ public class SatVisitorEQ implements FormulaVisitor{
     	}    		  	
     	return result;       
     }
-
-    
- //   private BDD oldEX(BDD p){
- //   	BDD result = Program.myFactory.zero();
- //    	for (int i=0;  i < models.size(); i++){
- //   		
- //   		int varNum = Program.myFactory.varNum();
- //   		BDD mod = models.get(i).getTransitions();
- //   		mod = addExists(varNum/2, varNum, mod, Program.myFactory); // obtain all states of the model.
- //   		result = result.or(WeakPrevious(p.and(mod), models.get(i)));    		
- //   	}
- //   	
- //   	return result; 
- //   }
-    
     
     /***
      * @return returns the set of states that hold AXp using early quantification
@@ -2040,7 +2742,7 @@ public class SatVisitorEQ implements FormulaVisitor{
 		// The following code deals with external vars, any external var (say z)
 		// must keep its value, that is z=z'. We avoid to calculate this by means of
 		// subtitutions, each z is replaced by z', this does not affect the calculation
-		// sin external vars are not restricted by the process's BDD.
+		// since external vars are not restricted by the process's BDD.
         result = addExists(bddmodel.getExternalVarsIds(), result);     
         
        
@@ -2159,12 +2861,12 @@ public class SatVisitorEQ implements FormulaVisitor{
 		int varNum = Program.myFactory.varNum() / 2;
 		BDDPairing pairs = Program.myFactory.makePair();		
 
-		if(r_primed){// creates pairs to changes variables v' by v , i.e. v -> v'		
+		if(r_primed){// creates pairs to change variables v' by v , i.e. v -> v'		
 			for (int i=0; i<varNum; i++){
 				pairs.set((varNum)+i, i);		
 			}   
 		}
-		else{// creates pairs to changes variables v by v',  i.e. v' -> v		
+		else{// creates pairs to change variables v by v',  i.e. v' -> v		
 			for (int i=0; i<varNum; i++){
 				pairs.set(i,(varNum)+i);		
 			}   
@@ -2249,6 +2951,8 @@ public class SatVisitorEQ implements FormulaVisitor{
 		or.accept(this); //compute "sat" of this implication
 		return this.sat;
 	}
+	
+	
     
         
 	

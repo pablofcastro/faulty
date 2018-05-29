@@ -58,7 +58,7 @@ public class VarBool implements BoolExp, Var{
      */
     public void initPrimes(){
     	 if (!initialisedPrime){
-    		 value_ = Program.myFactory.ithVar(Program.declaredVars+value.var()); // it obtains a second bit
+    		value_ = Program.myFactory.ithVar(Program.declaredVars+value.var()); // it obtains a second bit
     	 	id_ = Program.declaredVars+value.var();   	 	
     	 	Program.declaredVars_++;
     	 	model.addVar(instName+"."+name+"_", Type.BOOL);

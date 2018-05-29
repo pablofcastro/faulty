@@ -56,6 +56,37 @@ public class ProgramParser {
  		
  	}
 
+    
+    public Program parseFromString(String myProgram){
+        Program faultyProg=null;
+        try {
+            //programFile = new FileReader(NameFile);
+          
+            // Read the string
+ 			parser = new parserFaulty(new scannerFaulty(new java.io.StringReader(myProgram)));
+ 			AuxiliarProgram program = (AuxiliarProgram) parser.parse().value;
+
+ 			 
+ 			
+ 			// Check Types
+ 			Type result = checkTypes(program);
+ 			if(result == Type.ERROR){
+                for(int i=0; i<errorList.size(); i++){
+                    System.out.println(errorList.get(i).getErrorMsg());
+                }               
+            }
+            else{ // If not errors, build the concrete Faulty program    
+            	
+                faultyProg = buildProgram(program);
+            }    
+        } catch (Exception e) {        	
+ 			System.out.println("Program Error." + e.getMessage());
+            e.printStackTrace(System.out);
+ 		}
+        
+        return faultyProg;	
+ 	}
+    
     /**
      * 
      * @return Return the symbols table of the model.

@@ -1,33 +1,38 @@
+// A simple barrier protocol, with two processes and two phases
+// the protocol is described by Arora, Kulkarni.
+//
+// the main complexity of this protocol comes from the high connectivity between the processes: every process
+// need to check the state of the others ones, which implemented by shared memory
+// implies that we have many global variables, and branches in any process has to check these global vars.
+// the protocol behaves in the following way:
+// ready -> executing -> success, if an error is detected the process comebacks to a safe state an starts again,
+// the implementation above deals with detectable errors, but this can be adapted to deal with other kinds of faults.
+
 Enum state = {ready, executing, success, error};
 Enum ph = {ph0, ph1};
+
 Global state0 : state;
 Global state1 : state;
-Global php0 : ph; // phase for process0
-Global php1 : ph; // phase for process1
-Process P(myState : state, myPhase : ph, otherState0 : state, otherPhase0 : ph){
-    Initial: (myState == ready) && (myPhase == ph0);
-    Normative: !(myState == error);
+Global php0 : ph;
+Global php1 : ph;
 
+Process P(myState: state, myPhase : ph, otherState : state, otherPhase : ph){
+	Initial:  (myState == ready)  && (myPhase == ph0);
+	Normative: !(myState == error);
 
-//CPB1
-    myState==ready && ((otherState0==ready)) || ((otherState0==executing))-> myState=executing;
-
-//CPB2
-    myState==executing && (!(otherState0==ready)) || ((otherState0==success))->myState = success;
-
-//CPB3
-    myState==success && (!(otherState0==executing)) && otherState0== ready -> myState = ready, myPhase=otherPhase0;
-    myState==success && myPhase == ph0 && ((otherState0==success))-> myPhase = ph1;
-    myState==success && myPhase == ph1 && ((otherState0==success))-> myPhase = ph0;
-
-//CB4
-    myState==error && (!(otherState0==executing))&& (otherState0== ready)   -> myState = ready, myPhase = otherPhase0;
-    myState==error && ((otherState0==success))-> myState = ready, myPhase = otherPhase0;
-    true -> myState = error;
+ 	(myState == ready) && ((otherState == ready) || (otherState == executing)) -> myState = executing;
+  	(myState == executing) && ((otherState == success) || (otherState == executing)) -> myState = success;
+        (myState == success)  && (!(otherState == executing) && (otherState == ready)) -> myPhase = otherPhase , myState = ready;
+        (myState == error) && (!(otherState == executing) && (otherState == ready)) -> myPhase = otherPhase, myState = ready;
+        (myState == error) && (otherState == success) -> myPhase = otherPhase, myState = ready;
+        true -> myState = error;
 }
+
 Main(){
-    p0:P;
-    p1:P;
-    run p0(state0, php0, state1, php1);
-    run p1(state1, php1, state0, php0);
+
+  p1: P;
+  p2: P;
+  run p1(state0, php0, state1, php1);
+  run p2(state1, php1, state0, php0);
 }
+

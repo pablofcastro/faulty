@@ -88,13 +88,15 @@ public class Program{
 		this.model = model;
 		generatedPrimes = false;
 		enumTypes = new LinkedList<EnumType>();
+		declaredVars = 0;
+		declaredVars_ = 0;
 		
 		
 		// we calculate the number of BDD variables needed for the enumTypes
 		int numberEnumBits = 0;
 		for (int j=0; j < enums.size(); j++){
 			EnumType current = enums.get(j);
-			numberEnumBits =+ current.getNumVars() * current.getBitsNumber() * 2; 
+			numberEnumBits += current.getNumVars() * current.getBitsNumber() * 2; 
 		}
 		
 		// first we create a BDDFactory, for this we calculate the number of the state space
@@ -105,7 +107,8 @@ public class Program{
 		int cacheSize = 2000;
 		numberOfNodes = Math.max(1000, numberOfNodes);
 		initBDDFactory(numberOfNodes, cacheSize);
-		myFactory.setVarNum(sizeSpace); 	   
+		System.out.println(sizeSpace);
+		myFactory.setVarNum(sizeSpace); 	
 	}
 
 	/**
@@ -138,18 +141,17 @@ public class Program{
 		this.model = model;
 		generatedPrimes = false;
 		enumTypes = new LinkedList<EnumType>();
+		declaredVars = 0;
+		declaredVars_ = 0;
 	
 		// we calculate the number of BDD variables needed for the enumTypes
 		int numberEnumBits = 0;
 		for (int j=0; j < enums.size(); j++){
 			EnumType current = enums.get(j);
-			numberEnumBits =+ current.getNumVars() * current.getBitsNumber() * 2; 
+			numberEnumBits += current.getNumVars() * current.getBitsNumber() * 2; 
 		}
-		
-		// first we create a BDDFactory, for this we calculate the number of the state space
 		sizeSpace = (numberIntChannels * 4) + (numberBoolChannels*4) + (numberIntChannels * (4*maxLengthChannels) * intSize) + (4* numberBoolChannels * maxLengthChannels)  + (2*numberIntVars * intSize) + (numberEnumBits) + (2*numberBoolVars);		
-		
-		//System.out.println("Size Space:"+ sizeSpace);
+
 		// Initialize with reasonable nodes and cache size and Nx2 variables,
 		// if the number of nodes is low then the garbage collector will slow the procedure.
 		// on the other hand, a big number of nodes for smaller case studies will slow the model checker
@@ -157,7 +159,8 @@ public class Program{
 		int cacheSize = 2000000;
 		numberOfNodes = Math.max(20000000, numberOfNodes);
 		initBDDFactory(numberOfNodes, cacheSize);
-		myFactory.setVarNum(sizeSpace); 	   
+		System.out.println(sizeSpace);
+		myFactory.setVarNum(sizeSpace); 
 	}
 	
 	/**
@@ -165,7 +168,14 @@ public class Program{
 	 * for the program.
 	 */
 	private static void initBDDFactory(int numberOfNodes, int cacheSize){
-		myFactory = BDDFactory.init(numberOfNodes, cacheSize);
+		if (myFactory == null){
+			myFactory = BDDFactory.init(numberOfNodes, cacheSize);
+		}
+		else{
+			myFactory.done();
+			myFactory = BDDFactory.init(numberOfNodes, cacheSize);
+			
+		}
 	}
 
 	/**
@@ -689,7 +699,6 @@ public class Program{
 	 */
 	public LinkedList<BDDModel> buildPartialModels(){
 		LinkedList<BDDModel> models = new LinkedList<BDDModel>();
-		
 		if (!generatedPrimes){
 			initPrimes();
 			generatedPrimes = true;
@@ -708,10 +717,11 @@ public class Program{
 			externalVars.addAll(getLocalVarsNotIn(i));
 			model.setExternalVars(externalVars);
 			
-			// add the external vars
+			// add the internal vars
 			LinkedList<Var> internalVars = new LinkedList<Var>();
 			internalVars.addAll(processes.get(i).getGlobalBoolVarsInProcess());			
 			internalVars.addAll(processes.get(i).getBoolVars());
+			internalVars.addAll(processes.get(i).getEnumVars());
 			model.setInternalVars(internalVars);
 			// TO DO: add int vars
 			
@@ -788,6 +798,7 @@ public class Program{
 		for (int i = 0; i < processes.size(); i++){		
 			if (i != index){	
 					result.addAll(processes.get(i).getBoolVars());
+					result.addAll(processes.get(i).getEnumVars());
 			}		
 		}
 		return result;

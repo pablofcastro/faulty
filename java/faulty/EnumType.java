@@ -125,6 +125,10 @@ public class EnumType{
 		// no id for the name
 		return -1;
 	}
+	
+	public String getCons(int i){
+		return cons[i];
+	}
 		
 	/**
 	 * Adds a constant in the enum type

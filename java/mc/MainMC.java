@@ -49,6 +49,7 @@ public class MainMC {
             	          System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n");
                           System.out.println("Property or Model have errors.");
                      }
+                     Program.myFactory.done(); // we reset the factory
                }
                       	           
             }
@@ -70,10 +71,14 @@ public class MainMC {
                               if (DCTL_MC.mc_algorithm_eq(property, model)) {
                          	     //System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n");
      				    	     System.out.println("Property  is TRUE in the model.");
+     				    	     System.out.println(DCTL_MC.getWitness(property, model));
                               }
                               else{
                          	     //System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"); 
      					         System.out.println("Property  is FALSE in the model.");
+     					         // prints counterexample
+     					         System.out.println("Counterexample:");
+     					         System.out.println(DCTL_MC.getWitness(new Negation("!", property), model)); // remove in
                               }
                            
                           }
@@ -81,6 +86,7 @@ public class MainMC {
                  	           //System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n");
                                System.out.println("Property or Model have errors.");
                           }
+                         Program.myFactory.done(); // the BDDFactory is reset
                     }		
         		}
         		if (args[0].equals("-deq")){ // the case for disjoint early quantification

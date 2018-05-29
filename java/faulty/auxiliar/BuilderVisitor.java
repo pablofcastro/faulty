@@ -292,18 +292,18 @@ public class BuilderVisitor implements AuxiliarFaultyVisitor{
         
 		// add all the instances declarated in the model.
     	faulty.Process dupProcess=null;
-		for (int i = 1; i< numberInst; i++){
+		for (int i=1; i< numberInst; i++){
 			if(declParameters.size()>0){ //process use parameters
                 //Add the boolean parameters of the process
                 LinkedList<ParamBool>  boolParamList = createBoolParamList(declParameters,a.getInvkParametersList(a.getProcessInstanceName(i)));
                 //Add the int parameters of the process
                 LinkedList<ParamInt>  intParamList = createIntParamList(declParameters,a.getInvkParametersList(a.getProcessInstanceName(i)));
                 
-                dupProcess = this.process.duplicate(a.getProcessInstanceName(i),boolParamList, intParamList);
-                
-               
+                dupProcess = this.process.duplicate(a.getProcessInstanceName(i),boolParamList, intParamList); 
             }
-            
+			else{
+				dupProcess = this.process.duplicate(a.getProcessInstanceName(i)); 
+			}
             this.program.addProcess(dupProcess);
             
             

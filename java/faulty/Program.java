@@ -88,13 +88,15 @@ public class Program{
 		this.model = model;
 		generatedPrimes = false;
 		enumTypes = new LinkedList<EnumType>();
+		declaredVars = 0;
+		declaredVars_ = 0;
 		
 		
 		// we calculate the number of BDD variables needed for the enumTypes
 		int numberEnumBits = 0;
 		for (int j=0; j < enums.size(); j++){
 			EnumType current = enums.get(j);
-			numberEnumBits =+ current.getNumVars() * current.getBitsNumber() * 2; 
+			numberEnumBits += current.getNumVars() * current.getBitsNumber() * 2; 
 		}
 		
 		// first we create a BDDFactory, for this we calculate the number of the state space
@@ -105,7 +107,8 @@ public class Program{
 		int cacheSize = 2000;
 		numberOfNodes = Math.max(1000, numberOfNodes);
 		initBDDFactory(numberOfNodes, cacheSize);
-		myFactory.setVarNum(sizeSpace); 	   
+		//System.out.println(sizeSpace);
+		myFactory.setVarNum(sizeSpace); 	
 	}
 
 	/**
@@ -138,18 +141,17 @@ public class Program{
 		this.model = model;
 		generatedPrimes = false;
 		enumTypes = new LinkedList<EnumType>();
+		declaredVars = 0;
+		declaredVars_ = 0;
 	
 		// we calculate the number of BDD variables needed for the enumTypes
 		int numberEnumBits = 0;
 		for (int j=0; j < enums.size(); j++){
 			EnumType current = enums.get(j);
-			numberEnumBits =+ current.getNumVars() * current.getBitsNumber() * 2; 
+			numberEnumBits += current.getNumVars() * current.getBitsNumber() * 2; 
 		}
-		
-		// first we create a BDDFactory, for this we calculate the number of the state space
 		sizeSpace = (numberIntChannels * 4) + (numberBoolChannels*4) + (numberIntChannels * (4*maxLengthChannels) * intSize) + (4* numberBoolChannels * maxLengthChannels)  + (2*numberIntVars * intSize) + (numberEnumBits) + (2*numberBoolVars);		
-		
-		//System.out.println("Size Space:"+ sizeSpace);
+
 		// Initialize with reasonable nodes and cache size and Nx2 variables,
 		// if the number of nodes is low then the garbage collector will slow the procedure.
 		// on the other hand, a big number of nodes for smaller case studies will slow the model checker
@@ -157,7 +159,8 @@ public class Program{
 		int cacheSize = 2000000;
 		numberOfNodes = Math.max(20000000, numberOfNodes);
 		initBDDFactory(numberOfNodes, cacheSize);
-		myFactory.setVarNum(sizeSpace); 	   
+		//System.out.println(sizeSpace);
+		myFactory.setVarNum(sizeSpace); 
 	}
 	
 	/**
@@ -165,7 +168,14 @@ public class Program{
 	 * for the program.
 	 */
 	private static void initBDDFactory(int numberOfNodes, int cacheSize){
-		myFactory = BDDFactory.init(numberOfNodes, cacheSize);
+		if (myFactory == null){
+			myFactory = BDDFactory.init(numberOfNodes, cacheSize);
+		}
+		else{
+			myFactory.done();
+			myFactory = BDDFactory.init(numberOfNodes, cacheSize);
+			
+		}
 	}
 
 	/**
@@ -689,7 +699,6 @@ public class Program{
 	 */
 	public LinkedList<BDDModel> buildPartialModels(){
 		LinkedList<BDDModel> models = new LinkedList<BDDModel>();
-		
 		if (!generatedPrimes){
 			initPrimes();
 			generatedPrimes = true;
@@ -708,10 +717,11 @@ public class Program{
 			externalVars.addAll(getLocalVarsNotIn(i));
 			model.setExternalVars(externalVars);
 			
-			// add the external vars
+			// add the internal vars
 			LinkedList<Var> internalVars = new LinkedList<Var>();
 			internalVars.addAll(processes.get(i).getGlobalBoolVarsInProcess());			
 			internalVars.addAll(processes.get(i).getBoolVars());
+			internalVars.addAll(processes.get(i).getEnumVars());
 			model.setInternalVars(internalVars);
 			// TO DO: add int vars
 			
@@ -788,11 +798,175 @@ public class Program{
 		for (int i = 0; i < processes.size(); i++){		
 			if (i != index){	
 					result.addAll(processes.get(i).getBoolVars());
+					result.addAll(processes.get(i).getEnumVars());
 			}		
 		}
 		return result;
 			
 	}
+	
+	/**
+	 * Returns the runs of the program satisfying the property, it can be used to generat counterexamples
+	 * @param sat
+	 * @param length the length of the run
+	 * @return	a string describing the possible run(s) of the program satisfying the property
+	 */
+	public String getRuns(LinkedList<BDD> sats){
+		String result = "";
+		//BDD currentState = this.getInitialCond();
+		for (int j=0; j< sats.size(); j++){	
+			BDD currentState = sats.get(j);
+			result += "State "+ j + ":\n[Global: ";
+			//For now we only print the global vars
+			for (int i=0; i<this.boolVars.size(); i++){		
+				if (currentState.and(this.boolVars.get(i).getBDD()).satCount()>0){
+					result += boolVars.get(i).getName() + ",";
+					currentState = currentState.and(this.boolVars.get(i).getBDD());
+				}
+				else{
+					currentState = currentState.and(this.boolVars.get(i).getBDD().not());
+				}
+			}
+			result += "]\n";
+
+			for (int i=0; i<this.processes.size();i++){
+				result += "[Process "+processes.get(i).getInstName()+": ";
+				LinkedList<VarBool> bvars = processes.get(i).getBoolVars();
+				for (int k=0; k<bvars.size(); k++){
+					if (currentState.and(bvars.get(k).getBDD()).satCount()>0)
+						result += bvars.get(k).getName() + ",";
+				}
+				LinkedList<VarEnum> evars = processes.get(i).getEnumVars();
+				for (int k=0; k < evars.size(); k++){
+					EnumType myType = evars.get(k).getEnumType();
+					BDD[] bits = evars.get(k).getBits();
+										
+					int cons = 0;
+					boolean holds = false;
+					int pos = 0;
+					for (int h=bits.length-1; h>=0; h--){
+						if (currentState.and(bits[h]).satCount()>0)
+							cons = cons + ((int) (Math.pow(2, pos)));
+						pos++;
+							
+					}
+					result += myType.getCons(cons) + ", ";
+				}	
+				result += "]\n";
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * 
+	 * @param sats	A list of BDDs representing a run
+	 * @return	A list of hashmaps  [Process->State] identifying the states that each process in very step.
+	 */
+	public LinkedList<HashMap<String,String>> getRunsAsMaps(LinkedList<BDD> sats){
+		LinkedList<HashMap<String, String>> result = new LinkedList<HashMap<String,String>>();
+		for (int j=0; j< sats.size(); j++){	
+			HashMap<String, String> currentMap = new HashMap<String, String>();
+			BDD currentState = sats.get(j);
+			for (int i=0; i<this.processes.size();i++){
+				LinkedList<VarEnum> evars = processes.get(i).getEnumVars();
+				for (int k=0; k < evars.size(); k++){
+					EnumType myType = evars.get(k).getEnumType();
+					BDD[] bits = evars.get(k).getBits();
+										
+					int cons = 0;
+					boolean holds = false;
+					int pos = 0;
+					for (int h=bits.length-1; h>=0; h--){
+						if (currentState.and(bits[h]).satCount()>0)
+							cons = cons + ((int) (Math.pow(2, pos)));
+						pos++;
+							
+					}
+					currentMap.put(processes.get(i).getInstName(), myType.getCons(cons));
+				}	
+			}
+			result.add(currentMap);
+		}
+		return result;
+	}
+	/**
+	 * 
+	 * @param sats	A description of the run
+	 * @param process	A given process for which the run will be computed
+	 * @return	a list of the different states (enums) of the process during the run
+	 */
+	public LinkedList<String> getRunForProcess(LinkedList<BDD> sats, String process){
+		LinkedList<String> result = new LinkedList<String>();
+		for (int i=0; i<this.processes.size();i++){
+			Process actualProcess = processes.get(i);
+			if (actualProcess.getInstName().equals(process)){				
+				for (int j=0; j< sats.size(); j++){	
+					BDD currentState = sats.get(j);
+					LinkedList<VarEnum> evars = processes.get(i).getEnumVars();
+					for (int k=0; k < evars.size(); k++){
+						EnumType myType = evars.get(k).getEnumType();
+						BDD[] bits = evars.get(k).getBits();
+									
+						int cons = 0;
+						boolean holds = false;
+						int pos = 0;
+						for (int h=bits.length-1; h>=0; h--){
+							if (currentState.and(bits[h]).satCount()>0)
+								cons = cons + ((int) (Math.pow(2, pos)));
+							pos++;
+						
+						}
+						result.add(myType.getCons(cons));
+					}	
+				}
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * 
+	 * @param from
+	 * @param until
+	 * @param b
+	 * @param f
+	 * @return 
+	 */
+	private BDD addExists(int from, int until, BDD b, BDDFactory f){
+		BDD var;
+
+		for(int k=from; k< until; k++){			 	
+			var = f.ithVar(k);
+			b = b.exist(var);
+		}		
+		return b;		
+	}
+	
+	
+	/**
+     * 
+     * @param r_primed  Boolean flag to indicate it will replace all primed variables
+     *  (in which case r_primed = true) or all common variables (r_primed =false).-
+     * @return creates pairs to replace primed (v' -> v) or common variables (v-> v')
+     */
+	private BDDPairing makePairsToReplace(boolean r_primed){      
+		//obtain the identifier of each variable of the BDD.
+		int varNum = Program.myFactory.varNum() / 2;
+		BDDPairing pairs = Program.myFactory.makePair();		
+
+		if(r_primed){// creates pairs to changes variables v' by v , i.e. v -> v'		
+			for (int i=0; i<varNum; i++){
+				pairs.set((varNum)+i, i);		
+			}   
+		}
+		else{// creates pairs to changes variables v by v',  i.e. v' -> v		
+			for (int i=0; i<varNum; i++){
+				pairs.set(i,(varNum)+i);		
+			}   
+		} 
+		return pairs;
+	}	
 	
 	@Override
 	public String toString(){
