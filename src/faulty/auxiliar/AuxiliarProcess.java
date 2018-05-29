@@ -486,18 +486,17 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         }
         attributes = "  Thread t; \n" + ints + bools + enums + "\n";
         init = "  public " + processName + "() {\n";
-        //TODO: hacer algo con initialCond
+        init += initToJava(initialCond, false);
         init += "\n  }\n\n";
         run = "  public void run(){\n";
         for (int i = 0; i < branches.size()-1; i++){
             run += "    if (!action"+i+"())\n";
         }
         run +="      action"+(branches.size()-1)+";\n  }\n\n";
-        start = "  public void start (){\n    if (t == null) {\n      t = new Thread(this);\n      t.start ();\n    }\n  }\n\n";
+        start = "  public void start (){\n    if (t == null) {\n      t = new Thread(this);\n      t.start();\n    }\n  }\n\n";
         methods = "";
         for (int i = 0; i < branches.size(); i++){
             assigns = "";
-            //TODO: hacer algo con los guards de cada branch
             for (int j = 0; j < branches.get(i).getAssignList().size(); j++){
                 AuxiliarVarAssign v = (AuxiliarVarAssign)branches.get(i).getAssignList().get(j);
                 if (v.getExp() instanceof AuxiliarConsBoolExp){
@@ -532,6 +531,27 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         if (e instanceof AuxiliarAndBoolExp)
             return cnfToJava(((AuxiliarAndBoolExp)e).exp1) + " && " + cnfToJava(((AuxiliarAndBoolExp)e).exp2);
         return "true";
+    }
+
+    private String initToJava(AuxiliarExpression e, boolean neg){
+        if (e instanceof AuxiliarVar)
+            if (((AuxiliarVar)e).getEnumType() != null)
+                return ((AuxiliarVar)e).getEnumName() + "." + ((AuxiliarVar)e).getName();
+            else
+                if (((AuxiliarVar)e).getEnumName() != null)
+                    return ((AuxiliarVar)e).getName();
+                else
+                    if (neg)
+                        return "    " + ((AuxiliarVar)e).getName() + " = false";
+                    else
+                        return "    " + ((AuxiliarVar)e).getName() + " = true";
+        if (e instanceof AuxiliarNegBoolExp)
+            return initToJava(((AuxiliarNegBoolExp)e).exp, !neg); //flip the neg flag
+        if (e instanceof AuxiliarEqBoolExp)
+            return "    " + initToJava(((AuxiliarEqBoolExp)e).int1, neg) + " = " + initToJava(((AuxiliarEqBoolExp)e).int2, neg);
+        if (e instanceof AuxiliarAndBoolExp)
+            return initToJava(((AuxiliarAndBoolExp)e).exp1, neg) + ";\n" + initToJava(((AuxiliarAndBoolExp)e).exp2, neg);
+        return "";
     }
     
     
