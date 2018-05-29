@@ -44,7 +44,7 @@ public class ProgramParser {
                 }               
             }
             else{ // If not errors, build the concrete Faulty program    
-            	
+            	System.out.println(program.toJava());
                 faultyProg = buildProgram(program);
             }    
         } catch (Exception e) {        	
@@ -55,6 +55,35 @@ public class ProgramParser {
         return faultyProg;
  		
  	}
+
+    public String parseJava(String NameFile){
+        try {
+            programFile = new FileReader(NameFile);
+           
+
+            // Read file
+            parser = new parserFaulty(new scannerFaulty(programFile));
+            AuxiliarProgram program = (AuxiliarProgram)parser.parse().value;
+
+             
+            
+            // Check Types
+            Type result = checkTypes(program);
+            if(result == Type.ERROR){
+                for(int i=0; i<errorList.size(); i++){
+                    System.out.println(errorList.get(i).getErrorMsg());
+                }               
+            }
+            else
+                return program.toJava(); 
+        } catch (Exception e) {         
+            System.out.println("Program Error." + e.getMessage());
+            e.printStackTrace(System.out);
+        }
+        
+        return null;
+        
+    }
 
     /**
      * 
