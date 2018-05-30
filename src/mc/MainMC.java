@@ -26,18 +26,7 @@ public class MainMC {
         	if (args.length == 2){
             if (args[0].equals("-j")){
                 String javaProgram = prog.parseJava(args[1]);
-                try{
-                    File file = new File("../out/Program" + ".java");
-                    file.createNewFile();
-                    FileWriter fw = new FileWriter(file);
-                    BufferedWriter bw = new BufferedWriter(fw);
-                    bw.write("\n    "+javaProgram+";\n");
-                    bw.close();
-                    System.out.println("Java program created");
-                }
-                catch(IOException e){
-                    e.printStackTrace();
-                }
+                System.out.println("Java program created");
             }
             else{
                 model = prog.parse(args[0]);

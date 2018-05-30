@@ -1,6 +1,7 @@
 package faulty.auxiliar;
 
 import java.util.*;
+import java.io.*;
 
 
 /**
@@ -193,14 +194,26 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         prog = "";
         tEnums = "";
         for (int i = 0; i < enumTypes.size(); i++){
-            tEnums += "public enum " + enumTypes.get(i).getName() + "{";
+            tEnums = "public enum " + enumTypes.get(i).getName() + "{";
             for (int j = 0; j < enumTypes.get(i).cons.length; j++){
                 tEnums += enumTypes.get(i).getCons(j);
                 if (j == enumTypes.get(i).cons.length-1)
                     tEnums += "}\n";
                 else
                     tEnums += ",";
-            } 
+            }
+
+            try{
+                File file = new File("../out/" + enumTypes.get(i).getName() +".java");
+                file.createNewFile();
+                FileWriter fw = new FileWriter(file);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write(tEnums);
+                bw.close();
+            }
+            catch(IOException e){
+                e.printStackTrace();
+            }   
         }
 
         procs = "";
@@ -211,15 +224,15 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         globals = "";
         for (int i = 0; i < globalVars.getBoolVars().size(); i++){
             AuxiliarVar v = globalVars.getBoolVars().get(i);
-            globals += "public "+v.getType() + " " + v.getName() + ";\n";
+            globals += "public static "+"boolean" + " " + v.getName() + ";\n";
         }
         for (int i = 0; i < globalVars.getIntVars().size(); i++){
             AuxiliarVar v = globalVars.getIntVars().get(i);
-            globals += "public "+v.getType() + " " + v.getName() + ";\n";
+            globals += "public static "+"int" + " " + v.getName() + ";\n";
         }
         for (int i = 0; i < globalVars.getEnumVars().size(); i++){
             AuxiliarVar v = globalVars.getEnumVars().get(i);
-            globals += "public "+v.getType() + " " + v.getName() + ";\n";
+            globals += "public static "+v.getType() + " " + v.getName() + ";\n";
         }
 
         main = "  public static void main(String[] args){\n";
@@ -233,7 +246,19 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         }
         main += "}\n\n";
 
-        prog += "public class Program {\n\n" + tEnums + globals + procs + main + "}";
+        prog += "public class Program {\n\n" + globals + main + "}";
+
+        try{
+            File file = new File("../out/" + "Program" +".java");
+            file.createNewFile();
+            FileWriter fw = new FileWriter(file);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(prog);
+            bw.close();
+        }
+        catch(IOException e){
+            e.printStackTrace();
+        }
         return prog;
     }
 
