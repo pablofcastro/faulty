@@ -472,7 +472,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
 	}
     
     public String toJava(){
-        String ints,bools,enums,attributes,init,run,start,methods,assigns,prog;
+        String ints,bools,enums,params,attributes,init,run,start,methods,assigns,prog;
         ints = "";
         for (int i = 0; i < intVars.size(); i++){
             ints += "  int " + intVars.get(i).getName() + ";\n"; 
@@ -485,14 +485,27 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         for (int i = 0; i < enumVars.size(); i++){
             enums += "  "+enumVars.get(i).getEnumType().getName() + " " + enumVars.get(i).getName() + ";\n"; 
         }
-        attributes = "  Thread t; \n" + ints + bools + enums + "\n";
+        params = "";
+        for (int i = 0; i < paramList.size(); i++){
+            if (paramList.get(i).getType().isBOOLEAN())
+                params += "  boolean" + " "+ paramList.get(i).getDeclarationName() + ";\n";
+            if (paramList.get(i).getType().isINT())
+                params += "  int" + " "+ paramList.get(i).getDeclarationName() + ";\n";
+            if (paramList.get(i).getType().isEnumerated())
+                params += paramList.get(i).getEnumName() + " "+ paramList.get(i).getDeclarationName() + ";\n";
+        }
+        attributes = "  Thread t; \n" + ints + bools + enums + params +"\n";
         init = "  public " + processName + "(";
-        /*for (int i = 0; i < paramList.size(); i++){
+        for (int i = 0; i < paramList.size(); i++){
+            if (paramList.get(i).getType().isBOOLEAN())
+                init += "boolean" + " "+ paramList.get(i).getDeclarationName();
+            if (paramList.get(i).getType().isINT())
+                init += "int" + " "+ paramList.get(i).getDeclarationName();
+            if (paramList.get(i).getType().isEnumerated())
+                init += paramList.get(i).getEnumName() + " "+ paramList.get(i).getDeclarationName();
             if (i < paramList.size() - 1)
-                init += paramList.get(i).getType() + " "+ paramList.get(i).getDeclarationName() + ",";
-            else
-                init += paramList.get(paramList.size() - 1).getType() + " "+ paramList.get(paramList.size() - 1).getDeclarationName();
-        }*/
+                init += ",";
+        }
         init += ") {\n";
         /*for (int i = 0; i < paramList.size(); i++){
             if (processInvkParameters.get(i).getInvkValues().get(i) instanceof AuxiliarVar){}
@@ -514,17 +527,17 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
             for (int j = 0; j < branches.get(i).getAssignList().size(); j++){
                 AuxiliarVarAssign v = (AuxiliarVarAssign)branches.get(i).getAssignList().get(j);
                 if (v.getExp() instanceof AuxiliarConsBoolExp){
-                    if (hasLocalVar(v.getVar()))
+                    //if (hasLocalVar(v.getVar()))
                         assigns += "      "+v.getVar().getName()+"="+((AuxiliarConsBoolExp)v.getExp()).getValue() + ";\n";
-                    else
-                        assigns += "      Program."+v.getVar().getName()+"="+((AuxiliarConsBoolExp)v.getExp()).getValue() + ";\n";
+                    //else
+                    //    assigns += "      Program."+v.getVar().getName()+"="+((AuxiliarConsBoolExp)v.getExp()).getValue() + ";\n";
                 }
                 else{
                     if (v.getExp() instanceof AuxiliarVar)
-                        if (hasLocalVar(v.getVar()))
+                        //if (hasLocalVar(v.getVar()))
                             assigns += "      "+v.getVar().getName()+"="+((AuxiliarVar)v.getExp()).getEnumName()+"."+((AuxiliarVar)v.getExp()).getName() + ";\n";
-                        else
-                            assigns += "      Program."+v.getVar().getName()+"="+((AuxiliarVar)v.getExp()).getEnumName()+"."+((AuxiliarVar)v.getExp()).getName() + ";\n";
+                        //else
+                        //    assigns += "      Program."+v.getVar().getName()+"="+((AuxiliarVar)v.getExp()).getEnumName()+"."+((AuxiliarVar)v.getExp()).getName() + ";\n";
                 }
 
             }
@@ -555,10 +568,10 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
             if (((AuxiliarVar)e).getEnumType() != null)
                 return ((AuxiliarVar)e).getEnumName() + "." + ((AuxiliarVar)e).getName();
             else
-                if (hasLocalVar((AuxiliarVar)e))
+                //if (hasLocalVar((AuxiliarVar)e))
                     return ((AuxiliarVar)e).getName();
-                else
-                    return "Program."+((AuxiliarVar)e).getName();
+                //else
+                    //return "Program."+((AuxiliarVar)e).getName();
         if (e instanceof AuxiliarNegBoolExp)
             return "!" + cnfToJava(((AuxiliarNegBoolExp)e).exp);
         if (e instanceof AuxiliarEqBoolExp)
@@ -574,10 +587,10 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
                 return ((AuxiliarVar)e).getEnumName() + "." + ((AuxiliarVar)e).getName();
             else
                 if (((AuxiliarVar)e).getEnumName() != null)
-                    if (hasLocalVar((AuxiliarVar)e))
+                    //if (hasLocalVar((AuxiliarVar)e))
                         return ((AuxiliarVar)e).getName();
-                    else
-                        return "Program."+((AuxiliarVar)e).getName();
+                    //else
+                        //return "Program."+((AuxiliarVar)e).getName();
                 else
                     if (hasLocalVar((AuxiliarVar)e))
                         if (neg)
@@ -585,10 +598,11 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
                         else
                             return "    " + ((AuxiliarVar)e).getName() + " = true" + ";\n";
                     else
-                        if (neg)
+                            return  "    " + ((AuxiliarVar)e).getName() + "=" + ((AuxiliarVar)e).getName() + ";\n";
+                        /*if (neg)
                             return "    Program." + ((AuxiliarVar)e).getName() + " = false" + ";\n";
                         else
-                            return "    Program." + ((AuxiliarVar)e).getName() + " = true" + ";\n";
+                            return "    Program." + ((AuxiliarVar)e).getName() + " = true" + ";\n";*/
         if (e instanceof AuxiliarNegBoolExp)
             return initToJava(((AuxiliarNegBoolExp)e).exp, !neg); //flip the neg flag
         if (e instanceof AuxiliarEqBoolExp)
@@ -612,10 +626,10 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
             if (v.getName().equals(enumVars.get(i).getName()))
                 return true;
         }
-        for (int i = 0; i < paramList.size(); i++){
+        /*for (int i = 0; i < paramList.size(); i++){
             if (v.getName().equals(paramList.get(i).getDeclarationName()))
                 return true;
-        }
+        }*/
         return false;
     }
     

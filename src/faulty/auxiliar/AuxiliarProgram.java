@@ -238,7 +238,18 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         main = "  public static void main(String[] args){\n";
         for (int i = 0; i < mainProgram.getProcessDecl().size(); i++){
             AuxiliarProcessDecl curr = mainProgram.getProcessDecl().get(i);
-            main += "    "+ curr.getType() + " " + curr.getName() + " = new "+curr.getType()+"()"+";\n";
+            main += "    "+ curr.getType() + " " + curr.getName() + " = new "+curr.getType()+"(";
+            for (int j = 0; j < process.getProcessList().size(); j++){
+                if (process.getProcessList().get(j).getName().equals(curr.getType()))
+                    for (int k = 0; k < process.getProcessList().get(j).processInvkParameters.get(0).getInvkValues().size(); k++){
+                        if (process.getProcessList().get(j).processInvkParameters.get(0).getInvkValues().get(k) instanceof AuxiliarVar){
+                            main += ((AuxiliarVar)process.getProcessList().get(j).processInvkParameters.get(0).getInvkValues().get(k)).getName();
+                            if (k < process.getProcessList().get(j).processInvkParameters.get(0).getInvkValues().size()-1)
+                                main += ",";
+                        }
+                    }
+            }
+            main += ")"+";\n";
         }
         for (int i = 0; i < mainProgram.getProcessDecl().size(); i++){
             AuxiliarProcessDecl curr = mainProgram.getProcessDecl().get(i);
