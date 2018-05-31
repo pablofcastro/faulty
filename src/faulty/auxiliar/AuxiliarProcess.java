@@ -514,11 +514,12 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         init += initToJava(initialCond, false);
         init += "\n  }\n\n";
         run = "  public void run(){\n";
+        run += "    while (true){\n";
         for (int i = 0; i < branches.size(); i++){
             if (i < branches.size()-1)
-                run += "    if (!action"+i+"())\n";
+                run += "      if (!action"+i+"())\n";
             else
-                run +="      action"+(branches.size()-1)+"();\n  }\n\n";
+                run +="        action"+(branches.size()-1)+"();\n    }\n  }\n\n";
         }
         start = "  public void start (){\n    if (t == null) {\n      t = new Thread(this);\n      t.start();\n    }\n  }\n\n";
         methods = "";
@@ -594,11 +595,11 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
                 else
                     if (hasLocalVar((AuxiliarVar)e))
                         if (neg)
-                            return "    " + ((AuxiliarVar)e).getName() + " = false" + ";\n";
+                            return "    this." + ((AuxiliarVar)e).getName() + " = false" + ";\n";
                         else
-                            return "    " + ((AuxiliarVar)e).getName() + " = true" + ";\n";
+                            return "    this." + ((AuxiliarVar)e).getName() + " = true" + ";\n";
                     else
-                            return  "    " + ((AuxiliarVar)e).getName() + "=" + ((AuxiliarVar)e).getName() + ";\n";
+                            return  "    this." + ((AuxiliarVar)e).getName() + "=" + ((AuxiliarVar)e).getName() + ";\n";
                         /*if (neg)
                             return "    Program." + ((AuxiliarVar)e).getName() + " = false" + ";\n";
                         else
@@ -606,7 +607,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         if (e instanceof AuxiliarNegBoolExp)
             return initToJava(((AuxiliarNegBoolExp)e).exp, !neg); //flip the neg flag
         if (e instanceof AuxiliarEqBoolExp)
-            return "    " + initToJava(((AuxiliarEqBoolExp)e).int1, neg) + " = " + initToJava(((AuxiliarEqBoolExp)e).int2, neg) + ";\n";
+            return "    this." + initToJava(((AuxiliarEqBoolExp)e).int1, neg) + " = " + initToJava(((AuxiliarEqBoolExp)e).int2, neg) + ";\n";
         if (e instanceof AuxiliarAndBoolExp)
             return initToJava(((AuxiliarAndBoolExp)e).exp1, neg) + initToJava(((AuxiliarAndBoolExp)e).exp2, neg);
         return "";
