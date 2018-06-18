@@ -190,7 +190,7 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
 	}
 
     public String toJava(){
-        String tEnums,prog,globals,procs,main;
+        String tEnums,prog,globals,params,procs,main;
         prog = "";
         tEnums = "";
         for (int i = 0; i < enumTypes.size(); i++){
@@ -222,20 +222,22 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         }
 
         globals = "";
+        params = "";
         for (int i = 0; i < globalVars.getBoolVars().size(); i++){
             AuxiliarVar v = globalVars.getBoolVars().get(i);
-            globals += "public static "+"boolean" + " " + v.getName() + ";\n";
+            globals += " public static "+"boolean" + " " + v.getName() + " = true;\n";
+            params += "     "+"Bool" + " " + v.getName() + " = new Bool(true);\n";
         }
         for (int i = 0; i < globalVars.getIntVars().size(); i++){
             AuxiliarVar v = globalVars.getIntVars().get(i);
-            globals += "public static "+"int" + " " + v.getName() + ";\n";
+            globals += " "+"Int" + " " + v.getName() + " = true;\n";
         }
         for (int i = 0; i < globalVars.getEnumVars().size(); i++){
             AuxiliarVar v = globalVars.getEnumVars().get(i);
-            globals += "public static "+v.getType() + " " + v.getName() + ";\n";
+            globals += " "+v.getType() + " " + v.getName() + ";\n";
         }
 
-        main = "  public static void main(String[] args){\n";
+        main = "  public static void main(String[] args){\n" + params;
         for (int i = 0; i < mainProgram.getProcessDecl().size(); i++){
             AuxiliarProcessDecl curr = mainProgram.getProcessDecl().get(i);
             main += "    "+ curr.getType() + " " + curr.getName() + " = new "+curr.getType()+"(";

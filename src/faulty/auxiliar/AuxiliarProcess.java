@@ -488,9 +488,9 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         params = "";
         for (int i = 0; i < paramList.size(); i++){
             if (paramList.get(i).getType().isBOOLEAN())
-                params += "  boolean" + " "+ paramList.get(i).getDeclarationName() + ";\n";
+                params += "  Bool" + " "+ paramList.get(i).getDeclarationName() + ";\n";
             if (paramList.get(i).getType().isINT())
-                params += "  int" + " "+ paramList.get(i).getDeclarationName() + ";\n";
+                params += "  Int" + " "+ paramList.get(i).getDeclarationName() + ";\n";
             if (paramList.get(i).getType().isEnumerated())
                 params += paramList.get(i).getEnumName() + " "+ paramList.get(i).getDeclarationName() + ";\n";
         }
@@ -498,9 +498,9 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         init = "  public " + processName + "(";
         for (int i = 0; i < paramList.size(); i++){
             if (paramList.get(i).getType().isBOOLEAN())
-                init += "boolean" + " "+ paramList.get(i).getDeclarationName();
+                init += "Bool" + " "+ paramList.get(i).getDeclarationName();
             if (paramList.get(i).getType().isINT())
-                init += "int" + " "+ paramList.get(i).getDeclarationName();
+                init += "Int" + " "+ paramList.get(i).getDeclarationName();
             if (paramList.get(i).getType().isEnumerated())
                 init += paramList.get(i).getEnumName() + " "+ paramList.get(i).getDeclarationName();
             if (i < paramList.size() - 1)
@@ -528,11 +528,13 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
             for (int j = 0; j < branches.get(i).getAssignList().size(); j++){
                 AuxiliarVarAssign v = (AuxiliarVarAssign)branches.get(i).getAssignList().get(j);
                 if (v.getExp() instanceof AuxiliarConsBoolExp){
-                    //if (hasLocalVar(v.getVar()))
+                    if (hasLocalVar(v.getVar()))
                         assigns += "      "+v.getVar().getName()+"="+((AuxiliarConsBoolExp)v.getExp()).getValue() + ";\n";
-                    //else
-                    //    assigns += "      Program."+v.getVar().getName()+"="+((AuxiliarConsBoolExp)v.getExp()).getValue() + ";\n";
-                }
+                    else
+                        if (hasParam(v.getVar()))
+                            assigns += "      "+v.getVar().getName()+".setValue("+((AuxiliarConsBoolExp)v.getExp()).getValue() + ");\n";
+                        else
+                            assigns += "      Program."+v.getVar().getName()+"="+((AuxiliarConsBoolExp)v.getExp()).getValue() + ";\n";                }
                 else{
                     if (v.getExp() instanceof AuxiliarVar)
                         //if (hasLocalVar(v.getVar()))
@@ -569,10 +571,13 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
             if (((AuxiliarVar)e).getEnumType() != null)
                 return ((AuxiliarVar)e).getEnumName() + "." + ((AuxiliarVar)e).getName();
             else
-                //if (hasLocalVar((AuxiliarVar)e))
+                if (hasLocalVar((AuxiliarVar)e))
                     return ((AuxiliarVar)e).getName();
-                //else
-                    //return "Program."+((AuxiliarVar)e).getName();
+                else
+                    if (hasParam((AuxiliarVar)e))
+                        return ((AuxiliarVar)e).getName()+".getValue()";
+                    else
+                        return "Program."+((AuxiliarVar)e).getName();
         if (e instanceof AuxiliarNegBoolExp)
             return "!" + cnfToJava(((AuxiliarNegBoolExp)e).exp);
         if (e instanceof AuxiliarEqBoolExp)
@@ -633,5 +638,17 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         }*/
         return false;
     }
+
+    private boolean hasParam(AuxiliarVar v){
+        for (int i = 0; i < paramList.size(); i++){
+            if (v.getName().equals(paramList.get(i).getDeclarationName()))
+                return true;
+        }
+        return false;
+    }
+
+    /*la idea aca seria diferenciar las locales de los parametros de las globales ya que las globales van con Program. por ser estaticas, 
+    los parametros usan metodos de la clase Bool (Int..), y las locales se tratan de la forma habitual
+    */
     
 }
