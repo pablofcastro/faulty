@@ -190,7 +190,8 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
 	}
 
     public String toJava(){
-        String tEnums,prog,globals,params,procs,main;
+        String imports,tEnums,prog,globals,params,procs,main;
+        imports = "import java.util.Random;"+ "\n\n";
         prog = "";
         tEnums = "";
         for (int i = 0; i < enumTypes.size(); i++){
@@ -221,11 +222,11 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
             procs += process.getProcessList().get(i).toJava() + "\n\n";
         }
 
-        globals = "";
+        globals = "    public static Random randomGenerator = new Random();\n";
         params = "";
         for (int i = 0; i < globalVars.getBoolVars().size(); i++){
             AuxiliarVar v = globalVars.getBoolVars().get(i);
-            globals += " public static "+"boolean" + " " + v.getName() + " = true;\n";
+            globals += "    public static "+"boolean" + " " + v.getName() + " = true;\n";
             params += "     "+"Bool" + " " + v.getName() + " = new Bool(true);\n";
         }
         for (int i = 0; i < globalVars.getIntVars().size(); i++){
@@ -259,7 +260,7 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         }
         main += "}\n\n";
 
-        prog += "public class Program {\n\n" + globals + main + "}";
+        prog += imports+"public class Program {\n\n" + globals + main + "}";
 
         try{
             File file = new File("../out/" + "Program" +".java");

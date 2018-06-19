@@ -515,12 +515,17 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         init += "\n  }\n\n";
         run = "  public void run(){\n";
         run += "    while (true){\n";
-        for (int i = 0; i < branches.size(); i++){
+        /*for (int i = 0; i < branches.size(); i++){
             if (i < branches.size()-1)
                 run += "      if (!action"+i+"())\n";
             else
                 run +="        action"+(branches.size()-1)+"();\n    }\n  }\n\n";
+        }*/
+        run += "      switch ("+"Program.randomGenerator.nextInt("+branches.size()+")){\n";
+        for (int i = 0; i < branches.size(); i++){
+            run += "        case "+i+":action"+i+"();break;\n";
         }
+        run += "        default:break;\n      }\n    }\n  }\n";
         start = "  public void start (){\n    if (t == null) {\n      t = new Thread(this);\n      t.start();\n    }\n  }\n\n";
         methods = "";
         for (int i = 0; i < branches.size(); i++){
