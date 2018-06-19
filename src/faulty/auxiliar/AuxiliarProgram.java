@@ -226,12 +226,12 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         params = "";
         for (int i = 0; i < globalVars.getBoolVars().size(); i++){
             AuxiliarVar v = globalVars.getBoolVars().get(i);
-            globals += "    public static "+"boolean" + " " + v.getName() + " = true;\n";
-            params += "     "+"Bool" + " " + v.getName() + " = new Bool(true);\n";
+            globals += "    public static "+"boolean" + " " + v.getName() + " = false;\n";
+            params += "     "+"Bool" + " " + v.getName() + " = new Bool(false);\n";
         }
         for (int i = 0; i < globalVars.getIntVars().size(); i++){
             AuxiliarVar v = globalVars.getIntVars().get(i);
-            globals += " "+"Int" + " " + v.getName() + " = true;\n";
+            globals += " "+"Int" + " " + v.getName() + " = 0;\n";
         }
         for (int i = 0; i < globalVars.getEnumVars().size(); i++){
             AuxiliarVar v = globalVars.getEnumVars().get(i);

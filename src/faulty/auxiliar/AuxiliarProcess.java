@@ -609,11 +609,18 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
                         else
                             return "    this." + ((AuxiliarVar)e).getName() + " = true" + ";\n";
                     else
-                            return  "    this." + ((AuxiliarVar)e).getName() + "=" + ((AuxiliarVar)e).getName() + ";\n";
-                        /*if (neg)
-                            return "    Program." + ((AuxiliarVar)e).getName() + " = false" + ";\n";
+                        if (hasParam((AuxiliarVar)e))
+                            if (neg)
+                                return  "    this." + ((AuxiliarVar)e).getName() + "=" + ((AuxiliarVar)e).getName() + ";\n"+
+                                        "    this." + ((AuxiliarVar)e).getName() + ".setValue(false);\n";
+                            else
+                                return  "    this." + ((AuxiliarVar)e).getName() + "=" + ((AuxiliarVar)e).getName() + ";\n"+
+                                        "    this." + ((AuxiliarVar)e).getName() + ".setValue(true);\n";
                         else
-                            return "    Program." + ((AuxiliarVar)e).getName() + " = true" + ";\n";*/
+                            if (neg)
+                                return "    Program." + ((AuxiliarVar)e).getName() + " = false" + ";\n";
+                            else
+                                return "    Program." + ((AuxiliarVar)e).getName() + " = true" + ";\n";
         if (e instanceof AuxiliarNegBoolExp)
             return initToJava(((AuxiliarNegBoolExp)e).exp, !neg); //flip the neg flag
         if (e instanceof AuxiliarEqBoolExp)
