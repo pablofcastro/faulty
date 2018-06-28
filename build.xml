@@ -16,6 +16,7 @@
   <property name="java.parserFormula"     location="java/parserFormula"/>
   <property name="java.faulty"     location="java/faulty"/>
   <property name="java.faulty.auxiliar"     location="java/faulty/auxiliar"/>
+  <property name="java.graph"     location="java/graph"/>
   <property name="jar.file"       location="${dist}/${ant.project.name}.jar"/>
   <property name="jar.main.class" value="mc.MainMC"/>
   <property environment="env" />
@@ -65,6 +66,7 @@
     <mkdir dir="${java.formula}"/>
     <mkdir dir="${java.auxiliar}"/> 
     <mkdir dir="${java.faulty.auxiliar}"/>
+    <mkdir dir="${java.graph}"/>
       
     <copy todir="${java.faulty}">
           <fileset dir="src/faulty" includes="**.java"/>
@@ -84,6 +86,9 @@
     </copy>
     <copy todir="${java.auxiliar}">
           <fileset dir="src/auxiliar" includes="**.java"/>
+    </copy>
+    <copy todir="${java.graph}">
+          <fileset dir="src/graph" includes="**.java"/>
     </copy>  
       
   </target>

@@ -3,6 +3,7 @@ package faulty.auxiliar;
 
 import java.util.*;
 import java.io.*;
+import graph.*;
 
 
 
@@ -565,6 +566,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         catch(IOException e){
             e.printStackTrace();
         }
+        toGraph();
         return prog;
 
     }
@@ -592,6 +594,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         return "true";
     }
 
+    //ASSUME e IS CNF, WITH NEGATION ON ATOMIC LEVEL ONLY
     private String initToJava(AuxiliarExpression e, boolean neg){
         if (e instanceof AuxiliarVar)
             if (((AuxiliarVar)e).getEnumType() != null)
@@ -632,16 +635,16 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     
 
     private boolean hasLocalVar(AuxiliarVar v){
-        for (int i = 0; i < boolVars.size(); i++){
-            if (v.getName().equals(boolVars.get(i).getName()))
+        for (AuxiliarVar i : boolVars){
+            if (v.getName().equals(i.getName()))
                 return true;
         }
-        for (int i = 0; i < intVars.size(); i++){
-            if (v.getName().equals(intVars.get(i).getName()))
+        for (AuxiliarVar i : intVars){
+            if (v.getName().equals(i.getName()))
                 return true;
         }
-        for (int i = 0; i < enumVars.size(); i++){
-            if (v.getName().equals(enumVars.get(i).getName()))
+        for (AuxiliarVar i : enumVars){
+            if (v.getName().equals(i.getName()))
                 return true;
         }
         /*for (int i = 0; i < paramList.size(); i++){
@@ -652,15 +655,39 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     }
 
     private boolean hasParam(AuxiliarVar v){
-        for (int i = 0; i < paramList.size(); i++){
-            if (v.getName().equals(paramList.get(i).getDeclarationName()))
+        for (AuxiliarParam i : paramList){
+            if (v.getName().equals(i.getDeclarationName()))
                 return true;
         }
         return false;
     }
 
-    /*la idea aca seria diferenciar las locales de los parametros de las globales ya que las globales van con Program. por ser estaticas, 
-    los parametros usan metodos de la clase Bool (Int..), y las locales se tratan de la forma habitual
-    */
+    public ExplicitModel toGraph(){
+        ExplicitModel m = new ExplicitModel();
+        Node init = new Node(boolVars, initialCond);
+        m.addNode(init);
+        TreeSet<Node> iterableSet = new TreeSet<Node>();
+        iterableSet.add(init);
+        while (!iterableSet.isEmpty()){
+            //System.out.println(vertices.toString());
+            Node from = iterableSet.pollFirst();
+            for (AuxiliarBranch b : branches){
+                if (from.satisfies(b.getGuard())){
+                    Node to = from.createSuccessor(b.getAssignList());
+                    Node toOld = m.search(to);
+                    if (toOld == null){
+                        m.addNode(to);
+                        m.addEdge(from,to);
+                        iterableSet.add(to);
+                    }
+                    else{
+                        m.addEdge(from,toOld);
+                    }
+                }
+            }
+        }
+        System.out.println(m.toString());
+        return m;
+    }
     
 }
