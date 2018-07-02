@@ -4,7 +4,9 @@ import java.util.*;
 import faulty.auxiliar.*;
 
 public class ExplicitModel {
-	private HashMap<Node, TreeSet<Node>> adjList;
+	private HashMap<Node, TreeSet<Node>> succList;
+	private HashMap<Node, TreeSet<Node>> preList;
+	private Node initial;
 	private LinkedList<Node> nodes;
 	private static final TreeSet<Node> EMPTY_SET = new TreeSet<Node>();
 	private int numNodes;
@@ -14,16 +16,26 @@ public class ExplicitModel {
 	 * Construct empty Graph
 	 */
 	public ExplicitModel() {
-		adjList = new HashMap<Node, TreeSet<Node>>();
+		succList = new HashMap<Node, TreeSet<Node>>();
+		preList = new HashMap<Node, TreeSet<Node>>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<Node>();
 
 	}
 
+	public void setInitial(Node v){
+		initial = v;
+	}
+
+	public Node getInitial(){
+		return initial;
+	}
+
 
 	public void addNode(Node v) {
 		nodes.add(v);
-		adjList.put(v, new TreeSet<Node>());
+		succList.put(v, new TreeSet<Node>());
+		preList.put(v, new TreeSet<Node>());
 		numNodes += 1;
 	}
 
@@ -44,7 +56,7 @@ public class ExplicitModel {
 
 		if (!hasNode(from) || !hasNode(to))
 			return false;
-		return adjList.get(from).contains(to);
+		return succList.get(from).contains(to);
 	}
 
 
@@ -53,12 +65,21 @@ public class ExplicitModel {
 			if (hasEdge(from, to))
 				return;
 			numEdges += 1;
-			adjList.get(from).add(to);
+			succList.get(from).add(to);
+			preList.get(to).add(from);
 		}
 	}
 
-	public LinkedList<Node> getnodes(){
+	public LinkedList<Node> getNodes(){
 		return nodes;
+	}
+
+	public TreeSet<Node> getSuccessors(Node v){
+		return succList.get(v);
+	}
+
+	public TreeSet<Node> getPredecessors(Node v){
+		return preList.get(v);
 	}
 
 	public void resetVisited(){
@@ -71,7 +92,7 @@ public class ExplicitModel {
 		String res = "";
 		for (Node v : nodes){
 			res += v.toString() + "\n";
-			res += "    ->"+ adjList.get(v).toString() +"\n";
+			res += "    ->"+ succList.get(v).toString() +"\n";
 		}
 		return res;
 	}

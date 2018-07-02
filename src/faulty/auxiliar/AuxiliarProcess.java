@@ -472,6 +472,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
 	     v.visit(this);			
 	}
     
+    /*Generates java code implementing this process*/
     public String toJava(){
         String ints,bools,enums,params,attributes,init,run,start,methods,assigns,prog;
         ints = "";
@@ -566,7 +567,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         catch(IOException e){
             e.printStackTrace();
         }
-        toGraph();
+        //toGraph();
         return prog;
 
     }
@@ -634,6 +635,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     }
     
 
+    /*Checks if this process has a local var v*/
     private boolean hasLocalVar(AuxiliarVar v){
         for (AuxiliarVar i : boolVars){
             if (v.getName().equals(i.getName()))
@@ -654,6 +656,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         return false;
     }
 
+    /*Checks if this process has a parameter v*/
     private boolean hasParam(AuxiliarVar v){
         for (AuxiliarParam i : paramList){
             if (v.getName().equals(i.getDeclarationName()))
@@ -662,14 +665,15 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         return false;
     }
 
+    /*Generates a explicit model (Kripke structure) for this process*/
     public ExplicitModel toGraph(){
         ExplicitModel m = new ExplicitModel();
-        Node init = new Node(boolVars, initialCond);
+        Node init = new Node(boolVars, initialCond); //TODO:take into account global vars
         m.addNode(init);
+        m.setInitial(init);
         TreeSet<Node> iterableSet = new TreeSet<Node>();
         iterableSet.add(init);
         while (!iterableSet.isEmpty()){
-            //System.out.println(vertices.toString());
             Node from = iterableSet.pollFirst();
             for (AuxiliarBranch b : branches){
                 if (from.satisfies(b.getGuard())){
@@ -686,7 +690,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
                 }
             }
         }
-        System.out.println(m.toString());
+        //System.out.println(m.toString());
         return m;
     }
     

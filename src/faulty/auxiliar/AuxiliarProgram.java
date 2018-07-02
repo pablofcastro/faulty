@@ -2,6 +2,7 @@ package faulty.auxiliar;
 
 import java.util.*;
 import java.io.*;
+import graph.*;
 
 
 /**
@@ -189,6 +190,7 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
 	     v.visit(this);			
 	}
 
+    /*Generates java code implementing the complete program*/
     public String toJava(){
         String imports,tEnums,prog,globals,params,procs,main;
         imports = "import java.util.Random;"+ "\n\n";
@@ -273,7 +275,55 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         catch(IOException e){
             e.printStackTrace();
         }
+        toGraph();
         return prog;
+    }
+
+    /*Generates a explicit model (Kripke structure) for the complete program*/
+    public ExplicitCompositeModel toGraph(){
+        ExplicitCompositeModel m = new ExplicitCompositeModel();
+        LinkedList<ExplicitModel> procs = new LinkedList<ExplicitModel>();
+
+        //states in m are lists of states (from processes)
+        //calculate initial state
+        CompositeNode init = new CompositeNode(new LinkedList<Node>());
+        for (AuxiliarProcess proc : process.getProcessList()){
+            ExplicitModel p = proc.toGraph();
+            procs.add(p);
+            init.getNodes().add(p.getInitial());
+        }
+        m.addNode(init);
+        m.setInitial(init);
+
+        TreeSet<CompositeNode> set = new TreeSet<CompositeNode>();
+        set.add(m.getInitial());
+
+        //build the whole model
+        while(!set.isEmpty()){
+            CompositeNode curr = set.pollFirst();
+            for (int i = 0; i < curr.getNodes().size(); i++){
+                for(Node n_ : procs.get(i).getSuccessors(curr.getNodes().get(i))){
+                    CompositeNode curr_ = new CompositeNode((LinkedList<Node>)curr.getNodes().clone());
+                    curr_.getNodes().set(i,n_);
+                    CompositeNode toOld = m.search(curr_);
+                    if (toOld == null){
+                        //System.out.println("curr:"+curr);
+                        //System.out.println("curr_:"+curr_);
+                        m.addNode(curr_);
+                        m.addEdge(curr,curr_);
+                        set.add(curr_);
+                    }
+                    else{
+                        m.addEdge(curr,toOld);
+                        //System.out.println("sdasdsdasdasddasdsddaddassda");
+                    }
+                }
+            }
+        }
+        //ExplicitModel res = m.flatten();
+        System.out.println(m.toString());
+        return m;
+        //TODO: flatten all states (union)
     }
 
 }
