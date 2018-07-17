@@ -286,11 +286,12 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
 
         //states in m are lists of states (from processes)
         //calculate initial state
-        CompositeNode init = new CompositeNode(new LinkedList<Node>());
+        CompositeNode init = new CompositeNode(new LinkedList<Node>(), globalVars.getBoolVars());
         for (AuxiliarProcess proc : process.getProcessList()){
             ExplicitModel p = proc.toGraph();
             procs.add(p);
             init.getNodes().add(p.getInitial());
+            init.updateState(p.getInitial()); //pre: todos los procesos inicializan las vars globales igual
         }
         m.addNode(init);
         m.setInitial(init);
@@ -303,8 +304,10 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
             CompositeNode curr = set.pollFirst();
             for (int i = 0; i < curr.getNodes().size(); i++){
                 for(Node n_ : procs.get(i).getSuccessors(curr.getNodes().get(i))){
-                    CompositeNode curr_ = new CompositeNode((LinkedList<Node>)curr.getNodes().clone());
+                    //CompositeNode curr_ = new CompositeNode((LinkedList<Node>)curr.getNodes().clone());
+                    CompositeNode curr_ = curr.clone();
                     curr_.getNodes().set(i,n_);
+                    curr_.updateState(n_); //if there are any modifications to shared vars on n_ then update global state
                     CompositeNode toOld = m.search(curr_);
                     if (toOld == null){
                         //System.out.println("curr:"+curr);
@@ -315,7 +318,6 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
                     }
                     else{
                         m.addEdge(curr,toOld);
-                        //System.out.println("sdasdsdasdasddasdsddaddassda");
                     }
                 }
             }

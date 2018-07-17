@@ -88,8 +88,9 @@ public class ExplicitCompositeModel {
 	public String toString(){
 		String res = "";
 		for (CompositeNode v : nodes){
-			res += v.toString() + "\n";
-			res += "    ->"+ succList.get(v).toString() +"\n";
+			res += "\n" + v.toString() + "\n";
+			for (CompositeNode u : succList.get(v))
+				res += "    -->"+ u.toString() +"\n";
 		}
 		return res;
 	}

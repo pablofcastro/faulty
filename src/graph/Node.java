@@ -8,6 +8,7 @@ public class Node implements Comparable{
 	HashMap<String,Boolean> state;
 	LinkedList<AuxiliarVar> vars;
 	boolean visited;
+	CompositeNode superNode; // the node that englobes this one
 
 	public Node(){
 

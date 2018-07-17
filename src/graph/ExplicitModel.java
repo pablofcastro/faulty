@@ -92,7 +92,7 @@ public class ExplicitModel {
 		String res = "";
 		for (Node v : nodes){
 			res += v.toString() + "\n";
-			res += "    ->"+ succList.get(v).toString() +"\n";
+			res += "    -->"+ succList.get(v).toString() +"\n";
 		}
 		return res;
 	}

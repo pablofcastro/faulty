@@ -668,7 +668,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     /*Generates a explicit model (Kripke structure) for this process*/
     public ExplicitModel toGraph(){
         ExplicitModel m = new ExplicitModel();
-        Node init = new Node(boolVars, initialCond); //TODO:take into account global vars
+        Node init = new Node(boolVars, initialCond);
         m.addNode(init);
         m.setInitial(init);
         TreeSet<Node> iterableSet = new TreeSet<Node>();
