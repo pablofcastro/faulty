@@ -7,17 +7,17 @@ import faulty.auxiliar.*;
 public class CompositeNode implements Comparable{
 	LinkedList<Node> nodes;
 	HashMap<String,Boolean> globalState;
-	LinkedList<AuxiliarVar> sharedVars;
+	ExplicitCompositeModel model;
 
 	public CompositeNode(){
 
 	}
 
-	public CompositeNode(LinkedList<Node> n, LinkedList<AuxiliarVar> vars){
+	public CompositeNode(LinkedList<Node> n, ExplicitCompositeModel m){
 		nodes = n;
-		sharedVars = vars;
+		model = m;
 		globalState = new HashMap<String,Boolean>();
-		for (AuxiliarVar v : sharedVars){
+		for (AuxiliarVar v : model.getSharedVars()){
 			globalState.put(v.getName(),false);
 		}
 	}
@@ -48,18 +48,25 @@ public class CompositeNode implements Comparable{
 		return globalState;
 	}
 
-	public void updateState(Node n){
-		for (AuxiliarVar v : sharedVars){
-			Boolean value = n.getState().get(v.getName());
-			if (value != null){
-				globalState.put(v.getName(),value);
+	public void updateState(Node n, Node n_){
+		for (AuxiliarVar v : model.getSharedVars()){
+			LinkedList<Pair> l = n.getModel().getGlobalAssignments();
+			for (Pair e : l){
+				Pair ef = (Pair)e.getFst();
+				Pair es = (Pair)e.getSnd();
+				Node eff = (Node)ef.getFst();
+				Node efs = (Node)ef.getSnd();
+				String esf = (String)es.getFst();
+				Boolean ess = (Boolean)es.getSnd();
+				if (eff.equals(n) && efs.equals(n_) && esf.equals(v.getName()))
+					globalState.put(v.getName(),ess);
 			}
 		}
 	}
 
 	public String toString(){
 		String res = "";
-		for (AuxiliarVar v : sharedVars){
+		for (AuxiliarVar v : model.getSharedVars()){
 			if (globalState.get(v.getName()))
 				res += v.getName() + "_";
 		}
@@ -73,7 +80,7 @@ public class CompositeNode implements Comparable{
 		for (int i=0;i<nodes.size();i++)
 			if (!nodes.get(i).equals(n.getNodes().get(i)))
 				return false;
-		for (AuxiliarVar var: sharedVars){
+		for (AuxiliarVar var: model.getSharedVars()){
 			if (globalState.get(var.getName()) != n.getGlobalState().get(var.getName()))
 				return false;
 		}
@@ -82,14 +89,11 @@ public class CompositeNode implements Comparable{
 
 	public CompositeNode clone(){
 		CompositeNode n = new CompositeNode();
-		n.sharedVars = sharedVars;
+		n.model = model;
 		n.nodes = new LinkedList<Node>();
-		/*for (Node v : nodes){
-			n.nodes.add(v.clone());
-		}*/
-		n.nodes.addAll(nodes);
+		n.nodes.addAll(nodes); // this is not deep clone on purpose
 		n.globalState = new HashMap<String,Boolean>();
-		for (AuxiliarVar v : sharedVars){
+		for (AuxiliarVar v : model.getSharedVars()){
 			n.globalState.put(v.getName(),globalState.get(v.getName()));
 		}
 		return n;

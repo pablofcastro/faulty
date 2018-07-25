@@ -666,12 +666,12 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     }
 
     /*Generates a explicit model (Kripke structure) for this process*/
-    public ExplicitModel toGraph(String pName, LinkedList<AuxiliarVar> globalVars){
-        ExplicitModel m = new ExplicitModel(pName);
-        LinkedList<AuxiliarVar> allVars = new LinkedList<AuxiliarVar>();
+    public ExplicitModel toGraph(String pName, ExplicitCompositeModel fullModel){//, LinkedList<AuxiliarVar> globalVars){
+        ExplicitModel m = new ExplicitModel(pName,boolVars, fullModel);
+        /*LinkedList<AuxiliarVar> allVars = new LinkedList<AuxiliarVar>();
         allVars.addAll(boolVars);
-        allVars.addAll(globalVars);
-        Node init = new Node(allVars, initialCond);
+        allVars.addAll(globalVars);*/
+        Node init = new Node(m,initialCond);
         m.addNode(init);
         m.setInitial(init);
         TreeSet<Node> iterableSet = new TreeSet<Node>();

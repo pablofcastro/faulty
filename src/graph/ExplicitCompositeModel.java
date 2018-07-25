@@ -8,6 +8,7 @@ public class ExplicitCompositeModel {
 	private HashMap<CompositeNode, TreeSet<CompositeNode>> preList;
 	private HashMap<Pair, String> labels; //edge labels
 	private CompositeNode initial;
+	private LinkedList<AuxiliarVar> sharedVars;
 	private LinkedList<CompositeNode> nodes;
 	private static final TreeSet<CompositeNode> EMPTY_SET = new TreeSet<CompositeNode>();
 	private int numNodes;
@@ -16,7 +17,8 @@ public class ExplicitCompositeModel {
 	/**
 	 * Construct empty Graph
 	 */
-	public ExplicitCompositeModel() {
+	public ExplicitCompositeModel(LinkedList<AuxiliarVar> svs) {
+		sharedVars = svs;
 		succList = new HashMap<CompositeNode, TreeSet<CompositeNode>>();
 		preList = new HashMap<CompositeNode, TreeSet<CompositeNode>>();
 		labels = new HashMap<Pair, String>();
@@ -31,6 +33,10 @@ public class ExplicitCompositeModel {
 
 	public CompositeNode getInitial(){
 		return initial;
+	}
+
+	public LinkedList<AuxiliarVar> getSharedVars(){
+		return sharedVars;
 	}
 
 

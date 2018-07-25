@@ -6,30 +6,36 @@ import faulty.auxiliar.*;
 
 public class Node implements Comparable{
 	HashMap<String,Boolean> state;
-	LinkedList<AuxiliarVar> vars;
 	boolean visited;
+	ExplicitModel model;
 	//CompositeNode superNode; // the node that englobes this one
-	String processName;
 
 	public Node(){
 
 	}
 
-	public Node(LinkedList<AuxiliarVar> vars){
+	public Node(ExplicitModel m){
 		state = new HashMap<String,Boolean>();
-		this.vars = vars;
-		for (AuxiliarVar v : vars){
+		model = m;
+		for (AuxiliarVar v : model.getVars()){
+			state.put(v.getName(),false);
+		}
+		for (AuxiliarVar v : model.getFullModel().getSharedVars()){
 			state.put(v.getName(),false);
 		}
 		visited = false;
 	}
 
-	public Node(LinkedList<AuxiliarVar> vars, AuxiliarExpression e){
+	public Node(ExplicitModel m, AuxiliarExpression e){
 		state = new HashMap<String,Boolean>();
-		this.vars = vars;
+		model = m;
 		visited = false;
 		state.putAll(eval(e));
-		for (AuxiliarVar v : vars){
+		for (AuxiliarVar v : model.getVars()){
+			if (!state.containsKey(v.getName()))
+				state.put(v.getName(),false);
+		}
+		for (AuxiliarVar v : model.getFullModel().getSharedVars()){
 			if (!state.containsKey(v.getName()))
 				state.put(v.getName(),false);
 		}
@@ -39,8 +45,9 @@ public class Node implements Comparable{
 		return state;
 	}
 
-	public String getProcessName(){
-		return processName;
+
+	public ExplicitModel getModel(){
+		return model;
 	}
 
 	public void resetVisited(){
@@ -84,7 +91,11 @@ public class Node implements Comparable{
 
 	public boolean satisfies(AuxiliarExpression e){
 		HashMap<String,Boolean> eState = eval(e);
-		for (AuxiliarVar v : vars){
+		for (AuxiliarVar v : model.getVars()){
+			if (eState.containsKey(v.getName()) && eState.get(v.getName()) != state.get(v.getName()))
+				return false;
+		}
+		for (AuxiliarVar v : model.getFullModel().getSharedVars()){
 			if (eState.containsKey(v.getName()) && eState.get(v.getName()) != state.get(v.getName()))
 				return false;
 		}
@@ -95,8 +106,17 @@ public class Node implements Comparable{
 		Node succ = clone();
 		for (AuxiliarCode c : assigns){
 			if (c instanceof AuxiliarVarAssign){
-				if (((AuxiliarVarAssign)c).getExp() instanceof AuxiliarConsBoolExp)
-					succ.getState().put((((AuxiliarVarAssign)c).getVar()).getName(), ((AuxiliarConsBoolExp)((AuxiliarVarAssign)c).getExp()).getValue());
+				if (((AuxiliarVarAssign)c).getExp() instanceof AuxiliarConsBoolExp){
+					String name = (((AuxiliarVarAssign)c).getVar()).getName();
+					Boolean value = ((AuxiliarConsBoolExp)((AuxiliarVarAssign)c).getExp()).getValue();
+					for (AuxiliarVar v : model.getFullModel().getSharedVars()){
+						if (v.getName().equals(name)){
+							model.getGlobalAssignments().add(new Pair(new Pair(this,succ),new Pair(name, value)));
+							break;
+						}
+					}
+					succ.getState().put(name, value);
+				}
 			}
 		}
 		return succ;
@@ -104,20 +124,26 @@ public class Node implements Comparable{
 
 	public Node clone(){
 		Node n = new Node();
-		n.vars = vars;
+		n.model = model;
 		n.state = new HashMap<String,Boolean>();
-		for (AuxiliarVar v : vars){
+		for (AuxiliarVar v : model.getVars()){
 			n.state.put(v.getName(),state.get(v.getName()));
 		}
-		n.processName = processName;
+		for (AuxiliarVar v : model.getFullModel().getSharedVars()){
+			n.state.put(v.getName(),state.get(v.getName()));
+		}
 		n.visited = false;
 		return n;
 	}
 
 	public boolean equals(Node n){
-		if (!n.getProcessName().equals(processName))
+		if (!n.getModel().getProcessName().equals(model.getProcessName()))
 			return false;
-		for (AuxiliarVar var: vars){
+		for (AuxiliarVar var: model.getVars()){
+			if (state.get(var.getName()) != n.getState().get(var.getName()))
+				return false;
+		}
+		for (AuxiliarVar var: model.getFullModel().getSharedVars()){
 			if (state.get(var.getName()) != n.getState().get(var.getName()))
 				return false;
 		}
@@ -126,11 +152,16 @@ public class Node implements Comparable{
 
 	public String toString(){
 		String res = "";
-		for (AuxiliarVar v : vars){
+		for (AuxiliarVar v : model.getVars()){
 			if (state.get(v.getName()))
-			res += processName +""+v.getName() + "_";
+			res += model.getProcessName() +""+v.getName() + "_";
+		}
+		for (AuxiliarVar v : model.getFullModel().getSharedVars()){
+			if (state.get(v.getName()))
+			res += model.getProcessName() +""+v.getName() + "_";
 		}
 		return res;
+		//return state.toString();
 	}
 
 	@Override
@@ -144,9 +175,5 @@ public class Node implements Comparable{
 	@Override
 	public int hashCode(){
 	    return 1;
-	}
-
-	public void setProcessName(String pName){
-		processName = pName;
 	}
 }

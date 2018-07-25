@@ -7,28 +7,38 @@ public class ExplicitModel {
 	private HashMap<Node, TreeSet<Node>> succList; //succesors adjacency list
 	private HashMap<Node, TreeSet<Node>> preList; //predecessors adjacency list
 	private HashMap<Pair, String> labels; //edge labels
+	private LinkedList<AuxiliarVar> vars;
 	private Node initial;
 	private LinkedList<Node> nodes;
 	private static final TreeSet<Node> EMPTY_SET = new TreeSet<Node>();
 	private int numNodes;
 	private int numEdges;
 	private String processName;
+	private ExplicitCompositeModel fullModel;
+	private LinkedList<Pair> globalAssignments; //this is needed for updating the global state
 
 	/**
 	 * Construct empty Graph
 	 */
-	public ExplicitModel(String pName) {
+	public ExplicitModel(String pName, LinkedList<AuxiliarVar> vs, ExplicitCompositeModel fm) {
 		succList = new HashMap<Node, TreeSet<Node>>();
 		preList = new HashMap<Node, TreeSet<Node>>();
 		labels = new HashMap<Pair, String>();
+		globalAssignments = new LinkedList<Pair>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<Node>();
 		processName = pName;
+		vars = vs;
+		fullModel = fm;
 
 	}
 
 	public void setInitial(Node v){
 		initial = v;
+	}
+
+	public ExplicitCompositeModel getFullModel(){
+		return fullModel;
 	}
 
 	public Node getInitial(){
@@ -39,9 +49,19 @@ public class ExplicitModel {
 		return labels;
 	}
 
+	public LinkedList<AuxiliarVar> getVars(){
+		return vars;
+	}
+
+	public String getProcessName(){
+		return processName;
+	}
+
+	public LinkedList<Pair> getGlobalAssignments(){
+		return globalAssignments;
+	}
 
 	public void addNode(Node v) {
-		v.setProcessName(processName);
 		nodes.add(v);
 		succList.put(v, new TreeSet<Node>());
 		preList.put(v, new TreeSet<Node>());

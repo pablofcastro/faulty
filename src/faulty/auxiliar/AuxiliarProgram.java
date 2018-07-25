@@ -281,18 +281,18 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
 
     /*Generates a explicit model (Kripke structure) for the complete program*/
     public ExplicitCompositeModel toGraph(){
-        ExplicitCompositeModel m = new ExplicitCompositeModel();
+        ExplicitCompositeModel m = new ExplicitCompositeModel(globalVars.getBoolVars());
         LinkedList<ExplicitModel> procs = new LinkedList<ExplicitModel>();
 
         //states in m are lists of states (from processes)
         //calculate initial state
-        CompositeNode init = new CompositeNode(new LinkedList<Node>(), globalVars.getBoolVars());
+        CompositeNode init = new CompositeNode(new LinkedList<Node>(), m);
         for (int i = 0; i < process.getProcessList().size(); i++){
             AuxiliarProcess proc = process.getProcessList().get(i);
-            ExplicitModel p = proc.toGraph(mainProgram.getProcessDecl().get(i).getName(),globalVars.getBoolVars());
+            ExplicitModel p = proc.toGraph(mainProgram.getProcessDecl().get(i).getName(), m);//,globalVars.getBoolVars());
             procs.add(p);
             init.getNodes().add(p.getInitial());
-            init.updateState(p.getInitial()); //pre: global var init is the same in every process
+            //init.updateState(null,p.getInitial()); //pre: global var init is the same in every process
         }
         m.addNode(init);
         m.setInitial(init);
@@ -309,7 +309,7 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
                     Pair p = new Pair(n,n_);
                     CompositeNode curr_ = curr.clone();
                     curr_.getNodes().set(i,n_);
-                    curr_.updateState(n_); //if there are any modifications to shared vars on n_ then update global state
+                    curr_.updateState(n,n_); //if there are any modifications to shared vars on n_ then update global state
                     CompositeNode toOld = m.search(curr_);
                     if (toOld == null){
                         m.addNode(curr_);
