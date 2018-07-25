@@ -62,7 +62,8 @@ terminal ENUM;
 
 terminal Integer INTEGER;
 terminal TRUE,FALSE;
-terminal String ID;         
+terminal String ID;
+terminal String FAULTY;         
                 
                 
 
@@ -96,6 +97,8 @@ non terminal AuxiliarExpression invkParam;
 non terminal LinkedList<String> constantDecls;
 non terminal AuxiliarEnumType enumDecl;
 non terminal LinkedList<AuxiliarEnumType> enumList;
+non terminal String label;
+non terminal Boolean faulty;
 
 
 precedence left GT,LT,DOUBLE_EQUAL,AND,OR;
@@ -467,10 +470,21 @@ branchList ::= branch:b  {:  LinkedList<AuxiliarBranch> list = new LinkedList<Au
                                                     :}
                ; 
 
-branch ::= expr:e  RIGHTARROW assigList:list {:   //ListAssign l = new ListAssign(list);
-                                                  AuxiliarBranch b = new AuxiliarBranch(e,list,false);
+branch ::= label:l faulty:f expr:e  RIGHTARROW assigList:list {:   //ListAssign l = new ListAssign(list);
+                                                  AuxiliarBranch b = new AuxiliarBranch(e,list,f,l);
                                                   RESULT = b;
                                              :}
+          | faulty:f expr:e  RIGHTARROW assigList:list {:   //ListAssign l = new ListAssign(list);
+                                                  AuxiliarBranch b = new AuxiliarBranch(e,list,f);
+                                                  RESULT = b;
+                                             :}
+        ;
+
+label ::= LBRACKET ID:id RBRACKET {: RESULT = id; :}
+        ;
+
+faulty ::= FAULTY {: RESULT = true; :}
+        | {: RESULT = false; :}
         ;   
 
 assigList ::=  assignation:assign {: LinkedList<AuxiliarCode> list = new LinkedList<AuxiliarCode>();

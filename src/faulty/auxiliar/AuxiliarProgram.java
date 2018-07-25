@@ -287,45 +287,44 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         //states in m are lists of states (from processes)
         //calculate initial state
         CompositeNode init = new CompositeNode(new LinkedList<Node>(), globalVars.getBoolVars());
-        for (AuxiliarProcess proc : process.getProcessList()){
-            ExplicitModel p = proc.toGraph();
+        for (int i = 0; i < process.getProcessList().size(); i++){
+            AuxiliarProcess proc = process.getProcessList().get(i);
+            ExplicitModel p = proc.toGraph(mainProgram.getProcessDecl().get(i).getName(),globalVars.getBoolVars());
             procs.add(p);
             init.getNodes().add(p.getInitial());
-            init.updateState(p.getInitial()); //pre: todos los procesos inicializan las vars globales igual
+            init.updateState(p.getInitial()); //pre: global var init is the same in every process
         }
         m.addNode(init);
         m.setInitial(init);
 
-        TreeSet<CompositeNode> set = new TreeSet<CompositeNode>();
-        set.add(m.getInitial());
+        TreeSet<CompositeNode> iterSet = new TreeSet<CompositeNode>();
+        iterSet.add(m.getInitial());
 
         //build the whole model
-        while(!set.isEmpty()){
-            CompositeNode curr = set.pollFirst();
-            for (int i = 0; i < curr.getNodes().size(); i++){
-                for(Node n_ : procs.get(i).getSuccessors(curr.getNodes().get(i))){
-                    //CompositeNode curr_ = new CompositeNode((LinkedList<Node>)curr.getNodes().clone());
+        while(!iterSet.isEmpty()){
+            CompositeNode curr = iterSet.pollFirst();
+            for (int i = 0; i < curr.getNodes().size(); i++){ // for each process in current global state
+                Node n = curr.getNodes().get(i);
+                for(Node n_ : procs.get(i).getSuccessors(n)){ //for each successor of the process create a global successor
+                    Pair p = new Pair(n,n_);
                     CompositeNode curr_ = curr.clone();
                     curr_.getNodes().set(i,n_);
                     curr_.updateState(n_); //if there are any modifications to shared vars on n_ then update global state
                     CompositeNode toOld = m.search(curr_);
                     if (toOld == null){
-                        //System.out.println("curr:"+curr);
-                        //System.out.println("curr_:"+curr_);
                         m.addNode(curr_);
-                        m.addEdge(curr,curr_);
-                        set.add(curr_);
+                        iterSet.add(curr_);
+                        m.addEdge(curr,curr_,procs.get(i).getLabels().get(p));
                     }
                     else{
-                        m.addEdge(curr,toOld);
+                        m.addEdge(curr,toOld,procs.get(i).getLabels().get(p));
                     }
                 }
             }
         }
         //ExplicitModel res = m.flatten();
-        System.out.println(m.toString());
+        System.out.println(m.createDot());
         return m;
-        //TODO: flatten all states (union)
     }
 
 }

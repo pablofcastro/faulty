@@ -666,9 +666,12 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     }
 
     /*Generates a explicit model (Kripke structure) for this process*/
-    public ExplicitModel toGraph(){
-        ExplicitModel m = new ExplicitModel();
-        Node init = new Node(boolVars, initialCond);
+    public ExplicitModel toGraph(String pName, LinkedList<AuxiliarVar> globalVars){
+        ExplicitModel m = new ExplicitModel(pName);
+        LinkedList<AuxiliarVar> allVars = new LinkedList<AuxiliarVar>();
+        allVars.addAll(boolVars);
+        allVars.addAll(globalVars);
+        Node init = new Node(allVars, initialCond);
         m.addNode(init);
         m.setInitial(init);
         TreeSet<Node> iterableSet = new TreeSet<Node>();
@@ -681,16 +684,16 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
                     Node toOld = m.search(to);
                     if (toOld == null){
                         m.addNode(to);
-                        m.addEdge(from,to);
+                        m.addEdge(from,to,b.getLabel());
                         iterableSet.add(to);
                     }
                     else{
-                        m.addEdge(from,toOld);
+                        m.addEdge(from,toOld,b.getLabel());
                     }
                 }
             }
         }
-        //System.out.println(m.toString());
+        System.out.println(m.createDot());
         return m;
     }
     

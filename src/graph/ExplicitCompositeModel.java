@@ -6,6 +6,7 @@ import faulty.auxiliar.*;
 public class ExplicitCompositeModel {
 	private HashMap<CompositeNode, TreeSet<CompositeNode>> succList;
 	private HashMap<CompositeNode, TreeSet<CompositeNode>> preList;
+	private HashMap<Pair, String> labels; //edge labels
 	private CompositeNode initial;
 	private LinkedList<CompositeNode> nodes;
 	private static final TreeSet<CompositeNode> EMPTY_SET = new TreeSet<CompositeNode>();
@@ -18,6 +19,7 @@ public class ExplicitCompositeModel {
 	public ExplicitCompositeModel() {
 		succList = new HashMap<CompositeNode, TreeSet<CompositeNode>>();
 		preList = new HashMap<CompositeNode, TreeSet<CompositeNode>>();
+		labels = new HashMap<Pair, String>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<CompositeNode>();
 
@@ -62,13 +64,14 @@ public class ExplicitCompositeModel {
 	}
 
 
-	public void addEdge(CompositeNode from, CompositeNode to) {
+	public void addEdge(CompositeNode from, CompositeNode to, String lbl) {
 		if (to != null){
 			if (hasEdge(from, to))
 				return;
 			numEdges += 1;
 			succList.get(from).add(to);
 			preList.get(to).add(from);
+			labels.put(new Pair(from,to),lbl);
 		}
 	}
 
@@ -92,6 +95,16 @@ public class ExplicitCompositeModel {
 			for (CompositeNode u : succList.get(v))
 				res += "    -->"+ u.toString() +"\n";
 		}
+		return res;
+	}
+
+	public String createDot(){
+		String res = "digraph model {\n\n";
+		for (CompositeNode v : nodes){
+			for (CompositeNode u : succList.get(v))
+				res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(new Pair(v,u))+"\"]"+";\n";
+		}
+		res += "\n}";
 		return res;
 	}
 

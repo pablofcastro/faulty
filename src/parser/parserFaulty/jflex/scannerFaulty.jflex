@@ -194,6 +194,10 @@ white_space     = {end_of_line} | [ \t\f]
              return new Symbol(symFaulty.CHANNEL,yyline,yycolumn,yytext());
           }
           
+"faulty"  {  //System.out.println("FAULTY :  "+ yytext());
+         return new Symbol(symFaulty.FAULTY,yyline,yycolumn,yytext());
+      } 
+          
 {id}  {  //System.out.println("ID :  "+ yytext());
          return new Symbol(symFaulty.ID,yyline,yycolumn,yytext());
       }	

@@ -4,22 +4,26 @@ import java.util.*;
 import faulty.auxiliar.*;
 
 public class ExplicitModel {
-	private HashMap<Node, TreeSet<Node>> succList;
-	private HashMap<Node, TreeSet<Node>> preList;
+	private HashMap<Node, TreeSet<Node>> succList; //succesors adjacency list
+	private HashMap<Node, TreeSet<Node>> preList; //predecessors adjacency list
+	private HashMap<Pair, String> labels; //edge labels
 	private Node initial;
 	private LinkedList<Node> nodes;
 	private static final TreeSet<Node> EMPTY_SET = new TreeSet<Node>();
 	private int numNodes;
 	private int numEdges;
+	private String processName;
 
 	/**
 	 * Construct empty Graph
 	 */
-	public ExplicitModel() {
+	public ExplicitModel(String pName) {
 		succList = new HashMap<Node, TreeSet<Node>>();
 		preList = new HashMap<Node, TreeSet<Node>>();
+		labels = new HashMap<Pair, String>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<Node>();
+		processName = pName;
 
 	}
 
@@ -31,8 +35,13 @@ public class ExplicitModel {
 		return initial;
 	}
 
+	public HashMap<Pair, String> getLabels(){
+		return labels;
+	}
+
 
 	public void addNode(Node v) {
+		v.setProcessName(processName);
 		nodes.add(v);
 		succList.put(v, new TreeSet<Node>());
 		preList.put(v, new TreeSet<Node>());
@@ -60,13 +69,14 @@ public class ExplicitModel {
 	}
 
 
-	public void addEdge(Node from, Node to) {
+	public void addEdge(Node from, Node to, String lbl) {
 		if (to != null){
 			if (hasEdge(from, to))
 				return;
 			numEdges += 1;
 			succList.get(from).add(to);
 			preList.get(to).add(from);
+			labels.put(new Pair(from,to),processName+"."+lbl);
 		}
 	}
 
@@ -94,6 +104,16 @@ public class ExplicitModel {
 			res += v.toString() + "\n";
 			res += "    -->"+ succList.get(v).toString() +"\n";
 		}
+		return res;
+	}
+
+	public String createDot(){
+		String res = "digraph model {\n\n";
+		for (Node v : nodes){
+			for (Node u : succList.get(v))
+				res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(new Pair(v,u))+"\"]"+";\n";
+		}
+		res += "\n}";
 		return res;
 	}
 }

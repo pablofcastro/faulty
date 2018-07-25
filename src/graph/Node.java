@@ -8,7 +8,8 @@ public class Node implements Comparable{
 	HashMap<String,Boolean> state;
 	LinkedList<AuxiliarVar> vars;
 	boolean visited;
-	CompositeNode superNode; // the node that englobes this one
+	//CompositeNode superNode; // the node that englobes this one
+	String processName;
 
 	public Node(){
 
@@ -36,6 +37,10 @@ public class Node implements Comparable{
 
 	public HashMap<String,Boolean> getState(){
 		return state;
+	}
+
+	public String getProcessName(){
+		return processName;
 	}
 
 	public void resetVisited(){
@@ -98,16 +103,22 @@ public class Node implements Comparable{
 	}
 
 	public Node clone(){
-		Node v = new Node();
-		v.vars = vars;
-		v.state = (HashMap<String,Boolean>)state.clone();
-		v.visited = false;
-		return v;
+		Node n = new Node();
+		n.vars = vars;
+		n.state = new HashMap<String,Boolean>();
+		for (AuxiliarVar v : vars){
+			n.state.put(v.getName(),state.get(v.getName()));
+		}
+		n.processName = processName;
+		n.visited = false;
+		return n;
 	}
 
-	public boolean equals(Node v){
+	public boolean equals(Node n){
+		if (!n.getProcessName().equals(processName))
+			return false;
 		for (AuxiliarVar var: vars){
-			if (state.get(var.getName()) != v.getState().get(var.getName()))
+			if (state.get(var.getName()) != n.getState().get(var.getName()))
 				return false;
 		}
 		return true;
@@ -116,7 +127,8 @@ public class Node implements Comparable{
 	public String toString(){
 		String res = "";
 		for (AuxiliarVar v : vars){
-			res += v.getName() + "="+ state.get(v.getName()) + ",";
+			if (state.get(v.getName()))
+			res += processName +""+v.getName() + "_";
 		}
 		return res;
 	}
@@ -127,5 +139,14 @@ public class Node implements Comparable{
 			if (this.equals((Node)u))
 				return 0;
 		return -1;
+	}
+
+	@Override
+	public int hashCode(){
+	    return 1;
+	}
+
+	public void setProcessName(String pName){
+		processName = pName;
 	}
 }

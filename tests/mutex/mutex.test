@@ -12,12 +12,12 @@ d : BOOL;
 Initial: !c && nc && !w && !d;
 Normative : d == false;
 
-nc == true && d == false -> w = true, nc = false;
-w == true && s == false && d == false  -> w = false, c = true, s = true;
-c == true && d == false -> c = false, nc = true, s = false;
-d == false -> d = true;
-d == true -> d = true;
-d == true -> d = false; 
+[Waiting] nc == true && d == false -> w = true, nc = false;
+[EnterCS] w == true && s == false && d == false  -> w = false, c = true, s = true;
+[ExitCS] c == true && d == false -> c = false, nc = true, s = false;
+[Down] faulty d == false -> d = true;
+[Down] faulty d == true -> d = true;
+[Recover] d == true -> d = false; 
 }
 
 Process Process2{
@@ -31,12 +31,12 @@ d : BOOL;
 Initial: !c && nc && !w && !d;
 Normative : d == false;
 
-nc == true && d == false -> w = true, nc = false;
-w == true && s == false && d == false -> w = false, c = true, s = true;
-c == true && d == false -> c = false, nc = true, s = false;
-d == false -> d = true;
-d == true -> d = true;
-d == true -> d = false;
+[Waiting] nc == true && d == false -> w = true, nc = false;
+[EnterCS] w == true && s == false && d == false  -> w = false, c = true, s = true;
+[ExitCS] c == true && d == false -> c = false, nc = true, s = false;
+[Down] faulty d == false -> d = true;
+[Down] faulty d == true -> d = true;
+[Recover] d == true -> d = false; 
 	
 }
 
