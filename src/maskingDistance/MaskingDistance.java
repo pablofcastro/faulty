@@ -40,31 +40,48 @@ public class MaskingDistance{
             		Pair p = new Pair(curr.getImpState(),succ);
             		GameNode curr_ = new GameNode(curr.getSpecState(),succ,imp.getLabels().get(p), "V");
             		GameNode toOld = g.search(curr_);
+            		boolean f = imp.getFaultyActions().get(p);
                     if (toOld == null){
 	            		g.addNode(curr_);
-	            		g.addEdge(curr,curr_,curr_.getSymbol(), imp.getFaultyActions().get(p)); //add label may not be necessary
+	            		if (f)
+	            			curr_.setMask(true);
+	            		g.addEdge(curr,curr_,curr_.getSymbol(), f); //add label may not be necessary
 	            		iterSet.add(curr_);
 	            	}
 	            	else{
-	            		g.addEdge(curr,toOld,toOld.getSymbol(), imp.getFaultyActions().get(p));
+	            		g.addEdge(curr,toOld,toOld.getSymbol(), f);
 	            	}
             	}
             }
             else{ //if player is verifier we add its possible moves from current state
             	for (CompositeNode succ : spec.getSuccessors(curr.getSpecState())){
 	            	Pair p = new Pair(curr.getSpecState(),succ);
-	            	if (curr.getSymbol().equals(spec.getLabels().get(p))){
-	            		GameNode curr_ = new GameNode(succ,curr.getImpState(),"", "R");
+	            	if (curr.getMask()){ //this means the state has to mask a previous fault
+	            		GameNode curr_ = new GameNode(curr.getSpecState(),curr.getImpState(),"<>", "R");
 	            		GameNode toOld = g.search(curr_);
 	                    if (toOld == null){
 		            		g.addNode(curr_);
-		            		g.addEdge(curr,curr_,curr_.getSymbol(), spec.getFaultyActions().get(p)); //add label may not be necessary
+		            		g.addEdge(curr,curr_,"M", false); //add label may not be necessary
 		            		iterSet.add(curr_);
 		            	}
 		            	else{
-		            		g.addEdge(curr,toOld,toOld.getSymbol(), spec.getFaultyActions().get(p));
+		            		g.addEdge(curr,toOld,"M", false);
 		            	}
-		            }
+	            	}
+	            	else{
+		            	if (curr.getSymbol().equals(spec.getLabels().get(p))){
+		            		GameNode curr_ = new GameNode(succ,curr.getImpState(),"<>", "R");
+		            		GameNode toOld = g.search(curr_);
+		                    if (toOld == null){
+			            		g.addNode(curr_);
+			            		g.addEdge(curr,curr_,spec.getLabels().get(p), spec.getFaultyActions().get(p)); //add label may not be necessary
+			            		iterSet.add(curr_);
+			            	}
+			            	else{
+			            		g.addEdge(curr,toOld,spec.getLabels().get(p), spec.getFaultyActions().get(p));
+			            	}
+			            }
+			        }
             	}
             }
         }

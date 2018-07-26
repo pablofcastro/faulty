@@ -118,8 +118,15 @@ public class ExplicitCompositeModel {
 	public String createDot(){
 		String res = "digraph model {\n\n";
 		for (CompositeNode v : nodes){
-			for (CompositeNode u : succList.get(v))
-				res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(new Pair(v,u))+"\"]"+";\n";
+			if (v.getIsFaulty())
+				res += "    "+v.toString()+" [color=\"red\"];\n";
+			for (CompositeNode u : succList.get(v)){
+				Pair edge = new Pair(v,u);
+				if (faultyActions.get(edge))
+					res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"red\",label = \""+labels.get(edge)+"\"]"+";\n";
+				else
+					res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(edge)+"\"]"+";\n";
+			}
 		}
 		res += "\n}";
 		try{

@@ -102,10 +102,13 @@ public class GameGraph{
 		for (GameNode v : nodes){
 			for (GameNode u : succList.get(v)){
 				Pair edge = new Pair(v,u);
-				if (faultyActions.get(edge))
-					res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"red\",label = \""+labels.get(edge)+"\"]"+";\n";
+				if (labels.get(edge).equals("M"))
+					res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"green\",label = \""+labels.get(edge)+"\"]"+";\n";
 				else
-					res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(edge)+"\"]"+";\n";
+					if (faultyActions.get(edge))
+						res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"red\",label = \""+labels.get(edge)+"\"]"+";\n";
+					else
+						res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(edge)+"\"]"+";\n";
 			}
 		}
 		res += "\n}";

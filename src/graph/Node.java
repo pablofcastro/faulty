@@ -8,6 +8,7 @@ public class Node implements Comparable{
 	HashMap<String,Boolean> state;
 	boolean visited;
 	ExplicitModel model;
+	boolean isFaulty;
 	//CompositeNode superNode; // the node that englobes this one
 
 	public Node(){
@@ -48,6 +49,10 @@ public class Node implements Comparable{
 
 	public ExplicitModel getModel(){
 		return model;
+	}
+
+	public boolean getIsFaulty(){
+		return isFaulty;
 	}
 
 	public void resetVisited(){
@@ -100,6 +105,11 @@ public class Node implements Comparable{
 				return false;
 		}
 		return true;
+	}
+
+	public void checkNormCondition(AuxiliarExpression e){
+		if (!satisfies(e))
+            isFaulty = true;
 	}
 
 	public Node createSuccessor(LinkedList<AuxiliarCode> assigns){

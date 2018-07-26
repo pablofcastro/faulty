@@ -672,6 +672,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         allVars.addAll(boolVars);
         allVars.addAll(globalVars);*/
         Node init = new Node(m,initialCond);
+        init.checkNormCondition(normCondition);
         m.addNode(init);
         m.setInitial(init);
         TreeSet<Node> iterableSet = new TreeSet<Node>();
@@ -681,6 +682,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
             for (AuxiliarBranch b : branches){
                 if (from.satisfies(b.getGuard())){
                     Node to = from.createSuccessor(b.getAssignList());
+                    to.checkNormCondition(normCondition);
                     Node toOld = m.search(to);
                     if (toOld == null){
                         m.addNode(to);
@@ -693,7 +695,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
                 }
             }
         }
-        //System.out.println(m.createDot());
+        System.out.println(m.createDot());
         return m;
     }
     

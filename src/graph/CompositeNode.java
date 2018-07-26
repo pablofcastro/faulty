@@ -8,6 +8,7 @@ public class CompositeNode implements Comparable{
 	LinkedList<Node> nodes;
 	HashMap<String,Boolean> globalState;
 	ExplicitCompositeModel model;
+	boolean isFaulty;
 
 	public CompositeNode(){
 
@@ -19,6 +20,10 @@ public class CompositeNode implements Comparable{
 		globalState = new HashMap<String,Boolean>();
 		for (AuxiliarVar v : model.getSharedVars()){
 			globalState.put(v.getName(),false);
+		}
+		for (Node v : nodes){
+			if (v.getIsFaulty())
+				isFaulty = true;
 		}
 	}
 
@@ -46,6 +51,10 @@ public class CompositeNode implements Comparable{
 
 	public HashMap<String,Boolean> getGlobalState(){
 		return globalState;
+	}
+
+	public boolean getIsFaulty(){
+		return isFaulty;
 	}
 
 	public void updateState(Node n, Node n_){
@@ -92,6 +101,10 @@ public class CompositeNode implements Comparable{
 		n.model = model;
 		n.nodes = new LinkedList<Node>();
 		n.nodes.addAll(nodes); // this is not deep clone on purpose
+		for (Node v : nodes){
+			if (v.getIsFaulty())
+				n.isFaulty = true;
+		}
 		n.globalState = new HashMap<String,Boolean>();
 		for (AuxiliarVar v : model.getSharedVars()){
 			n.globalState.put(v.getName(),globalState.get(v.getName()));

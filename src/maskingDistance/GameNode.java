@@ -10,6 +10,7 @@ public class GameNode implements Comparable{
 	CompositeNode impState;
 	String symbol;
 	String player;
+	boolean mask;
 
 	public GameNode(){
 
@@ -36,6 +37,14 @@ public class GameNode implements Comparable{
 
 	public String getPlayer(){
 		return player;
+	}
+
+	public boolean getMask(){
+		return mask;
+	}
+
+	public void setMask(boolean m){
+		mask = m;
 	}
 
 	@Override
