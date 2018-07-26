@@ -314,16 +314,16 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
                     if (toOld == null){
                         m.addNode(curr_);
                         iterSet.add(curr_);
-                        m.addEdge(curr,curr_,procs.get(i).getLabels().get(p));
+                        m.addEdge(curr, curr_, procs.get(i).getLabels().get(p), procs.get(i).getFaultyActions().get(p));
                     }
                     else{
-                        m.addEdge(curr,toOld,procs.get(i).getLabels().get(p));
+                        m.addEdge(curr, toOld, procs.get(i).getLabels().get(p), procs.get(i).getFaultyActions().get(p));
                     }
                 }
             }
         }
         //ExplicitModel res = m.flatten();
-        System.out.println(m.createDot());
+        //System.out.println(m.createDot());
         return m;
     }
 

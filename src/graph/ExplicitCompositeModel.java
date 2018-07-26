@@ -2,11 +2,13 @@ package graph;
 
 import java.util.*;
 import faulty.auxiliar.*;
+import java.io.*;
 
 public class ExplicitCompositeModel {
 	private HashMap<CompositeNode, TreeSet<CompositeNode>> succList;
 	private HashMap<CompositeNode, TreeSet<CompositeNode>> preList;
 	private HashMap<Pair, String> labels; //edge labels
+	private HashMap<Pair, Boolean> faultyActions;
 	private CompositeNode initial;
 	private LinkedList<AuxiliarVar> sharedVars;
 	private LinkedList<CompositeNode> nodes;
@@ -22,6 +24,7 @@ public class ExplicitCompositeModel {
 		succList = new HashMap<CompositeNode, TreeSet<CompositeNode>>();
 		preList = new HashMap<CompositeNode, TreeSet<CompositeNode>>();
 		labels = new HashMap<Pair, String>();
+		faultyActions = new HashMap<Pair, Boolean>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<CompositeNode>();
 
@@ -39,6 +42,13 @@ public class ExplicitCompositeModel {
 		return sharedVars;
 	}
 
+	public HashMap<Pair, String> getLabels(){
+		return labels;
+	}
+
+	public HashMap<Pair, Boolean> getFaultyActions(){
+		return faultyActions;
+	}
 
 	public void addNode(CompositeNode v) {
 		nodes.add(v);
@@ -70,7 +80,7 @@ public class ExplicitCompositeModel {
 	}
 
 
-	public void addEdge(CompositeNode from, CompositeNode to, String lbl) {
+	public void addEdge(CompositeNode from, CompositeNode to, String lbl, Boolean faulty) {
 		if (to != null){
 			if (hasEdge(from, to))
 				return;
@@ -78,6 +88,7 @@ public class ExplicitCompositeModel {
 			succList.get(from).add(to);
 			preList.get(to).add(from);
 			labels.put(new Pair(from,to),lbl);
+			faultyActions.put(new Pair(from,to),faulty);
 		}
 	}
 
@@ -111,6 +122,17 @@ public class ExplicitCompositeModel {
 				res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(new Pair(v,u))+"\"]"+";\n";
 		}
 		res += "\n}";
+		try{
+            File file = new File("../out/" + "FullModel" +".dot");
+            file.createNewFile();
+            FileWriter fw = new FileWriter(file);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(res);
+            bw.close();
+        }
+        catch(IOException e){
+            e.printStackTrace();
+        }
 		return res;
 	}
 

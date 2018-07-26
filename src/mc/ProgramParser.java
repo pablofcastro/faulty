@@ -85,6 +85,32 @@ public class ProgramParser {
         
     }
 
+    public AuxiliarProgram parseAux(String NameFile){
+        try {
+            programFile = new FileReader(NameFile);
+        
+            // Read file
+            parser = new parserFaulty(new scannerFaulty(programFile));
+            AuxiliarProgram program = (AuxiliarProgram)parser.parse().value;
+            
+            // Check Types
+            Type result = checkTypes(program);
+            if(result == Type.ERROR){
+                for(int i=0; i<errorList.size(); i++){
+                    System.out.println(errorList.get(i).getErrorMsg());
+                }               
+            }
+            else
+                return program; 
+        } catch (Exception e) {         
+            System.out.println("Program Error." + e.getMessage());
+            e.printStackTrace(System.out);
+        }
+        
+        return null;
+        
+    }
+
     /**
      * 
      * @return Return the symbols table of the model.

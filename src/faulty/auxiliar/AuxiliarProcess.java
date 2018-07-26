@@ -684,16 +684,16 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
                     Node toOld = m.search(to);
                     if (toOld == null){
                         m.addNode(to);
-                        m.addEdge(from,to,b.getLabel());
+                        m.addEdge(from,to,b.getLabel(),b.getIsFaulty());
                         iterableSet.add(to);
                     }
                     else{
-                        m.addEdge(from,toOld,b.getLabel());
+                        m.addEdge(from,toOld,b.getLabel(),b.getIsFaulty());
                     }
                 }
             }
         }
-        System.out.println(m.createDot());
+        //System.out.println(m.createDot());
         return m;
     }
     

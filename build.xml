@@ -17,6 +17,7 @@
   <property name="java.faulty"     location="java/faulty"/>
   <property name="java.faulty.auxiliar"     location="java/faulty/auxiliar"/>
   <property name="java.graph"     location="java/graph"/>
+  <property name="java.maskingDistance"     location="java/maskingDistance"/>
   <property name="jar.file"       location="${dist}/${ant.project.name}.jar"/>
   <property name="jar.main.class" value="mc.MainMC"/>
   <property environment="env" />
@@ -67,6 +68,7 @@
     <mkdir dir="${java.auxiliar}"/> 
     <mkdir dir="${java.faulty.auxiliar}"/>
     <mkdir dir="${java.graph}"/>
+    <mkdir dir="${java.maskingDistance}"/>
       
     <copy todir="${java.faulty}">
           <fileset dir="src/faulty" includes="**.java"/>
@@ -89,6 +91,9 @@
     </copy>
     <copy todir="${java.graph}">
           <fileset dir="src/graph" includes="**.java"/>
+    </copy>
+    <copy todir="${java.maskingDistance}">
+          <fileset dir="src/maskingDistance" includes="**.java"/>
     </copy>  
       
   </target>

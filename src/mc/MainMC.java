@@ -3,8 +3,10 @@ package mc;
 import java.io.*;
 
 import faulty.*;
+import faulty.auxiliar.*;
 import formula.*;
 import net.sf.javabdd.*;
+import maskingDistance.*;
 
 /**
  * This class represents the compiler.
@@ -60,6 +62,14 @@ public class MainMC {
           }
 
         	if (args.length == 3){
+
+            if (args[0].equals("-m")){
+                AuxiliarProgram spec = prog.parseAux(args[1]);
+                AuxiliarProgram imp = prog.parseAux(args[2]);
+                MaskingDistance md = new MaskingDistance();
+                md.buildGraph(spec,imp);
+                md.createDot();
+            }
         		
         		if (args[0].equals("-eq")){
         			

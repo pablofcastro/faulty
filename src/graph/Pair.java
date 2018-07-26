@@ -1,5 +1,6 @@
 package graph;
 import java.util.*;
+import maskingDistance.*;
 
 public class Pair {
 	
@@ -27,6 +28,8 @@ public class Pair {
 				return ((Node)fst).equals((Node)p.getFst()) && ((Node)snd).equals((Node)p.getSnd());
 			if (fst instanceof CompositeNode && snd instanceof CompositeNode && p.getFst() instanceof CompositeNode && p.getSnd() instanceof CompositeNode)
 				return ((CompositeNode)fst).equals((CompositeNode)p.getFst()) && ((CompositeNode)snd).equals((CompositeNode)p.getSnd());
+			if (fst instanceof GameNode && snd instanceof GameNode && p.getFst() instanceof GameNode && p.getSnd() instanceof GameNode)
+				return ((GameNode)fst).equals((GameNode)p.getFst()) && ((GameNode)snd).equals((GameNode)p.getSnd());
 		}
 		return false;
 	}

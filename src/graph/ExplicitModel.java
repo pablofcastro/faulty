@@ -2,11 +2,13 @@ package graph;
 
 import java.util.*;
 import faulty.auxiliar.*;
+import java.io.*;
 
 public class ExplicitModel {
 	private HashMap<Node, TreeSet<Node>> succList; //succesors adjacency list
 	private HashMap<Node, TreeSet<Node>> preList; //predecessors adjacency list
 	private HashMap<Pair, String> labels; //edge labels
+	private HashMap<Pair, Boolean> faultyActions;
 	private LinkedList<AuxiliarVar> vars;
 	private Node initial;
 	private LinkedList<Node> nodes;
@@ -24,6 +26,7 @@ public class ExplicitModel {
 		succList = new HashMap<Node, TreeSet<Node>>();
 		preList = new HashMap<Node, TreeSet<Node>>();
 		labels = new HashMap<Pair, String>();
+		faultyActions = new HashMap<Pair, Boolean>();
 		globalAssignments = new LinkedList<Pair>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<Node>();
@@ -47,6 +50,10 @@ public class ExplicitModel {
 
 	public HashMap<Pair, String> getLabels(){
 		return labels;
+	}
+
+	public HashMap<Pair, Boolean> getFaultyActions(){
+		return faultyActions;
 	}
 
 	public LinkedList<AuxiliarVar> getVars(){
@@ -89,7 +96,7 @@ public class ExplicitModel {
 	}
 
 
-	public void addEdge(Node from, Node to, String lbl) {
+	public void addEdge(Node from, Node to, String lbl, Boolean faulty) {
 		if (to != null){
 			if (hasEdge(from, to))
 				return;
@@ -97,6 +104,7 @@ public class ExplicitModel {
 			succList.get(from).add(to);
 			preList.get(to).add(from);
 			labels.put(new Pair(from,to),processName+"."+lbl);
+			faultyActions.put(new Pair(from,to),faulty);
 		}
 	}
 
@@ -134,6 +142,17 @@ public class ExplicitModel {
 				res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(new Pair(v,u))+"\"]"+";\n";
 		}
 		res += "\n}";
+		try{
+            File file = new File("../out/" + processName +".dot");
+            file.createNewFile();
+            FileWriter fw = new FileWriter(file);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(res);
+            bw.close();
+        }
+        catch(IOException e){
+            e.printStackTrace();
+        }
 		return res;
 	}
 }
