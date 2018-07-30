@@ -34,6 +34,10 @@ public class GameGraph{
 		return initial;
 	}
 
+	public HashMap<Pair, String> getLabels(){
+		return labels;
+	}
+
 	public void addNode(GameNode v) {
 		nodes.add(v);
 		succList.put(v, new TreeSet<GameNode>());
@@ -102,7 +106,7 @@ public class GameGraph{
 		for (GameNode v : nodes){
 			for (GameNode u : succList.get(v)){
 				Pair edge = new Pair(v,u);
-				if (labels.get(edge).equals("M"))
+				if (labels.get(edge).split("|")[0].equals("M"))
 					res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"green\",label = \""+labels.get(edge)+"\"]"+";\n";
 				else
 					if (faultyActions.get(edge))

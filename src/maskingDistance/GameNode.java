@@ -57,17 +57,18 @@ public class GameNode implements Comparable{
 
 	@Override
 	public int hashCode(){
-	    return 1;
+	    return Objects.hash(specState, impState, symbol, player);
+	    //return 1;
 	}
 
 
 	public String toString(){
-		String res = specState.toString()+impState.toString()+"___"+player;
+		String res = "SPEC"+specState.toString()+"IMP"+impState.toString()+"___"+player;
 		return res;
 	}
 
 	public boolean equals(GameNode n){
-		return specState.equals(n.getSpecState()) && impState.equals(n.getImpState()) && symbol.equals(n.getSymbol()) && player.equals(n.getPlayer());
+		return specState.equals(n.getSpecState()) && impState.equals(n.getImpState()) && symbol.equals(n.getSymbol()) && player.equals(n.getPlayer()) && mask == n.getMask();
 	}
 
 	/*public CompositeNode clone(){		

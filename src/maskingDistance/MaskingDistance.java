@@ -25,7 +25,7 @@ public class MaskingDistance{
 		g = new GameGraph();
 
         //calculate initial state
-        GameNode init = new GameNode(spec.getInitial(), imp.getInitial(), "","R");
+        GameNode init = new GameNode(spec.getInitial(), imp.getInitial(), "<>","R");
         g.addNode(init);
         g.setInitial(init);
 
@@ -49,7 +49,8 @@ public class MaskingDistance{
 	            		iterSet.add(curr_);
 	            	}
 	            	else{
-	            		g.addEdge(curr,toOld,toOld.getSymbol(), f);
+	            		//if (!g.getLabels().get(new Pair(curr,toOld)).equals(toOld.getSymbol()))
+	            			g.addEdge(curr,toOld,toOld.getSymbol(), f);
 	            	}
             	}
             }
@@ -61,11 +62,11 @@ public class MaskingDistance{
 	            		GameNode toOld = g.search(curr_);
 	                    if (toOld == null){
 		            		g.addNode(curr_);
-		            		g.addEdge(curr,curr_,"M", false); //add label may not be necessary
+		            		g.addEdge(curr,curr_,"M|"+curr.getSymbol(), false); //add label may not be necessary
 		            		iterSet.add(curr_);
 		            	}
 		            	else{
-		            		g.addEdge(curr,toOld,"M", false);
+		            		g.addEdge(curr,toOld,"M|"+curr.getSymbol(), false);
 		            	}
 	            	}
 	            	else{

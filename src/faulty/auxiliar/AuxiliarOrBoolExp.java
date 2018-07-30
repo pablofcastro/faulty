@@ -20,4 +20,12 @@ public class AuxiliarOrBoolExp extends AuxiliarExpression{
 	public void accept(AuxiliarFaultyVisitor v){
 	     v.visit(this);			
 	}
+
+    public AuxiliarExpression getExp1(){
+        return exp1;
+    }
+
+    public AuxiliarExpression getExp2(){
+        return exp2;
+    }
 }

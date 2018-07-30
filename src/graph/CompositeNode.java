@@ -42,7 +42,7 @@ public class CompositeNode implements Comparable{
 
 	@Override
 	public int hashCode(){
-	    return 1;
+	    return Objects.hash(nodes, globalState, model, isFaulty);
 	}
 
 	public LinkedList<Node> getNodes(){

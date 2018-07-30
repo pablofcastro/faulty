@@ -31,7 +31,7 @@ public class Node implements Comparable{
 		state = new HashMap<String,Boolean>();
 		model = m;
 		visited = false;
-		state.putAll(eval(e));
+		state.putAll(evalInit(e));
 		for (AuxiliarVar v : model.getVars()){
 			if (!state.containsKey(v.getName()))
 				state.put(v.getName(),false);
@@ -67,13 +67,13 @@ public class Node implements Comparable{
 		return visited;
 	}
 
-	public HashMap<String,Boolean> eval(AuxiliarExpression e){
+	public HashMap<String,Boolean> evalInit(AuxiliarExpression e){
 		HashMap<String,Boolean> st = new HashMap<String,Boolean>();
-		evalExpr(e, false, st);
+		evalExprInit(e, false, st);
 		return st;
 	}
 
-	private void evalExpr(AuxiliarExpression e, boolean neg, HashMap<String,Boolean> st){
+	private void evalExprInit(AuxiliarExpression e, boolean neg, HashMap<String,Boolean> st){
 		if (e instanceof AuxiliarVar){
 			if (neg){
 				st.put(((AuxiliarVar)e).getName(),false);
@@ -83,28 +83,41 @@ public class Node implements Comparable{
 			}
 		}
 		if (e instanceof AuxiliarNegBoolExp){
-			evalExpr(((AuxiliarNegBoolExp)e).getExp(),!neg, st);
+			evalExprInit(((AuxiliarNegBoolExp)e).getExp(),!neg, st);
 		}
 		if (e instanceof AuxiliarAndBoolExp){
-			evalExpr(((AuxiliarAndBoolExp)e).getExp1(),neg,st);
-			evalExpr(((AuxiliarAndBoolExp)e).getExp2(),neg,st);
+			evalExprInit(((AuxiliarAndBoolExp)e).getExp1(),neg,st);
+			evalExprInit(((AuxiliarAndBoolExp)e).getExp2(),neg,st);
 		}
 		if (e instanceof AuxiliarEqBoolExp){
 			st.put(((AuxiliarVar)((AuxiliarEqBoolExp)e).getInt1()).getName(), ((AuxiliarConsBoolExp)((AuxiliarEqBoolExp)e).getInt2()).getValue());
 		}
 	}
 
+	private boolean evalBoolExpr(AuxiliarExpression e){
+		if (e instanceof AuxiliarConsBoolExp){
+			return ((AuxiliarConsBoolExp)e).getValue();
+		}
+		if (e instanceof AuxiliarVar){
+			return state.get(((AuxiliarVar)e).getName());
+		}
+		if (e instanceof AuxiliarNegBoolExp){
+			return !evalBoolExpr(((AuxiliarNegBoolExp)e).getExp());
+		}
+		if (e instanceof AuxiliarAndBoolExp){
+			return evalBoolExpr(((AuxiliarAndBoolExp)e).getExp1()) && evalBoolExpr(((AuxiliarAndBoolExp)e).getExp2());
+		}
+		if (e instanceof AuxiliarOrBoolExp){
+			return evalBoolExpr(((AuxiliarOrBoolExp)e).getExp1()) || evalBoolExpr(((AuxiliarOrBoolExp)e).getExp2());
+		}
+		if (e instanceof AuxiliarEqBoolExp){
+			return evalBoolExpr(((AuxiliarEqBoolExp)e).getInt1()) == evalBoolExpr(((AuxiliarEqBoolExp)e).getInt2());
+		}
+		return false;
+	}
+
 	public boolean satisfies(AuxiliarExpression e){
-		HashMap<String,Boolean> eState = eval(e);
-		for (AuxiliarVar v : model.getVars()){
-			if (eState.containsKey(v.getName()) && eState.get(v.getName()) != state.get(v.getName()))
-				return false;
-		}
-		for (AuxiliarVar v : model.getFullModel().getSharedVars()){
-			if (eState.containsKey(v.getName()) && eState.get(v.getName()) != state.get(v.getName()))
-				return false;
-		}
-		return true;
+		return evalBoolExpr(e);
 	}
 
 	public void checkNormCondition(AuxiliarExpression e){
@@ -116,17 +129,15 @@ public class Node implements Comparable{
 		Node succ = clone();
 		for (AuxiliarCode c : assigns){
 			if (c instanceof AuxiliarVarAssign){
-				if (((AuxiliarVarAssign)c).getExp() instanceof AuxiliarConsBoolExp){
-					String name = (((AuxiliarVarAssign)c).getVar()).getName();
-					Boolean value = ((AuxiliarConsBoolExp)((AuxiliarVarAssign)c).getExp()).getValue();
-					for (AuxiliarVar v : model.getFullModel().getSharedVars()){
-						if (v.getName().equals(name)){
-							model.getGlobalAssignments().add(new Pair(new Pair(this,succ),new Pair(name, value)));
-							break;
-						}
+				String name = (((AuxiliarVarAssign)c).getVar()).getName();
+				Boolean value = evalBoolExpr(((AuxiliarVarAssign)c).getExp());
+				for (AuxiliarVar v : model.getFullModel().getSharedVars()){ // keep track of assignments to global variables
+					if (v.getName().equals(name)){
+						model.getGlobalAssignments().add(new Pair(new Pair(this,succ),new Pair(name, value)));
+						break;
 					}
-					succ.getState().put(name, value);
 				}
+				succ.getState().put(name, value);
 			}
 		}
 		return succ;
@@ -184,6 +195,6 @@ public class Node implements Comparable{
 
 	@Override
 	public int hashCode(){
-	    return 1;
+	    return Objects.hash(state, visited, model, isFaulty);
 	}
 }
