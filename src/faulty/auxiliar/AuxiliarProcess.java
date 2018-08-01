@@ -695,7 +695,7 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
                 }
             }
         }
-        System.out.println(m.createDot());
+        //System.out.println(m.createDot());
         return m;
     }
     

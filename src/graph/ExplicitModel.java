@@ -103,7 +103,7 @@ public class ExplicitModel {
 			numEdges += 1;
 			succList.get(from).add(to);
 			preList.get(to).add(from);
-			labels.put(new Pair(from,to),processName+"."+lbl);
+			labels.put(new Pair(from,to),processName+""+lbl);
 			faultyActions.put(new Pair(from,to),faulty);
 		}
 	}

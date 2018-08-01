@@ -15,6 +15,7 @@ public class GameGraph{
 	private static final TreeSet<GameNode> EMPTY_SET = new TreeSet<GameNode>();
 	private int numNodes;
 	private int numEdges;
+	private GameNode errState;
 
 	public GameGraph() {
 		succList = new HashMap<GameNode, TreeSet<GameNode>>();
@@ -23,7 +24,13 @@ public class GameGraph{
 		faultyActions = new HashMap<Pair, Boolean>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<GameNode>();
+		errState = new GameNode(null,null,"ERR","");
+		addNode(errState);
 
+	}
+
+	public GameNode errState(){		
+		return errState;
 	}
 
 	public void setInitial(GameNode v){
@@ -36,6 +43,10 @@ public class GameGraph{
 
 	public HashMap<Pair, String> getLabels(){
 		return labels;
+	}
+
+	public HashMap<Pair, Boolean> getFaultyActions(){
+		return faultyActions;
 	}
 
 	public void addNode(GameNode v) {
@@ -106,7 +117,7 @@ public class GameGraph{
 		for (GameNode v : nodes){
 			for (GameNode u : succList.get(v)){
 				Pair edge = new Pair(v,u);
-				if (labels.get(edge).split("|")[0].equals("M"))
+				if (labels.get(edge).split("M")[0].equals(""))
 					res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"green\",label = \""+labels.get(edge)+"\"]"+";\n";
 				else
 					if (faultyActions.get(edge))

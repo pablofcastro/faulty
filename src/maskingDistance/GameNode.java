@@ -11,9 +11,12 @@ public class GameNode implements Comparable{
 	String symbol;
 	String player;
 	boolean mask;
+	boolean visited;
+	int distanceValue;
 
 	public GameNode(){
-
+		visited = false;
+		distanceValue = 0;
 	}
 
 	public GameNode(CompositeNode s, CompositeNode i, String sym, String p){
@@ -21,6 +24,8 @@ public class GameNode implements Comparable{
 		impState = i;
 		symbol = sym;
 		player = p;
+		visited = false;
+		distanceValue = 0;
 	}
 
 	public CompositeNode getSpecState(){
@@ -47,6 +52,22 @@ public class GameNode implements Comparable{
 		mask = m;
 	}
 
+	public boolean getVisited(){
+		return visited;
+	}
+
+	public void setVisited(boolean v){
+		visited = v;
+	}
+
+	public int getDistanceValue(){
+		return distanceValue;
+	}
+
+	public void setDistanceValue(int d){
+		distanceValue = d;
+	}
+
 	@Override
 	public int compareTo(Object u) {
 		if (u instanceof GameNode)
@@ -63,16 +84,29 @@ public class GameNode implements Comparable{
 
 
 	public String toString(){
-		String res = "SPEC"+specState.toString()+"IMP"+impState.toString()+"___"+player;
+		String res;
+		if (this.isErrState())
+			res = "ERR_STATE";
+		else
+			res = "SPEC"+specState.toString()+"__"+symbol+"__"+"IMP"+impState.toString()+"___"+player;
 		return res;
 	}
 
-	public boolean equals(GameNode n){
-		return specState.equals(n.getSpecState()) && impState.equals(n.getImpState()) && symbol.equals(n.getSymbol()) && player.equals(n.getPlayer()) && mask == n.getMask();
+	public boolean isErrState(){
+		return symbol.equals("ERR");
 	}
 
-	/*public CompositeNode clone(){		
-		return new GameNode(specState,impState,symbol,player);
-	}*/
+	public boolean equals(GameNode n){
+		if (this.isErrState()){
+			if (n.isErrState())
+				return true;
+			else
+				return false;
+		}
+		if (n.isErrState()){
+			return false;
+		}
+		return specState.equals(n.getSpecState()) && impState.equals(n.getImpState()) && symbol.equals(n.getSymbol()) && player.equals(n.getPlayer()) && mask == n.getMask();
+	}
 	
 }
