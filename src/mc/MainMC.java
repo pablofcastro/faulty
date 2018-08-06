@@ -67,8 +67,9 @@ public class MainMC {
                 AuxiliarProgram spec = prog.parseAux(args[1]);
                 AuxiliarProgram imp = prog.parseAux(args[2]);
                 MaskingDistance md = new MaskingDistance();
-                md.buildGraph(spec,imp);
-                md.createDot();
+                //md.buildGraph(spec,imp);
+                //md.createDot();
+                System.out.println("Masking Distance: "+md.calculateDistance(spec,imp));
             }
         		
         		if (args[0].equals("-eq")){

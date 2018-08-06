@@ -162,47 +162,9 @@ public class MaskingDistance{
         //System.out.println(g.createDot());
 	}
 
-	/*public double calculateDistance(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
-		buildGraphOptimized(specProgram,impProgram);
-		Stack<String> trace = new Stack<String>();
-		Stack<GameNode> s = new Stack<GameNode>();
-		int minDistance = Integer.MAX_VALUE-1;
-		GameNode curr;
-		s.push(g.getInitial());
-		while (!s.isEmpty()){
-			curr = s.pop();
-			//trace.push(curr.getSymbol());
-			//if (curr.getSymbol().equals("ERR"))
-			//	System.out.println(trace);
-			boolean nothingAdded = true;
-			if (!curr.getVisited()){
-				curr.setVisited(true);
-				for (GameNode succ : g.getSuccessors(curr)){
-					if (g.getLabels().get(new Pair(curr,succ)).equals("ERR")){
-						if (curr.getDistanceValue() < minDistance)
-							minDistance = curr.getDistanceValue();
-					}
-					if (!succ.getVisited()){
-						if (g.getFaultyActions().get(new Pair(curr,succ))){
-							succ.setDistanceValue(curr.getDistanceValue()+1);
-						}
-						else{
-							succ.setDistanceValue(curr.getDistanceValue());
-						}
-						s.push(succ);
-					//	nothingAdded = false;
-					}
-					//if(nothingAdded)
-					//	trace.pop();
-				}
-			}
-		}
-		double res= Math.round((double)1/(1+minDistance) * Math.pow(10, 2)) / Math.pow(10, 2);
-		createDot();
-		return res;
-	}*/
 
-	private int minDistance(int dist[], Boolean sptSet[])
+
+	/*private int minDistance(int dist[], boolean sptSet[])
     {
         // Initialize min value
         int min = Integer.MAX_VALUE, min_index=-1;
@@ -217,12 +179,12 @@ public class MaskingDistance{
         return min_index;
     }
 
-	public double calculateDistance(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
+	public double calculateDistance2(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
 		//We use dijsktra's algorithm to find the shortest path to an error state
     	buildGraphOptimized(specProgram,impProgram);
     	int n = g.getNodes().size();
         int dist[] = new int[n];
-        Boolean sptSet[] = new Boolean[n];
+        boolean sptSet[] = new boolean[n];
         // Initialize all distances as INFINITE and stpSet[] as false
         for (int i = 0; i < n; i++){
             dist[i] = Integer.MAX_VALUE;
@@ -231,23 +193,67 @@ public class MaskingDistance{
         // Distance of source vertex from itself is always 0
         dist[1] = 0; // 1 is initial and 0 is errState
         // Find shortest path for all vertices
-        for (int count = 0; count < n-1; count++){
+        for (int count = 0; count < n; count++){
             int u = minDistance(dist, sptSet);
+            System.out.println(u);
             sptSet[u] = true;
             GameNode from = g.getNodes().get(u);
             for (int v = 0; v < n; v++){
             	GameNode to = g.getNodes().get(v);
                 boolean adj = g.getSuccessors(from).contains(to);
-                if (!sptSet[v] && adj && dist[u] != Integer.MAX_VALUE){
-                	if (g.getFaultyActions().get(new Pair(from,to)) && dist[u]+1 < dist[v])
-                    	dist[v] = dist[u] + 1;
-                    if (!g.getFaultyActions().get(new Pair(from,to)) && dist[u] < dist[v])
-                    	dist[v] = dist[u];
+                if (!sptSet[v] && adj ){
+                	//System.out.println(to);
+                	int addedCost = g.getFaultyActions().get(new Pair(from,to)) ? 1 : 0;
+                	if (dist[u]+addedCost < dist[v]){
+                		//System.out.println(to);
+                    	dist[v] = dist[u] + addedCost;
+                    	//System.out.print(addedCost);
+                    	//System.out.println(g.getLabels().get(new Pair(from,to)));
+                    }
                 }
             }
         }
 
         int minDistance = dist[0];
+        
+        double res= Math.round((double)1/(1+minDistance) * Math.pow(10, 3)) / Math.pow(10, 3);
+		createDot();
+		return res;
+    }*/
+
+    public double calculateDistance(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
+		//We use dijsktra's algorithm to find the shortest path to an error state
+    	buildGraphOptimized(specProgram,impProgram);
+
+        for(GameNode n : g.getNodes()){
+        	n.setDistanceValue(Integer.MAX_VALUE);
+        	n.setVisited(false);
+        }
+        g.getInitial().setDistanceValue(0);
+
+        // Find shortest path for all vertices
+        for (int count = 0; count < g.getNodes().size(); count++){
+        	int min = Integer.MAX_VALUE;
+        	int minIndex = 0;
+        	GameNode from;
+        	for (int i = 0;i<g.getNodes().size();i++){
+        		if (!g.getNodes().get(i).getVisited() && g.getNodes().get(i).getDistanceValue() < min){
+        			min = g.getNodes().get(i).getDistanceValue();
+        			minIndex = i;
+        		}
+        	}
+            from = g.getNodes().get(minIndex);
+            from.setVisited(true);
+            for (GameNode to : g.getSuccessors(from)){
+                if (!to.getVisited()){
+                	int addedCost = g.getFaultyActions().get(new Pair(from,to)) ? 1 : 0;
+                	if (from.getDistanceValue()+addedCost < to.getDistanceValue()){
+                    	to.setDistanceValue(from.getDistanceValue() + addedCost);
+                    }
+                }
+            }
+        }
+        int minDistance = g.errState().getDistanceValue();
         
         double res= Math.round((double)1/(1+minDistance) * Math.pow(10, 3)) / Math.pow(10, 3);
 		createDot();
