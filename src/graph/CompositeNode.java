@@ -5,10 +5,10 @@ import faulty.auxiliar.*;
 
 
 public class CompositeNode implements Comparable{
-	LinkedList<Node> nodes;
-	HashMap<String,Boolean> globalState;
-	ExplicitCompositeModel model;
-	boolean isFaulty;
+	LinkedList<Node> nodes; // Current Local States for each process 
+	HashMap<String,Boolean> globalState; // Shared global state
+	ExplicitCompositeModel model; // Global model whose this state belongs to
+	boolean isFaulty; // Is this state a faulty one?
 
 	public CompositeNode(){
 
@@ -29,11 +29,6 @@ public class CompositeNode implements Comparable{
 
 	@Override
 	public int compareTo(Object u) {
-		/*if (u instanceof CompositeNode)
-			for (int i=0; i<(((CompositeNode)u).getNodes()).size(); i++)
-				if (!nodes.get(i).equals(((CompositeNode)u).getNodes().get(i)))
-					return -1;
-		return 0;*/
 		if (u instanceof CompositeNode)
 			if (this.equals((CompositeNode)u))
 				return 0;
@@ -57,6 +52,7 @@ public class CompositeNode implements Comparable{
 		return isFaulty;
 	}
 
+	//updateState takes as input a process node n and a process node n_ and updates the global variables in n with the ones in n_
 	public void updateState(Node n, Node n_){
 		for (AuxiliarVar v : model.getSharedVars()){
 			LinkedList<Pair> l = n.getModel().getGlobalAssignments();

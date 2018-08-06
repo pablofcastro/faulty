@@ -5,20 +5,16 @@ import faulty.auxiliar.*;
 import java.io.*;
 
 public class ExplicitCompositeModel {
-	private HashMap<CompositeNode, TreeSet<CompositeNode>> succList;
-	private HashMap<CompositeNode, TreeSet<CompositeNode>> preList;
-	private HashMap<Pair, String> labels; //edge labels
-	private HashMap<Pair, Boolean> faultyActions;
-	private CompositeNode initial;
-	private LinkedList<AuxiliarVar> sharedVars;
-	private LinkedList<CompositeNode> nodes;
-	private static final TreeSet<CompositeNode> EMPTY_SET = new TreeSet<CompositeNode>();
+	private HashMap<CompositeNode, TreeSet<CompositeNode>> succList; // Succesors adjacency list
+	private HashMap<CompositeNode, TreeSet<CompositeNode>> preList; // Predecessors adjacency list
+	private HashMap<Pair, String> labels; // Edge labels
+	private HashMap<Pair, Boolean> faultyActions; // Faulty transitions
+	private CompositeNode initial; // Initial State
+	private LinkedList<AuxiliarVar> sharedVars; // Global variables
+	private LinkedList<CompositeNode> nodes; // Global states
 	private int numNodes;
 	private int numEdges;
 
-	/**
-	 * Construct empty Graph
-	 */
 	public ExplicitCompositeModel(LinkedList<AuxiliarVar> svs) {
 		sharedVars = svs;
 		succList = new HashMap<CompositeNode, TreeSet<CompositeNode>>();
@@ -59,8 +55,6 @@ public class ExplicitCompositeModel {
 
 	public CompositeNode search(CompositeNode v) {
 		for (CompositeNode node : nodes){
-			//System.out.println("node:"+node.toString());
-			//System.out.println("v:"+v.toString());
 			if (node.equals(v))
 				return node;
 		};
@@ -104,17 +98,6 @@ public class ExplicitCompositeModel {
 		return preList.get(v);
 	}
 
-	
-	public String toString(){
-		String res = "";
-		for (CompositeNode v : nodes){
-			res += "\n" + v.toString() + "\n";
-			for (CompositeNode u : succList.get(v))
-				res += "    -->"+ u.toString() +"\n";
-		}
-		return res;
-	}
-
 	public String createDot(){
 		String res = "digraph model {\n\n";
 		for (CompositeNode v : nodes){
@@ -142,30 +125,5 @@ public class ExplicitCompositeModel {
         }
 		return res;
 	}
-
-	/*public ExplicitModel flatten(){
-		ExplicitModel res = new ExplicitModel();
-		res.setInitial(union(initial));
-		TreeSet<CompositeNode> set = new TreeSet<CompositeNode>();
-		TreeSet<Node> setFlat = new TreeSet<Node>();
-		set.add(initial);
-		setFlat.add(res.getInitial());
-
-		while (!set.isEmpty()){
-			CompositeNode curr = set.pollFirst();
-			Node currFlat = setFlat.pollFirst();
-			for (CompositeNode n : succList.get(curr)){
-				res.addEdge(currFlat, union(n));
-			}
-		}
-		return res; 
-	}
-
-	private Node union(CompositeNode n){
-		Node res = new Node();
-		HashMap<String,Boolean> state = n.getFirst().getState();
-		LinkedList<AuxiliarVar> vars = n.getFirst().getVars();
-		for (int i)
-		return res;
-	}*/
+	
 }

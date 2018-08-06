@@ -6,13 +6,13 @@ import java.io.*;
 
 public class GameNode implements Comparable{
 
-	CompositeNode specState;
-	CompositeNode impState;
-	String symbol;
-	String player;
-	boolean mask;
-	boolean visited;
-	int distanceValue;
+	CompositeNode specState; // Current state of the Specification
+	CompositeNode impState; // Current state of the Implementation
+	String symbol; // The symbol of the action that lead to this state
+	String player; // The player that has to play from here
+	boolean mask; // True if the player has to mask this.symbol
+	boolean visited; // Utility for graph traversal algorithms
+	int distanceValue; // Value of the game for this node
 
 	public GameNode(){
 		visited = false;
@@ -79,7 +79,6 @@ public class GameNode implements Comparable{
 	@Override
 	public int hashCode(){
 	    return Objects.hash(specState, impState, symbol, player);
-	    //return 1;
 	}
 
 

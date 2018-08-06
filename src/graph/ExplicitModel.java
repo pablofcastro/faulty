@@ -5,23 +5,19 @@ import faulty.auxiliar.*;
 import java.io.*;
 
 public class ExplicitModel {
-	private HashMap<Node, TreeSet<Node>> succList; //succesors adjacency list
-	private HashMap<Node, TreeSet<Node>> preList; //predecessors adjacency list
-	private HashMap<Pair, String> labels; //edge labels
-	private HashMap<Pair, Boolean> faultyActions;
-	private LinkedList<AuxiliarVar> vars;
-	private Node initial;
-	private LinkedList<Node> nodes;
-	private static final TreeSet<Node> EMPTY_SET = new TreeSet<Node>();
+	private HashMap<Node, TreeSet<Node>> succList; // Succesors adjacency list
+	private HashMap<Node, TreeSet<Node>> preList; // Predecessors adjacency list
+	private HashMap<Pair, String> labels; // Edge labels
+	private HashMap<Pair, Boolean> faultyActions; // Faulty transitions
+	private LinkedList<AuxiliarVar> vars; // Local variables
+	private Node initial; // Initial State
+	private LinkedList<Node> nodes; // States
 	private int numNodes;
 	private int numEdges;
 	private String processName;
-	private ExplicitCompositeModel fullModel;
-	private LinkedList<Pair> globalAssignments; //this is needed for updating the global state
+	private ExplicitCompositeModel fullModel; //Program whose this process belongs to
+	private LinkedList<Pair> globalAssignments; // Utility for updating the global state
 
-	/**
-	 * Construct empty Graph
-	 */
 	public ExplicitModel(String pName, LinkedList<AuxiliarVar> vs, ExplicitCompositeModel fm) {
 		succList = new HashMap<Node, TreeSet<Node>>();
 		preList = new HashMap<Node, TreeSet<Node>>();
@@ -126,14 +122,6 @@ public class ExplicitModel {
 		}
 	}
 	
-	public String toString(){
-		String res = "";
-		for (Node v : nodes){
-			res += v.toString() + "\n";
-			res += "    -->"+ succList.get(v).toString() +"\n";
-		}
-		return res;
-	}
 
 	public String createDot(){
 		String res = "digraph model {\n\n";

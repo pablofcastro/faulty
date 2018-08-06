@@ -6,16 +6,15 @@ import java.io.*;
 
 public class GameGraph{
 
-	private HashMap<GameNode, TreeSet<GameNode>> succList;
-	private HashMap<GameNode, TreeSet<GameNode>> preList;
-	private HashMap<Pair, String> labels; //edge labels, may not be necessary
-	private HashMap<Pair, Boolean> faultyActions;
-	private GameNode initial;
-	private LinkedList<GameNode> nodes;
-	private static final TreeSet<GameNode> EMPTY_SET = new TreeSet<GameNode>();
+	private HashMap<GameNode, TreeSet<GameNode>> succList; // Successors adjacency list
+	private HashMap<GameNode, TreeSet<GameNode>> preList; // Predecessors adjacency list
+	private HashMap<Pair, String> labels; // Labels for edges
+	private HashMap<Pair, Boolean> faultyActions; // Which edges correspond to faulty actions
+	private GameNode initial; // Initial state
+	private LinkedList<GameNode> nodes; // States
 	private int numNodes;
 	private int numEdges;
-	private GameNode errState;
+	private GameNode errState; // Special error state
 
 	public GameGraph() {
 		succList = new HashMap<GameNode, TreeSet<GameNode>>();
@@ -99,17 +98,6 @@ public class GameGraph{
 
 	public TreeSet<GameNode> getPredecessors(GameNode v){
 		return preList.get(v);
-	}
-
-	
-	public String toString(){
-		String res = "";
-		for (GameNode v : nodes){
-			res += "\n" + v.toString() + "\n";
-			for (GameNode u : succList.get(v))
-				res += "    -->"+ u.toString() +"\n";
-		}
-		return res;
 	}
 
 	public String createDot(){

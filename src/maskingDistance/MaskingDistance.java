@@ -7,7 +7,7 @@ import faulty.auxiliar.*;
 
 public class MaskingDistance{
 
-	private GameGraph g;
+	private GameGraph g; // The masking distance game graph, undefined until buildGraph is called
 
 	public MaskingDistance(){
 
@@ -18,6 +18,9 @@ public class MaskingDistance{
 	}
 
 	public void buildGraph(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
+		//This method builds a game graph for the Masking Distance Game, there are two players: the Refuter(R) and the Verifier(V)
+		//The refuter plays with the implementation(imp), this means choosing any action available (faulty or not)
+		//and the verifier plays with the specification, he tries to match the action played by the refuter, if he can't then an error state is reached.
 		ExplicitCompositeModel spec,imp;
 		spec = specProgram.toGraph();
 		imp = impProgram.toGraph();
@@ -49,7 +52,6 @@ public class MaskingDistance{
 	            		iterSet.add(curr_);
 	            	}
 	            	else{
-	            		//System.out.println("AAAAA");
 	            		g.addEdge(curr,toOld,toOld.getSymbol(), f);
 	            	}
             	}
@@ -96,6 +98,10 @@ public class MaskingDistance{
 	}
 
 	public void buildGraphOptimized(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
+		//This method builds a game graph for the Masking Distance Game, there are two players: the Refuter(R) and the Verifier(V)
+		//The refuter plays with the implementation(imp), this means choosing any action available (faulty or not)
+		//and the verifier plays with the specification, he tries to match the action played by the refuter, if he can't then an error state is reached.
+		//This version has some optimizations, namely: Got rid of M transitions
 		ExplicitCompositeModel spec,imp;
 		spec = specProgram.toGraph();
 		imp = impProgram.toGraph();
@@ -129,7 +135,6 @@ public class MaskingDistance{
 	            		iterSet.add(curr_);
 	            	}
 	            	else{
-	            		//System.out.println("AAAAA");
 	            		g.addEdge(curr,toOld,imp.getLabels().get(p), f);
 	            	}
             	}
@@ -162,67 +167,9 @@ public class MaskingDistance{
         //System.out.println(g.createDot());
 	}
 
-
-
-	/*private int minDistance(int dist[], boolean sptSet[])
-    {
-        // Initialize min value
-        int min = Integer.MAX_VALUE, min_index=-1;
- 
-        for (int v = 0; v < g.getNodes().size(); v++)
-            if (sptSet[v] == false && dist[v] <= min)
-            {
-                min = dist[v];
-                min_index = v;
-            }
- 
-        return min_index;
-    }
-
-	public double calculateDistance2(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
-		//We use dijsktra's algorithm to find the shortest path to an error state
-    	buildGraphOptimized(specProgram,impProgram);
-    	int n = g.getNodes().size();
-        int dist[] = new int[n];
-        boolean sptSet[] = new boolean[n];
-        // Initialize all distances as INFINITE and stpSet[] as false
-        for (int i = 0; i < n; i++){
-            dist[i] = Integer.MAX_VALUE;
-            sptSet[i] = false;
-        }
-        // Distance of source vertex from itself is always 0
-        dist[1] = 0; // 1 is initial and 0 is errState
-        // Find shortest path for all vertices
-        for (int count = 0; count < n; count++){
-            int u = minDistance(dist, sptSet);
-            System.out.println(u);
-            sptSet[u] = true;
-            GameNode from = g.getNodes().get(u);
-            for (int v = 0; v < n; v++){
-            	GameNode to = g.getNodes().get(v);
-                boolean adj = g.getSuccessors(from).contains(to);
-                if (!sptSet[v] && adj ){
-                	//System.out.println(to);
-                	int addedCost = g.getFaultyActions().get(new Pair(from,to)) ? 1 : 0;
-                	if (dist[u]+addedCost < dist[v]){
-                		//System.out.println(to);
-                    	dist[v] = dist[u] + addedCost;
-                    	//System.out.print(addedCost);
-                    	//System.out.println(g.getLabels().get(new Pair(from,to)));
-                    }
-                }
-            }
-        }
-
-        int minDistance = dist[0];
-        
-        double res= Math.round((double)1/(1+minDistance) * Math.pow(10, 3)) / Math.pow(10, 3);
-		createDot();
-		return res;
-    }*/
-
     public double calculateDistance(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
-		//We use dijsktra's algorithm to find the shortest path to an error state
+		// We use dijsktra's algorithm to find the shortest path to an error state
+		// This is the main method of this class
     	buildGraphOptimized(specProgram,impProgram);
 
         for(GameNode n : g.getNodes()){

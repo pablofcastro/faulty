@@ -5,11 +5,10 @@ import faulty.auxiliar.*;
 
 
 public class Node implements Comparable{
-	HashMap<String,Boolean> state;
-	boolean visited;
-	ExplicitModel model;
-	boolean isFaulty;
-	//CompositeNode superNode; // the node that englobes this one
+	HashMap<String,Boolean> state; // Current state of process, valuation of local vars
+	boolean visited; // Utility for graph traversal algorithms
+	ExplicitModel model; // Process whose this node belongs to
+	boolean isFaulty; // Is it a faulty state?
 
 	public Node(){
 
