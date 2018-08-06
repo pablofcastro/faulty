@@ -1,0 +1,12 @@
+# A simple script for running the faulty model checker
+echo "----------------------------Memory test----------------------------"
+echo "3 bits"
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell3normal.test ../tests/maskingDistance/memoryCell/memoryCell3.test
+echo "5 bits"
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell5normal.test ../tests/maskingDistance/memoryCell/memoryCell5.test
+echo "7 bits"
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell7normal.test ../tests/maskingDistance/memoryCell/memoryCell7.test
+echo "9 bits"
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell9normal.test ../tests/maskingDistance/memoryCell/memoryCell9.test
+echo "11 bits"
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell11normal.test ../tests/maskingDistance/memoryCell/memoryCell11.test
