@@ -102,13 +102,13 @@ public class ExplicitCompositeModel {
 		String res = "digraph model {\n\n";
 		for (CompositeNode v : nodes){
 			if (v.getIsFaulty())
-				res += "    "+v.toString()+" [color=\"red\"];\n";
+				res += "    STATE"+v.toString()+" [color=\"red\"];\n";
 			for (CompositeNode u : succList.get(v)){
 				Pair edge = new Pair(v,u);
 				if (faultyActions.get(edge))
-					res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"red\",label = \""+labels.get(edge)+"\"]"+";\n";
+					res += "    STATE"+v.toString()+" -> STATE"+ u.toString() +" [color=\"red\",label = \""+labels.get(edge)+"\"]"+";\n";
 				else
-					res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(edge)+"\"]"+";\n";
+					res += "    STATE"+v.toString()+" -> STATE"+ u.toString() +" [label = \""+labels.get(edge)+"\"]"+";\n";
 			}
 		}
 		res += "\n}";

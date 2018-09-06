@@ -52,8 +52,8 @@ public class CompositeNode implements Comparable{
 		return isFaulty;
 	}
 
-	//updateState takes as input a process node n and a process node n_ and updates the global variables in n with the ones in n_
-	public void updateState(Node n, Node n_){
+	//updateGlobalState takes as input a process node n and a process node n_ and updates the global state from assignments in transition <n,n_>
+	public void updateGlobalState(Node n, Node n_){
 		for (AuxiliarVar v : model.getSharedVars()){
 			LinkedList<Pair> l = n.getModel().getGlobalAssignments();
 			for (Pair e : l){

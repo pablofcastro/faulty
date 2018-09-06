@@ -10,15 +10,18 @@ public class ExplicitModel {
 	private HashMap<Pair, String> labels; // Edge labels
 	private HashMap<Pair, Boolean> faultyActions; // Faulty transitions
 	private LinkedList<AuxiliarVar> vars; // Local variables
+	private LinkedList<AuxiliarParam> params;
+	private LinkedList<AuxiliarExpression> invParams;
 	private Node initial; // Initial State
 	private LinkedList<Node> nodes; // States
 	private int numNodes;
 	private int numEdges;
 	private String processName;
+	private String processType;
 	private ExplicitCompositeModel fullModel; //Program whose this process belongs to
-	private LinkedList<Pair> globalAssignments; // Utility for updating the global state
+	private LinkedList<Pair> globalAssignments; // Utility for updating the global state, pairs of form <<s,s'>,<gVar,value>>, i.e <transition,assignment>
 
-	public ExplicitModel(String pName, LinkedList<AuxiliarVar> vs, ExplicitCompositeModel fm) {
+	public ExplicitModel(String pName, String pType, LinkedList<AuxiliarVar> vs, LinkedList<AuxiliarParam> ps, LinkedList<AuxiliarExpression> ips, ExplicitCompositeModel fm) {
 		succList = new HashMap<Node, TreeSet<Node>>();
 		preList = new HashMap<Node, TreeSet<Node>>();
 		labels = new HashMap<Pair, String>();
@@ -27,7 +30,10 @@ public class ExplicitModel {
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<Node>();
 		processName = pName;
+		processType = pType;
 		vars = vs;
+		params = ps;
+		invParams = ips;
 		fullModel = fm;
 
 	}
@@ -56,8 +62,20 @@ public class ExplicitModel {
 		return vars;
 	}
 
+	public LinkedList<AuxiliarParam> getParams(){
+		return params;
+	}
+
+	public LinkedList<AuxiliarExpression> getInvParams(){
+		return invParams;
+	}
+
 	public String getProcessName(){
 		return processName;
+	}
+
+	public String getProcessType(){
+		return processType;
 	}
 
 	public LinkedList<Pair> getGlobalAssignments(){
@@ -121,19 +139,30 @@ public class ExplicitModel {
 			v.resetVisited();
 		}
 	}
+
+	/*public void addEnvTransitions(int i){
+		for (Node n : nodes){ //este for deberia estar afuera
+			for (int j=i; j<fullModel.getSharedVars().size(); j++){
+				addEnvTransitions(i+1);
+				Node newState = n.clone();
+				//flip(vars[j]) , agregar newState y agregar transicion de n a newState
+				addEnvTransitions(i+1);
+			}	
+		}
+	}*/
 	
 
 	public String createDot(){
 		String res = "digraph model {\n\n";
 		for (Node v : nodes){
 			if (v.getIsFaulty())
-				res += "    "+v.toString()+" [color=\"red\"];\n";
+				res += "    STATE"+v.toString()+" [color=\"red\"];\n";
 			for (Node u : succList.get(v)){
 				Pair edge = new Pair(v,u);
 				if (faultyActions.get(edge))
-					res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"red\",label = \""+labels.get(edge)+"\"]"+";\n";
+					res += "    STATE"+v.toString()+" -> STATE"+ u.toString() +" [color=\"red\",label = \""+labels.get(edge)+"\"]"+";\n";
 				else
-					res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(edge)+"\"]"+";\n";
+					res += "    STATE"+v.toString()+" -> STATE"+ u.toString() +" [label = \""+labels.get(edge)+"\"]"+";\n";
 			}
 		}
 		res += "\n}";

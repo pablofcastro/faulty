@@ -102,7 +102,14 @@ public class GameGraph{
 
 	public String createDot(){
 		String res = "digraph model {\n\n";
+		res += "    node [style=filled];\n";
 		for (GameNode v : nodes){
+			if (v.getPlayer().equals("V"))
+				res += "    "+v.toString()+" [color=\"lightblue\"];\n";
+			if (v.getPlayer().equals("R"))
+				res += "    "+v.toString()+" [color=\"grey\"];\n";
+			if (v.getPlayer().equals(""))
+				res += "    "+v.toString()+" [color=\"red\"];\n";
 			for (GameNode u : succList.get(v)){
 				Pair edge = new Pair(v,u);
 				if (labels.get(edge).split("M")[0].equals(""))
