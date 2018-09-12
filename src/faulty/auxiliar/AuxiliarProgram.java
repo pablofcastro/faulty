@@ -381,10 +381,10 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
                         if (toOld == null){
                             m.addNode(curr_);
                             iterSet.add(curr_);
-                            m.addEdge(curr, curr_, b.getLabel(),b.getIsFaulty());
+                            m.addEdge(curr, curr_, n.getProcessName()+b.getLabel(),b.getIsFaulty());
                         }
                         else{
-                            m.addEdge(curr, toOld, b.getLabel(),b.getIsFaulty());
+                            m.addEdge(curr, toOld, n.getProcessName()+b.getLabel(),b.getIsFaulty());
                         }
                     }
                 }
