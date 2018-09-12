@@ -20,6 +20,7 @@ public class ExplicitModel {
 	private String processType;
 	private ExplicitCompositeModel fullModel; //Program whose this process belongs to
 	private LinkedList<Pair> globalAssignments; // Utility for updating the global state, pairs of form <<s,s'>,<gVar,value>>, i.e <transition,assignment>
+	private LinkedList<Pair> globalQueries; // Utility for checking guards that involve global variables, pairs of form <<s,s'>,<gVar,value>>, i.e <transition,values required>
 
 	public ExplicitModel(String pName, String pType, LinkedList<AuxiliarVar> vs, LinkedList<AuxiliarParam> ps, LinkedList<AuxiliarExpression> ips, ExplicitCompositeModel fm) {
 		succList = new HashMap<Node, TreeSet<Node>>();
@@ -27,6 +28,7 @@ public class ExplicitModel {
 		labels = new HashMap<Pair, String>();
 		faultyActions = new HashMap<Pair, Boolean>();
 		globalAssignments = new LinkedList<Pair>();
+		globalQueries = new LinkedList<Pair>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<Node>();
 		processName = pName;
@@ -80,6 +82,10 @@ public class ExplicitModel {
 
 	public LinkedList<Pair> getGlobalAssignments(){
 		return globalAssignments;
+	}
+
+	public LinkedList<Pair> getGlobalQueries(){
+		return globalQueries;
 	}
 
 	public void addNode(Node v) {
@@ -139,18 +145,6 @@ public class ExplicitModel {
 			v.resetVisited();
 		}
 	}
-
-	/*public void addEnvTransitions(int i){
-		for (Node n : nodes){ //este for deberia estar afuera
-			for (int j=i; j<fullModel.getSharedVars().size(); j++){
-				addEnvTransitions(i+1);
-				Node newState = n.clone();
-				//flip(vars[j]) , agregar newState y agregar transicion de n a newState
-				addEnvTransitions(i+1);
-			}	
-		}
-	}*/
-	
 
 	public String createDot(){
 		String res = "digraph model {\n\n";

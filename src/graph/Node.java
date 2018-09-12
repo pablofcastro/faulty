@@ -8,53 +8,48 @@ public class Node implements Comparable{
 	HashMap<String,Boolean> state; // Current state of process, valuation of local vars, this includes parameters and local version of globals
 	//HashMap<String,String> stateEnums;
 	boolean visited; // Utility for graph traversal algorithms
-	ExplicitModel model; // Process whose this node belongs to
 	boolean isFaulty; // Is it a faulty state?
+	AuxiliarProcess proc;
+	String processName;
+	CompositeNode parent;
 
 	public Node(){
 
 	}
 
-	public Node(ExplicitModel m){
+	/*public Node(){
 		state = new HashMap<String,Boolean>();
 		//stateEnums = new HashMap<String,String>();
-		model = m;
-		for (AuxiliarVar v : model.getVars()){
+		for (AuxiliarVar v : proc.getVarBool()){
 			state.put(v.getName(),false);
 		}
-		for (AuxiliarVar v : model.getFullModel().getSharedVars()){
-			state.put(v.getName(),false);
-		}
-		for (AuxiliarExpression invParam : model.getInvParams()){ //invParams
-			if (invParam instanceof AuxiliarVar)
-				state.put(((AuxiliarVar)invParam).getName(),false);
+		for (AuxiliarVar v : parent.getModel().getSharedVars()){
+			parent.getGlobalState().put(v.getName(),false);
 		}
 		visited = false;
-	}
+	}*/
 
-	public Node(ExplicitModel m, AuxiliarExpression e){
+	public Node(AuxiliarProcess p, String pName, CompositeNode par, AuxiliarExpression e){
 		state = new HashMap<String,Boolean>();
-		model = m;
 		visited = false;
+		processName = pName;
+		proc = p;
+		parent = par;
 		state.putAll(evalInit(e));
 		//evalInit(e);
-		for (AuxiliarVar v : model.getVars()){
+		for (AuxiliarVar v : proc.getVarBool()){
 			if (!state.containsKey(v.getName()))
 				state.put(v.getName(),false);
 		}
-		for (AuxiliarVar v : model.getFullModel().getSharedVars()){
-			if (!state.containsKey(v.getName()))
-				state.put(v.getName(),false);
+		for (AuxiliarVar v : parent.getModel().getSharedVars()){
+			if (!parent.getGlobalState().containsKey(v.getName()))
+				parent.getGlobalState().put(v.getName(),false);
 		}
-		for (AuxiliarExpression invParam : model.getInvParams()){
+		/*for (AuxiliarExpression invParam : model.getInvParams()){
 			if (invParam instanceof AuxiliarVar){
 				if (!state.containsKey(((AuxiliarVar)invParam).getName()))
 					state.put(((AuxiliarVar)invParam).getName(),false);
 			}
-		}
-		/*for (AuxiliarParam v : model.getParams()){
-			if (!state.containsKey(v.getDeclarationName()))
-				state.put(v.getDeclarationName(),false);
 		}*/
 	}
 
@@ -62,13 +57,24 @@ public class Node implements Comparable{
 		return state;
 	}
 
-
-	public ExplicitModel getModel(){
-		return model;
-	}
-
 	public boolean getIsFaulty(){
 		return isFaulty;
+	}
+
+	public CompositeNode getParent(){
+		return parent;
+	}
+
+	public void setParent(CompositeNode par){
+		parent = par;
+	}
+
+	public AuxiliarProcess getProcess(){
+		return proc;
+	}
+
+	public String getProcessName(){
+		return processName;
 	}
 
 	public void resetVisited(){
@@ -93,23 +99,37 @@ public class Node implements Comparable{
 	}
 
 	private AuxiliarVar instanciateIfParam(AuxiliarVar v){
-		for (int i=0;i < model.getParams().size();i++){
-			if (v.getName().equals(model.getParams().get(i)) && model.getInvParams().get(i) instanceof AuxiliarVar){
-				v = (AuxiliarVar)model.getInvParams().get(i);
+		for (int i=0;i < proc.getParamList().size();i++){
+			if (v.getName().equals(proc.getParamList().get(i).getDeclarationName()) && proc.getInvkParametersList(processName).get(i) instanceof AuxiliarVar){
+				v = (AuxiliarVar)proc.getInvkParametersList(processName).get(i);
 				break;
 			}
 		}
 		return v;
 	}
 
+	private boolean checkGlobalVar(AuxiliarVar v){
+		for (AuxiliarVar gv : parent.getModel().getSharedVars()){
+			if (v.getName().equals(gv.getName()))
+				return true;
+		}
+		return false;
+	}
+
 	private void evalExprInit(AuxiliarExpression e, boolean neg, HashMap<String,Boolean> st){
 		if (e instanceof AuxiliarVar){
 			e = instanciateIfParam((AuxiliarVar)e);
-			if (neg){
-				st.put(((AuxiliarVar)e).getName(),false);
+			if (checkGlobalVar((AuxiliarVar)e)){ //global
+				if (neg)
+					parent.getGlobalState().put(((AuxiliarVar)e).getName(),false);
+				else
+					parent.getGlobalState().put(((AuxiliarVar)e).getName(),true);
 			}
-			else{
-				st.put(((AuxiliarVar)e).getName(),true);
+			else{ //local
+				if (neg)
+					st.put(((AuxiliarVar)e).getName(),false);
+				else
+					st.put(((AuxiliarVar)e).getName(),true);
 			}
 		}
 		if (e instanceof AuxiliarNegBoolExp){
@@ -135,7 +155,10 @@ public class Node implements Comparable{
 		}
 		if (e instanceof AuxiliarVar){
 			e = instanciateIfParam((AuxiliarVar)e);
-			return state.get(((AuxiliarVar)e).getName());
+			if (checkGlobalVar((AuxiliarVar)e))
+				return parent.getGlobalState().get(((AuxiliarVar)e).getName());
+			else
+				return state.get(((AuxiliarVar)e).getName());
 		}
 		if (e instanceof AuxiliarNegBoolExp){
 			return !evalBoolExpr(((AuxiliarNegBoolExp)e).getExp());
@@ -161,19 +184,23 @@ public class Node implements Comparable{
             isFaulty = true;
 	}
 
-	public Node createSuccessor(LinkedList<AuxiliarCode> assigns){
+	public Node createSuccessor(CompositeNode par, LinkedList<AuxiliarCode> assigns){
 		Node succ = clone();
+		succ.setParent(par);
 		for (AuxiliarCode c : assigns){
 			if (c instanceof AuxiliarVarAssign){
 				String name = (((AuxiliarVarAssign)c).getVar()).getName();
 				Boolean value = evalBoolExpr(((AuxiliarVarAssign)c).getExp());
-				for (AuxiliarVar v : model.getFullModel().getSharedVars()){ // keep track of assignments to global variables
+				/*for (AuxiliarVar v : proc.getProgram().getSharedVars()){ // keep track of assignments to global variables
 					if (v.getName().equals(name)){
-						model.getGlobalAssignments().add(new Pair(new Pair(this,succ),new Pair(name, value)));
+						proc.getGlobalAssignments().add(new Pair(new Pair(this,succ),new Pair(name, value)));
 						break;
 					}
-				}
-				succ.getState().put(name, value);
+				}*/
+				if (checkGlobalVar(((AuxiliarVarAssign)c).getVar()))
+					succ.getParent().getGlobalState().put(name,value);
+				else
+					succ.getState().put(name,value);
 			}
 		}
 		return succ;
@@ -181,45 +208,47 @@ public class Node implements Comparable{
 
 	public Node clone(){
 		Node n = new Node();
-		n.model = model;
+		n.proc = proc;
+		n.processName = processName;
+		n.parent = parent;
 		n.state = new HashMap<String,Boolean>();
-		for (AuxiliarVar v : model.getVars()){
+		for (AuxiliarVar v : proc.getVarBool()){
 			n.state.put(v.getName(),state.get(v.getName()));
 		}
-		for (AuxiliarVar v : model.getFullModel().getSharedVars()){
+		/*for (AuxiliarVar v : model.getFullModel().getSharedVars()){
 			n.state.put(v.getName(),state.get(v.getName()));
 		}
 		for (AuxiliarParam v : model.getParams()){
 			n.state.put(v.getDeclarationName(),state.get(v.getDeclarationName()));
-		}
+		}*/
 		n.visited = false;
 		return n;
 	}
 
 	public boolean equals(Node n){
-		if (!n.getModel().getProcessName().equals(model.getProcessName()))
+		if (!n.getProcessName().equals(processName))
 			return false;
-		for (AuxiliarVar var: model.getVars()){
+		for (AuxiliarVar var: proc.getVarBool()){
 			if (state.get(var.getName()) != n.getState().get(var.getName()))
 				return false;
 		}
-		for (AuxiliarVar var: model.getFullModel().getSharedVars()){
+		/*for (AuxiliarVar var: model.getFullModel().getSharedVars()){
 			if (state.get(var.getName()) != n.getState().get(var.getName()))
 				return false;
-		}
+		}*/
 		return true;
 	}
 
 	public String toString(){
 		String res = "";
-		for (AuxiliarVar v : model.getVars()){
+		for (AuxiliarVar v : proc.getVarBool()){
+			if (state.get(v.getName()))
+			res += processName +""+v.getName() + "_";
+		}
+		/*for (AuxiliarVar v : model.getFullModel().getSharedVars()){
 			if (state.get(v.getName()))
 			res += model.getProcessName() +""+v.getName() + "_";
-		}
-		for (AuxiliarVar v : model.getFullModel().getSharedVars()){
-			if (state.get(v.getName()))
-			res += model.getProcessName() +""+v.getName() + "_";
-		}
+		}*/
 		return res;
 		//return state.toString();
 	}
@@ -234,6 +263,6 @@ public class Node implements Comparable{
 
 	@Override
 	public int hashCode(){
-	    return Objects.hash(state, visited, model, isFaulty);
+	    return Objects.hash(state, visited, proc, processName, isFaulty);
 	}
 }

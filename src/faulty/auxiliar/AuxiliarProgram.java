@@ -280,17 +280,9 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
     }
 
     /*Generates a explicit model (Kripke structure) for the complete program*/
-    public ExplicitCompositeModel toGraph(){
+   /* public ExplicitCompositeModel toGraph(){
         ExplicitCompositeModel m = new ExplicitCompositeModel(globalVars.getBoolVars());
         LinkedList<ExplicitModel> procs = new LinkedList<ExplicitModel>();
-
-        //create a model for each process
-        /*for (int i = 0; i < process.getProcessList().size(); i++){
-            System.out.println(mainProgram.getProcessDecl().get(i).getType());
-            AuxiliarProcess proc = process.getProcessList().get(i);
-            ExplicitModel p = proc.toGraph(mainProgram.getProcessDecl().get(i).getName(), m);//,globalVars.getBoolVars());
-            procs.add(p);
-        }*/
 
         //states in m are lists of states (from processes)
         //calculate initial state
@@ -331,6 +323,69 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
                     }
                     else{
                         m.addEdge(curr, toOld, procs.get(i).getLabels().get(p), procs.get(i).getFaultyActions().get(p));
+                    }
+                }
+            }
+        }
+        //ExplicitModel res = m.flatten();
+        m.createDot();
+        return m;
+    }
+*/
+    /*TOTRY: Create the whole model on the fly*/
+    public ExplicitCompositeModel toGraph(){
+        ExplicitCompositeModel m = new ExplicitCompositeModel(globalVars.getBoolVars());
+
+        //states in m are lists of states (from processes)
+        //calculate initial state
+        CompositeNode init = new CompositeNode(new LinkedList<Node>(), m);
+        for (AuxiliarProcessDecl pDecl : mainProgram.getProcessDecl()){
+            for (int i = 0; i < process.getProcessList().size(); i++){
+                AuxiliarProcess proc = process.getProcessList().get(i);
+                if (pDecl.getType().equals(proc.getName())){
+                    Node pInit = new Node(proc,pDecl.getName(),init,proc.getInitialCond());
+                    init.getNodes().add(pInit);
+                }
+            }
+        }
+        
+        m.addNode(init);
+        m.setInitial(init);
+
+        //repetir:para cada estado, para cada instancia de proceso, para cada branch del proceso, 
+        //ver si el estado satisface la guarda (las variables locales se chequean en la posicion del proceso en el estado,
+        //y las globales se chequean en el estado, si se satisface la guarda crear un estado sucesor donde se actualiza
+        //de acuerdo a las asignaciones, agregar el estado nuevo y la correspondiente transicion
+
+        TreeSet<CompositeNode> iterSet = new TreeSet<CompositeNode>();
+        iterSet.add(m.getInitial());
+
+        //build the whole model
+        while(!iterSet.isEmpty()){
+            CompositeNode curr = iterSet.pollFirst();
+
+            for (int i = 0; i < curr.getNodes().size(); i++){ // for each process in current global state
+                Node n = curr.getNodes().get(i);
+                for (AuxiliarBranch b : n.getProcess().getBranches()){
+                    if (n.satisfies(b.getGuard())){
+                        //create global successor curr_
+                        CompositeNode curr_ = curr.clone();
+                        //create successor n_
+                        Node n_ = n.createSuccessor(curr_,b.getAssignList());
+                        n_.checkNormCondition(n.getProcess().getNormativeCond());
+                        Pair p = new Pair(n,n_);
+                        curr_.getNodes().set(i,n_);
+                        curr_.checkNormCondition();
+                        //curr_.updateGlobalState(n,n_);
+                        CompositeNode toOld = m.search(curr_);
+                        if (toOld == null){
+                            m.addNode(curr_);
+                            iterSet.add(curr_);
+                            m.addEdge(curr, curr_, b.getLabel(),b.getIsFaulty());
+                        }
+                        else{
+                            m.addEdge(curr, toOld, b.getLabel(),b.getIsFaulty());
+                        }
                     }
                 }
             }

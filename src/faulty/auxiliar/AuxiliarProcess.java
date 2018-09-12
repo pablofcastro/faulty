@@ -666,12 +666,10 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
     }
 
     /*Generates a explicit model (Kripke structure) for this process*/
-    public ExplicitModel toGraph(String pName, ExplicitCompositeModel fullModel){//, LinkedList<AuxiliarVar> globalVars){
+    /*public ExplicitModel toGraph(String pName, ExplicitCompositeModel fullModel){//, LinkedList<AuxiliarVar> globalVars){
         ExplicitModel m = new ExplicitModel(pName, processName, boolVars, paramList, getInvkParametersList(pName), fullModel);
         //System.out.println();
-        /*LinkedList<AuxiliarVar> allVars = new LinkedList<AuxiliarVar>();
-        allVars.addAll(boolVars);
-        allVars.addAll(globalVars);*/
+        //TODO: add conditional transitions in the case of guards that ask for global variables
         Node init = new Node(m,initialCond);
         init.checkNormCondition(normCondition);
         m.addNode(init);
@@ -698,6 +696,6 @@ public class AuxiliarProcess extends AuxiliarProgramNode {
         }
         //System.out.println(m.createDot());
         return m;
-    }
+    }*/
     
 }

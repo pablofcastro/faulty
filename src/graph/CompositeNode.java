@@ -52,8 +52,18 @@ public class CompositeNode implements Comparable{
 		return isFaulty;
 	}
 
+	public ExplicitCompositeModel getModel(){
+		return model;
+	}
+
+	public void checkNormCondition(){
+		for (Node n : nodes)
+			if (n.getIsFaulty())
+            	isFaulty = true;
+	}
+
 	//updateGlobalState takes as input a process node n and a process node n_ and updates the global state from assignments in transition <n,n_>
-	public void updateGlobalState(Node n, Node n_){
+	/*public void updateGlobalState(Node n, Node n_){
 		for (AuxiliarVar v : model.getSharedVars()){
 			LinkedList<Pair> l = n.getModel().getGlobalAssignments();
 			for (Pair e : l){
@@ -67,7 +77,7 @@ public class CompositeNode implements Comparable{
 					globalState.put(v.getName(),ess);
 			}
 		}
-	}
+	}*/
 
 	public String toString(){
 		String res = "";
