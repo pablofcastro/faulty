@@ -351,11 +351,11 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         
         m.addNode(init);
         m.setInitial(init);
-
-        //repetir:para cada estado, para cada instancia de proceso, para cada branch del proceso, 
-        //ver si el estado satisface la guarda (las variables locales se chequean en la posicion del proceso en el estado,
-        //y las globales se chequean en el estado, si se satisface la guarda crear un estado sucesor donde se actualiza
-        //de acuerdo a las asignaciones, agregar el estado nuevo y la correspondiente transicion
+        //Keep track of processes local nodes
+        for (int i = 0; i < init.getNodes().size(); i++){
+            m.getProcessesNodes().add(new LinkedList<Node>());
+            m.getProcessesNodes().get(i).add(init.getNodes().get(i));
+        }
 
         TreeSet<CompositeNode> iterSet = new TreeSet<CompositeNode>();
         iterSet.add(m.getInitial());
@@ -366,14 +366,29 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
 
             for (int i = 0; i < curr.getNodes().size(); i++){ // for each process in current global state
                 Node n = curr.getNodes().get(i);
+                n.setParent(curr); //NO SE PORQUE TUVE QUE FORZAR ESTE SETEO
+                //System.out.println(curr);
                 for (AuxiliarBranch b : n.getProcess().getBranches()){
                     if (n.satisfies(b.getGuard())){
+                        if (!curr.equals(n.getParent())){
+                            System.out.println(b.getLabel());
+                            System.out.println(n);
+                            System.out.println(n.getParent());
+                            System.out.println(curr);
+                        }
+
                         //create global successor curr_
                         CompositeNode curr_ = curr.clone();
                         //create successor n_
-                        Node n_ = n.createSuccessor(curr_,b.getAssignList());
+                        Node n_ = n.createSuccessor(curr_,b.getAssignList(),i);
+                        /*if (!curr_.equals(n_.getParent())){
+                            System.out.println(n_);
+                            System.out.println(n_.getParent());
+                            System.out.println(curr_);
+                        }*/
+
                         n_.checkNormCondition(n.getProcess().getNormativeCond());
-                        Pair p = new Pair(n,n_);
+                        //Pair p = new Pair(n,n_);
                         curr_.getNodes().set(i,n_);
                         curr_.checkNormCondition();
                         //curr_.updateGlobalState(n,n_);
@@ -384,12 +399,14 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
                             m.addEdge(curr, curr_, n.getProcessName()+b.getLabel(),b.getIsFaulty());
                         }
                         else{
+                            n_.setParent(toOld);
                             m.addEdge(curr, toOld, n.getProcessName()+b.getLabel(),b.getIsFaulty());
                         }
                     }
                 }
             }
         }
+        System.out.println("hey");
         //ExplicitModel res = m.flatten();
         m.createDot();
         return m;

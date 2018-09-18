@@ -155,8 +155,12 @@ public class Node implements Comparable{
 		}
 		if (e instanceof AuxiliarVar){
 			e = instanciateIfParam((AuxiliarVar)e);
-			if (checkGlobalVar((AuxiliarVar)e))
+			if (checkGlobalVar((AuxiliarVar)e)){
+				//if (parent.getGlobalState().get(((AuxiliarVar)e).getName()))
+				//	System.out.println("PARENT:"+parent.toString());
+				//System.out.println(((AuxiliarVar)e).getName()+":"+parent.getGlobalState().get(((AuxiliarVar)e).getName()));
 				return parent.getGlobalState().get(((AuxiliarVar)e).getName());
+			}
 			else
 				return state.get(((AuxiliarVar)e).getName());
 		}
@@ -184,25 +188,36 @@ public class Node implements Comparable{
             isFaulty = true;
 	}
 
-	public Node createSuccessor(CompositeNode par, LinkedList<AuxiliarCode> assigns){
+	public Node createSuccessor(CompositeNode par, LinkedList<AuxiliarCode> assigns, int procIndex){
 		Node succ = clone();
 		succ.setParent(par);
 		for (AuxiliarCode c : assigns){
 			if (c instanceof AuxiliarVarAssign){
-				String name = (((AuxiliarVarAssign)c).getVar()).getName();
-				Boolean value = evalBoolExpr(((AuxiliarVarAssign)c).getExp());
+				AuxiliarVarAssign assign = (AuxiliarVarAssign)c;
+				AuxiliarVar var = instanciateIfParam(assign.getVar());
+				String name = var.getName();
+				Boolean value = evalBoolExpr(assign.getExp());
 				/*for (AuxiliarVar v : proc.getProgram().getSharedVars()){ // keep track of assignments to global variables
 					if (v.getName().equals(name)){
 						proc.getGlobalAssignments().add(new Pair(new Pair(this,succ),new Pair(name, value)));
 						break;
 					}
 				}*/
-				if (checkGlobalVar(((AuxiliarVarAssign)c).getVar()))
+				if (checkGlobalVar(var))
 					succ.getParent().getGlobalState().put(name,value);
 				else
 					succ.getState().put(name,value);
 			}
 		}
+		//check if succ already exists
+		for (int j = 0; j < parent.getModel().getProcessesNodes().get(procIndex).size(); j++){
+			Node old = parent.getModel().getProcessesNodes().get(procIndex).get(j);
+			if (succ.equals(old)){
+				old.setParent(par);
+				return old;
+			}
+		}
+		parent.getModel().getProcessesNodes().get(procIndex).add(succ); //add new local node
 		return succ;
 	}
 
@@ -243,7 +258,7 @@ public class Node implements Comparable{
 		String res = "";
 		for (AuxiliarVar v : proc.getVarBool()){
 			if (state.get(v.getName()))
-			res += processName +""+v.getName() + "_";
+				res += processName +""+v.getName() + "_";
 		}
 		/*for (AuxiliarVar v : model.getFullModel().getSharedVars()){
 			if (state.get(v.getName()))

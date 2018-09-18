@@ -28,7 +28,7 @@ public class GameGraph{
 
 	}
 
-	public GameNode errState(){		
+	public GameNode getErrState(){		
 		return errState;
 	}
 

@@ -89,7 +89,7 @@ public class MaskingDistance{
 			            }
 	            	}
 	            	if (!foundSucc){
-	        			g.addEdge(curr,g.errState(),"ERR", false);
+	        			g.addEdge(curr,g.getErrState(),"ERR", false);
 	            	}
 	            }
             }
@@ -159,7 +159,7 @@ public class MaskingDistance{
 			            }
 	            	}
 	            	if (!foundSucc){
-			            g.addEdge(curr,g.errState(),"ERR", false);
+			            g.addEdge(curr,g.getErrState(),"ERR", false);
 	            	}
 	            
             }
@@ -170,11 +170,12 @@ public class MaskingDistance{
     public double calculateDistance(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
 		// We use dijsktra's algorithm to find the shortest path to an error state
 		// This is the main method of this class
-    	buildGraphOptimized(specProgram,impProgram);
+    	buildGraph(specProgram,impProgram);
 
         for(GameNode n : g.getNodes()){
         	n.setDistanceValue(Integer.MAX_VALUE);
         	n.setVisited(false);
+        	n.setPreviousNodeInPath(null);
         }
         g.getInitial().setDistanceValue(0);
 
@@ -196,17 +197,30 @@ public class MaskingDistance{
                 	int addedCost = g.getFaultyActions().get(new Pair(from,to)) ? 1 : 0;
                 	if (from.getDistanceValue()+addedCost < to.getDistanceValue()){
                     	to.setDistanceValue(from.getDistanceValue() + addedCost);
+                    	to.setPreviousNodeInPath(from);
                     }
                 }
             }
         }
-        int minDistance = g.errState().getDistanceValue();
+        int minDistance = g.getErrState().getDistanceValue();
         
         double res= Math.round((double)1/(1+minDistance) * Math.pow(10, 3)) / Math.pow(10, 3);
 		createDot();
+		printTraceToError();
 		return res;
     }
 	
+	public void printTraceToError(){
+		System.out.println("PATH:");
+		GameNode curr = g.getErrState();
+		int i = 0;
+		while (curr != null){
+			System.out.println(i+"."+curr.toString());
+			curr = curr.getPreviousNodeInPath();
+			i++;
+		}
+	}
+
 	public void createDot(){
 		g.createDot();
 	}

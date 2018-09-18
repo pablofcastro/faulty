@@ -13,6 +13,7 @@ public class GameNode implements Comparable{
 	boolean mask; // True if the player has to mask this.symbol
 	boolean visited; // Utility for graph traversal algorithms
 	int distanceValue; // Value of the game for this node
+	GameNode previousNodeInPath; // Previous Node in Shortest path to errState
 
 	public GameNode(){
 		visited = false;
@@ -66,6 +67,14 @@ public class GameNode implements Comparable{
 
 	public void setDistanceValue(int d){
 		distanceValue = d;
+	}
+
+	public GameNode getPreviousNodeInPath(){
+		return previousNodeInPath;
+	}
+
+	public void setPreviousNodeInPath(GameNode prev){
+		previousNodeInPath = prev;
 	}
 
 	@Override

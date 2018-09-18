@@ -14,6 +14,7 @@ public class ExplicitCompositeModel {
 	private LinkedList<CompositeNode> nodes; // Global states
 	private int numNodes;
 	private int numEdges;
+	private LinkedList<LinkedList<Node>> processesNodes;
 
 	public ExplicitCompositeModel(LinkedList<AuxiliarVar> svs) {
 		sharedVars = svs;
@@ -23,7 +24,7 @@ public class ExplicitCompositeModel {
 		faultyActions = new HashMap<Pair, Boolean>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<CompositeNode>();
-
+		processesNodes = new LinkedList<LinkedList<Node>>();
 	}
 
 	public void setInitial(CompositeNode v){
@@ -88,6 +89,10 @@ public class ExplicitCompositeModel {
 
 	public LinkedList<CompositeNode> getNodes(){
 		return nodes;
+	}
+
+	public LinkedList<LinkedList<Node>> getProcessesNodes(){
+		return processesNodes;
 	}
 
 	public TreeSet<CompositeNode> getSuccessors(CompositeNode v){
