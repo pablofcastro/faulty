@@ -338,24 +338,23 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
 
         //states in m are lists of states (from processes)
         //calculate initial state
-        CompositeNode init = new CompositeNode(new LinkedList<Node>(), m);
-        for (AuxiliarProcessDecl pDecl : mainProgram.getProcessDecl()){
+        CompositeNode init = new CompositeNode(m);
+        for (int j=0; j < mainProgram.getProcessDecl().size(); j++){
+            AuxiliarProcessDecl pDecl = mainProgram.getProcessDecl().get(j);
             for (int i = 0; i < process.getProcessList().size(); i++){
                 AuxiliarProcess proc = process.getProcessList().get(i);
                 if (pDecl.getType().equals(proc.getName())){
-                    Node pInit = new Node(proc,pDecl.getName(),init,proc.getInitialCond());
-                    init.getNodes().add(pInit);
+                    //Node pInit = new Node(proc,pDecl.getName(),init,proc.getInitialCond());
+                    //init.getNodes().add(pInit);
+                    init.getModel().getProcs().add(proc);
+                    init.getModel().getProcDecls().add(pDecl.getName());
+                    init.evalInit(proc.getInitialCond(),j);
                 }
             }
         }
         
         m.addNode(init);
         m.setInitial(init);
-        //Keep track of processes local nodes
-        for (int i = 0; i < init.getNodes().size(); i++){
-            m.getProcessesNodes().add(new LinkedList<Node>());
-            m.getProcessesNodes().get(i).add(init.getNodes().get(i));
-        }
 
         TreeSet<CompositeNode> iterSet = new TreeSet<CompositeNode>();
         iterSet.add(m.getInitial());
@@ -363,44 +362,23 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         //build the whole model
         while(!iterSet.isEmpty()){
             CompositeNode curr = iterSet.pollFirst();
-
-            for (int i = 0; i < curr.getNodes().size(); i++){ // for each process in current global state
-                Node n = curr.getNodes().get(i);
-                n.setParent(curr); //NO SE PORQUE TUVE QUE FORZAR ESTE SETEO
-                //System.out.println(curr);
-                for (AuxiliarBranch b : n.getProcess().getBranches()){
-                    if (n.satisfies(b.getGuard())){
-                        if (!curr.equals(n.getParent())){
-                            System.out.println(b.getLabel());
-                            System.out.println(n);
-                            System.out.println(n.getParent());
-                            System.out.println(curr);
-                        }
-
+            System.out.println(curr);
+            for (int i = 0; i < m.getProcDecls().size(); i++){ // for each process in current global state
+                for (AuxiliarBranch b : m.getProcs().get(i).getBranches()){
+                    //System.out.println("    "+m.getProcDecls().get(i)+b.getLabel());
+                    if (curr.satisfies(b.getGuard(),i)){
+                        System.out.println("    "+m.getProcDecls().get(i)+b.getLabel());
                         //create global successor curr_
-                        CompositeNode curr_ = curr.clone();
-                        //create successor n_
-                        Node n_ = n.createSuccessor(curr_,b.getAssignList(),i);
-                        /*if (!curr_.equals(n_.getParent())){
-                            System.out.println(n_);
-                            System.out.println(n_.getParent());
-                            System.out.println(curr_);
-                        }*/
-
-                        n_.checkNormCondition(n.getProcess().getNormativeCond());
-                        //Pair p = new Pair(n,n_);
-                        curr_.getNodes().set(i,n_);
-                        curr_.checkNormCondition();
-                        //curr_.updateGlobalState(n,n_);
+                        CompositeNode curr_ = curr.createSuccessor(b.getAssignList(),i);
+                        curr_.checkNormCondition(m.getProcs().get(i).getNormativeCond(),i);
                         CompositeNode toOld = m.search(curr_);
                         if (toOld == null){
                             m.addNode(curr_);
                             iterSet.add(curr_);
-                            m.addEdge(curr, curr_, n.getProcessName()+b.getLabel(),b.getIsFaulty());
+                            m.addEdge(curr, curr_, m.getProcDecls().get(i)+b.getLabel(),b.getIsFaulty());
                         }
                         else{
-                            n_.setParent(toOld);
-                            m.addEdge(curr, toOld, n.getProcessName()+b.getLabel(),b.getIsFaulty());
+                            m.addEdge(curr, toOld, m.getProcDecls().get(i)+b.getLabel(),b.getIsFaulty());
                         }
                     }
                 }

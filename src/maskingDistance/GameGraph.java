@@ -8,8 +8,8 @@ public class GameGraph{
 
 	private HashMap<GameNode, TreeSet<GameNode>> succList; // Successors adjacency list
 	private HashMap<GameNode, TreeSet<GameNode>> preList; // Predecessors adjacency list
-	private HashMap<Pair, String> labels; // Labels for edges
-	private HashMap<Pair, Boolean> faultyActions; // Which edges correspond to faulty actions
+	private HashMap<Pair, LinkedList<String>> labels; // Labels for edges
+	private HashMap<Pair, LinkedList<Boolean>> faultyActions; // Which edges correspond to faulty actions
 	private GameNode initial; // Initial state
 	private LinkedList<GameNode> nodes; // States
 	private int numNodes;
@@ -19,8 +19,8 @@ public class GameGraph{
 	public GameGraph() {
 		succList = new HashMap<GameNode, TreeSet<GameNode>>();
 		preList = new HashMap<GameNode, TreeSet<GameNode>>();
-		labels = new HashMap<Pair, String>();
-		faultyActions = new HashMap<Pair, Boolean>();
+		labels = new HashMap<Pair, LinkedList<String>>();
+		faultyActions = new HashMap<Pair, LinkedList<Boolean>>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<GameNode>();
 		errState = new GameNode(null,null,"ERR","");
@@ -40,11 +40,11 @@ public class GameGraph{
 		return initial;
 	}
 
-	public HashMap<Pair, String> getLabels(){
+	public HashMap<Pair, LinkedList<String>> getLabels(){
 		return labels;
 	}
 
-	public HashMap<Pair, Boolean> getFaultyActions(){
+	public HashMap<Pair, LinkedList<Boolean>> getFaultyActions(){
 		return faultyActions;
 	}
 
@@ -78,13 +78,18 @@ public class GameGraph{
 
 	public void addEdge(GameNode from, GameNode to, String lbl, Boolean faulty) {
 		if (to != null){
-			if (hasEdge(from, to))
-				return;
+			//if (hasEdge(from, to))
+			//	return;
 			numEdges += 1;
 			succList.get(from).add(to);
 			preList.get(to).add(from);
-			labels.put(new Pair(from,to),lbl);
-			faultyActions.put(new Pair(from,to),faulty);
+			Pair transition = new Pair(from,to);
+			if (labels.get(transition) == null){
+				labels.put(transition,new LinkedList<String>());
+				faultyActions.put(transition,new LinkedList<Boolean>());
+			}
+			labels.get(transition).add(lbl);
+			faultyActions.get(transition).add(faulty);
 		}
 	}
 
@@ -112,13 +117,15 @@ public class GameGraph{
 				res += "    "+v.toString()+" [color=\"red\"];\n";
 			for (GameNode u : succList.get(v)){
 				Pair edge = new Pair(v,u);
-				if (labels.get(edge).split("M")[0].equals(""))
-					res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"green\",label = \""+labels.get(edge)+"\"]"+";\n";
-				else
-					if (faultyActions.get(edge))
-						res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"red\",label = \""+labels.get(edge)+"\"]"+";\n";
-					else
-						res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(edge)+"\"]"+";\n";
+				if (labels.get(edge) != null)
+					for (int i=0; i < labels.get(edge).size(); i++)			
+						if (labels.get(edge).get(i).split("M")[0].equals(""))
+							res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"green\",label = \""+labels.get(edge).get(i)+"\"]"+";\n";
+						else
+							if (faultyActions.get(edge).get(i))
+								res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"red\",label = \""+labels.get(edge).get(i)+"\"]"+";\n";
+							else
+								res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(edge).get(i)+"\"]"+";\n";
 			}
 		}
 		res += "\n}";

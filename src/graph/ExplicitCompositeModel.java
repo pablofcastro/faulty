@@ -7,24 +7,26 @@ import java.io.*;
 public class ExplicitCompositeModel {
 	private HashMap<CompositeNode, TreeSet<CompositeNode>> succList; // Succesors adjacency list
 	private HashMap<CompositeNode, TreeSet<CompositeNode>> preList; // Predecessors adjacency list
-	private HashMap<Pair, String> labels; // Edge labels
-	private HashMap<Pair, Boolean> faultyActions; // Faulty transitions
+	private HashMap<Pair, LinkedList<String>> labels; // Edge labels
+	private HashMap<Pair, LinkedList<Boolean>> faultyActions; // Faulty transitions
 	private CompositeNode initial; // Initial State
 	private LinkedList<AuxiliarVar> sharedVars; // Global variables
 	private LinkedList<CompositeNode> nodes; // Global states
 	private int numNodes;
 	private int numEdges;
-	private LinkedList<LinkedList<Node>> processesNodes;
+	private LinkedList<AuxiliarProcess> procs;
+	private LinkedList<String> procDecls;
 
 	public ExplicitCompositeModel(LinkedList<AuxiliarVar> svs) {
 		sharedVars = svs;
 		succList = new HashMap<CompositeNode, TreeSet<CompositeNode>>();
 		preList = new HashMap<CompositeNode, TreeSet<CompositeNode>>();
-		labels = new HashMap<Pair, String>();
-		faultyActions = new HashMap<Pair, Boolean>();
+		labels = new HashMap<Pair, LinkedList<String>>();
+		faultyActions = new HashMap<Pair, LinkedList<Boolean>>();
 		numNodes = numEdges = 0;
 		nodes = new LinkedList<CompositeNode>();
-		processesNodes = new LinkedList<LinkedList<Node>>();
+		procs = new LinkedList<AuxiliarProcess>();
+		procDecls = new LinkedList<String>();
 	}
 
 	public void setInitial(CompositeNode v){
@@ -39,12 +41,20 @@ public class ExplicitCompositeModel {
 		return sharedVars;
 	}
 
-	public HashMap<Pair, String> getLabels(){
+	public HashMap<Pair, LinkedList<String>> getLabels(){
 		return labels;
 	}
 
-	public HashMap<Pair, Boolean> getFaultyActions(){
+	public HashMap<Pair, LinkedList<Boolean>> getFaultyActions(){
 		return faultyActions;
+	}
+
+	public LinkedList<AuxiliarProcess> getProcs(){
+		return procs;
+	}
+
+	public LinkedList<String> getProcDecls(){
+		return procDecls;
 	}
 
 	public void addNode(CompositeNode v) {
@@ -77,22 +87,23 @@ public class ExplicitCompositeModel {
 
 	public void addEdge(CompositeNode from, CompositeNode to, String lbl, Boolean faulty) {
 		if (to != null){
-			if (hasEdge(from, to))
-				return;
+			//if (hasEdge(from, to))
+			//	return;
 			numEdges += 1;
 			succList.get(from).add(to);
 			preList.get(to).add(from);
-			labels.put(new Pair(from,to),lbl);
-			faultyActions.put(new Pair(from,to),faulty);
+			Pair transition = new Pair(from,to);
+			if (labels.get(transition) == null){
+				labels.put(transition,new LinkedList<String>());
+				faultyActions.put(transition,new LinkedList<Boolean>());
+			}
+			labels.get(transition).add(lbl);
+			faultyActions.get(transition).add(faulty);
 		}
 	}
 
 	public LinkedList<CompositeNode> getNodes(){
 		return nodes;
-	}
-
-	public LinkedList<LinkedList<Node>> getProcessesNodes(){
-		return processesNodes;
 	}
 
 	public TreeSet<CompositeNode> getSuccessors(CompositeNode v){
@@ -110,10 +121,12 @@ public class ExplicitCompositeModel {
 				res += "    STATE"+v.toString()+" [color=\"red\"];\n";
 			for (CompositeNode u : succList.get(v)){
 				Pair edge = new Pair(v,u);
-				if (faultyActions.get(edge))
-					res += "    STATE"+v.toString()+" -> STATE"+ u.toString() +" [color=\"red\",label = \""+labels.get(edge)+"\"]"+";\n";
-				else
-					res += "    STATE"+v.toString()+" -> STATE"+ u.toString() +" [label = \""+labels.get(edge)+"\"]"+";\n";
+				if (labels.get(edge) != null)
+					for (int i=0; i < labels.get(edge).size(); i++)			
+						if (faultyActions.get(edge).get(i))
+							res += "    STATE"+v.toString()+" -> STATE"+ u.toString() +" [color=\"red\",label = \""+labels.get(edge).get(i)+"\"]"+";\n";
+						else
+							res += "    STATE"+v.toString()+" -> STATE"+ u.toString() +" [label = \""+labels.get(edge).get(i)+"\"]"+";\n";
 			}
 		}
 		res += "\n}";

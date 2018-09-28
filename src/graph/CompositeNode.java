@@ -5,8 +5,7 @@ import faulty.auxiliar.*;
 
 
 public class CompositeNode implements Comparable{
-	LinkedList<Node> nodes; // Current Local States for each process 
-	HashMap<String,Boolean> globalState; // Shared global state
+	HashMap<String,Boolean> state; // global state
 	ExplicitCompositeModel model; // Global model whose this state belongs to
 	boolean isFaulty; // Is this state a faulty one?
 
@@ -14,16 +13,16 @@ public class CompositeNode implements Comparable{
 
 	}
 
-	public CompositeNode(LinkedList<Node> n, ExplicitCompositeModel m){
-		nodes = n;
+	public CompositeNode(ExplicitCompositeModel m){
 		model = m;
-		globalState = new HashMap<String,Boolean>();
+		state = new HashMap<String,Boolean>();
 		for (AuxiliarVar v : model.getSharedVars()){
-			globalState.put(v.getName(),false);
+			state.put(v.getName(),false);
 		}
-		for (Node v : nodes){
-			if (v.getIsFaulty())
-				isFaulty = true;
+		for (int i=0; i < model.getProcDecls().size(); i++){
+			for (AuxiliarVar v : model.getProcs().get(i).getVarBool()){
+				state.put(model.getProcDecls().get(i)+v.getName(),false);
+			}
 		}
 	}
 
@@ -37,15 +36,11 @@ public class CompositeNode implements Comparable{
 
 	@Override
 	public int hashCode(){
-	    return Objects.hash(nodes, globalState, model, isFaulty);
+	    return Objects.hash(state, model, isFaulty);
 	}
 
-	public LinkedList<Node> getNodes(){
-		return nodes;
-	}
-
-	public HashMap<String,Boolean> getGlobalState(){
-		return globalState;
+	public HashMap<String,Boolean> getState(){
+		return state;
 	}
 
 	public boolean getIsFaulty(){
@@ -56,48 +51,40 @@ public class CompositeNode implements Comparable{
 		return model;
 	}
 
-	public void checkNormCondition(){
-		for (Node n : nodes)
-			if (n.getIsFaulty())
-            	isFaulty = true;
+	public boolean satisfies(AuxiliarExpression e, int procIndex){
+		return evalBoolExpr(e, procIndex);
 	}
 
-	//updateGlobalState takes as input a process node n and a process node n_ and updates the global state from assignments in transition <n,n_>
-	/*public void updateGlobalState(Node n, Node n_){
-		for (AuxiliarVar v : model.getSharedVars()){
-			LinkedList<Pair> l = n.getModel().getGlobalAssignments();
-			for (Pair e : l){
-				Pair ef = (Pair)e.getFst();
-				Pair es = (Pair)e.getSnd();
-				Node eff = (Node)ef.getFst();
-				Node efs = (Node)ef.getSnd();
-				String esf = (String)es.getFst();
-				Boolean ess = (Boolean)es.getSnd();
-				if (eff.equals(n) && efs.equals(n_) && esf.equals(v.getName()))
-					globalState.put(v.getName(),ess);
-			}
-		}
-	}*/
+	public void checkNormCondition(AuxiliarExpression e, int procIndex){
+		if (!satisfies(e, procIndex))
+            isFaulty = true;
+	}
 
 	public String toString(){
 		String res = "";
 		for (AuxiliarVar v : model.getSharedVars()){
-			if (globalState.get(v.getName()))
+			if (state.get(v.getName()))
 				res += v.getName() + "_";
 		}
-		for (Node n : nodes){
-			res += n.toString();
+		for (int i=0; i < model.getProcDecls().size(); i++){
+			for (AuxiliarVar v : model.getProcs().get(i).getVarBool()){
+				if (state.get(model.getProcDecls().get(i)+v.getName()))
+					res += model.getProcDecls().get(i)+v.getName() + "_";
+			}
 		}
 		return res;
 	}
 
 	public boolean equals(CompositeNode n){
-		for (int i=0;i<nodes.size();i++)
-			if (!nodes.get(i).equals(n.getNodes().get(i)))
-				return false;
 		for (AuxiliarVar var: model.getSharedVars()){
-			if (globalState.get(var.getName()) != n.getGlobalState().get(var.getName()))
+			if (state.get(var.getName()) != n.getState().get(var.getName()))
 				return false;
+		}
+		for (int i=0; i < model.getProcDecls().size(); i++){
+			for (AuxiliarVar v : model.getProcs().get(i).getVarBool()){
+				if (n.getState().get(model.getProcDecls().get(i)+v.getName()) != state.get(model.getProcDecls().get(i)+v.getName()))
+					return false;
+			}
 		}
 		return true;
 	}
@@ -105,16 +92,122 @@ public class CompositeNode implements Comparable{
 	public CompositeNode clone(){
 		CompositeNode n = new CompositeNode();
 		n.model = model;
-		n.nodes = new LinkedList<Node>();
-		n.nodes.addAll(nodes); // this is not deep clone on purpose
-		for (Node v : nodes){
-			if (v.getIsFaulty())
-				n.isFaulty = true;
-		}
-		n.globalState = new HashMap<String,Boolean>();
+		n.state = new HashMap<String,Boolean>();
 		for (AuxiliarVar v : model.getSharedVars()){
-			n.globalState.put(v.getName(),globalState.get(v.getName()));
+			n.state.put(v.getName(),state.get(v.getName()));
+		}
+		for (int i=0; i < model.getProcDecls().size(); i++){
+			for (AuxiliarVar v : model.getProcs().get(i).getVarBool()){
+				n.state.put(model.getProcDecls().get(i)+v.getName(),state.get(model.getProcDecls().get(i)+v.getName()));
+			}
 		}
 		return n;
 	}
+
+	public void evalInit(AuxiliarExpression e, int procIndex){
+		HashMap<String,Boolean> st = new HashMap<String,Boolean>();
+		//HashMap<String,String> stEnum = new HashMap<String,String>();
+		evalExprInit(e, false, st, procIndex);
+		//state.putAll(st);
+		//stateEnums.putAll(stEnum);
+		state.putAll(st);
+	}
+
+	private AuxiliarVar instanciateIfParam(AuxiliarVar v, int procIndex){
+		AuxiliarProcess proc = model.getProcs().get(procIndex);
+		String processName = model.getProcDecls().get(procIndex);
+		for (int i=0;i < proc.getParamList().size();i++){
+			if (v.getName().equals(proc.getParamList().get(i).getDeclarationName()) && proc.getInvkParametersList(processName).get(i) instanceof AuxiliarVar){
+				v = (AuxiliarVar)proc.getInvkParametersList(processName).get(i);
+				break;
+			}
+		}
+		return v;
+	}
+
+	private boolean checkGlobalVar(AuxiliarVar v){
+		for (AuxiliarVar gv : model.getSharedVars()){
+			if (v.getName().equals(gv.getName()))
+				return true;
+		}
+		return false;
+	}
+
+	private void evalExprInit(AuxiliarExpression e, boolean neg, HashMap<String,Boolean> st, int procIndex){
+		if (e instanceof AuxiliarVar){
+			e = instanciateIfParam((AuxiliarVar)e,procIndex);
+			if (checkGlobalVar((AuxiliarVar)e)){ //global
+				if (neg)
+					st.put(((AuxiliarVar)e).getName(),false);
+				else
+					st.put(((AuxiliarVar)e).getName(),true);
+			}
+			else{ //local
+				if (neg)
+					st.put(model.getProcDecls().get(procIndex)+((AuxiliarVar)e).getName(),false);
+				else
+					st.put(model.getProcDecls().get(procIndex)+((AuxiliarVar)e).getName(),true);
+			}
+		}
+		if (e instanceof AuxiliarNegBoolExp){
+			evalExprInit(((AuxiliarNegBoolExp)e).getExp(),!neg, st,procIndex);
+		}
+		if (e instanceof AuxiliarAndBoolExp){
+			evalExprInit(((AuxiliarAndBoolExp)e).getExp1(),neg,st,procIndex);
+			evalExprInit(((AuxiliarAndBoolExp)e).getExp2(),neg,st,procIndex);
+		}
+		if (e instanceof AuxiliarEqBoolExp){
+			AuxiliarEqBoolExp exp = (AuxiliarEqBoolExp)e;
+			String varName = model.getProcDecls().get(procIndex)+((AuxiliarVar)exp.getInt1()).getName();
+			/*if (e.getInt2() instanceof AuxiliarVar) //then its an enum
+				stEnum.put(varName, ((AuxiliarVar)exp.getInt2()).getEnumName());
+			else //its a bool*/
+				st.put(varName, ((AuxiliarConsBoolExp)exp.getInt2()).getValue());
+		}
+	}
+
+	private boolean evalBoolExpr(AuxiliarExpression e, int procIndex){
+		if (e instanceof AuxiliarConsBoolExp){
+			return ((AuxiliarConsBoolExp)e).getValue();
+		}
+		if (e instanceof AuxiliarVar){
+			e = instanciateIfParam((AuxiliarVar)e,procIndex);
+			if (checkGlobalVar((AuxiliarVar)e)){
+				return state.get(((AuxiliarVar)e).getName());
+			}
+			else
+				return state.get(model.getProcDecls().get(procIndex)+((AuxiliarVar)e).getName());
+		}
+		if (e instanceof AuxiliarNegBoolExp){
+			return !evalBoolExpr(((AuxiliarNegBoolExp)e).getExp(),procIndex);
+		}
+		if (e instanceof AuxiliarAndBoolExp){
+			return evalBoolExpr(((AuxiliarAndBoolExp)e).getExp1(),procIndex) && evalBoolExpr(((AuxiliarAndBoolExp)e).getExp2(),procIndex);
+		}
+		if (e instanceof AuxiliarOrBoolExp){
+			return evalBoolExpr(((AuxiliarOrBoolExp)e).getExp1(),procIndex) || evalBoolExpr(((AuxiliarOrBoolExp)e).getExp2(),procIndex);
+		}
+		if (e instanceof AuxiliarEqBoolExp){
+			return evalBoolExpr(((AuxiliarEqBoolExp)e).getInt1(),procIndex) == evalBoolExpr(((AuxiliarEqBoolExp)e).getInt2(),procIndex);
+		}
+		return false;
+	}
+
+	public CompositeNode createSuccessor(LinkedList<AuxiliarCode> assigns, int procIndex){
+		CompositeNode succ = clone();
+		for (AuxiliarCode c : assigns){
+			if (c instanceof AuxiliarVarAssign){
+				AuxiliarVarAssign assign = (AuxiliarVarAssign)c;
+				AuxiliarVar var = instanciateIfParam(assign.getVar(),procIndex);
+				String name = var.getName();
+				Boolean value = evalBoolExpr(assign.getExp(),procIndex);
+				if (checkGlobalVar(var))
+					succ.getState().put(name,value);
+				else
+					succ.getState().put(model.getProcDecls().get(procIndex)+name,value);
+			}
+		}
+		return succ;
+	}
+
 }
