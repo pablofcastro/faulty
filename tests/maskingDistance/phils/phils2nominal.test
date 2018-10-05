@@ -1,0 +1,81 @@
+// This version of the faulty philosophers use only two bits to codify the state
+// of a philosopher, this reduces the state space of the examples
+// a enumeration type will be added in next versions of the tool
+// !s0!s1 : thinking
+// !s0 s1: hungry
+// s0!s1: eating
+// s0s1: faulty
+
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+
+
+Process OddPhil(forkL: BOOL, forkR:BOOL){
+   
+   s0,s1 : BOOL;
+   hasL, hasR : BOOL;
+   Initial: !s0 && !s1 && !hasL && !hasR && forkR && forkL;
+   Normative: !(hasR && !hasL);
+
+   //thinking -> hungry
+   [hungry] !s0 && !s1 -> s1 = true;
+
+   //thinking -> thinking
+   //[thinking] !s0 && !s1 -> s0 = false;
+
+   [getLeft] !s0 && s1 && forkL && !hasL && !hasR  -> forkL=false, hasL=true;
+
+   //hungry -> hungry
+   //[hungry] !s0 && s1 && !forkL && !hasL && !hasR -> s1 = true; 
+
+   [getRight] !s0 && s1 && hasL && forkR && !hasR -> forkR = false, hasR=true;
+   //[dropLeft] !s0 && s1 && hasL && !forkR && !hasR -> forkL = true, hasL=false; 
+
+   //hungry -> eating
+   [eating] !s0 && s1 && hasL && hasR -> s1 = false, s0 = true; 
+
+   [thinking] s0 && !s1 -> s0 = false, forkL=true, forkR=true, hasR=false, hasL=false;
+
+
+}
+
+Process EvenPhil(forkL: BOOL, forkR:BOOL){
+
+   s0,s1 : BOOL;
+   hasL, hasR : BOOL;
+   Initial: !s0 && !s1 && !hasL && !hasR && forkR && forkL;
+   Normative: !(hasL && !hasR); 
+
+   //thinking -> hungry
+   [hungry] !s0 && !s1 -> s1 = true;
+
+   //thinking -> thinking
+   //[thinking] !s0 && !s1 -> s0 = false;
+
+   [getRight] !s0 && s1 && forkR && !hasL && !hasR  -> forkR=false, hasR=true; 
+
+   //hungry -> hungry
+   //[hungry] !s0 && s1 && !forkR && !hasL && !hasR -> s1 = true; 
+
+   [getLeft] !s0 && s1 && hasR && forkL && !hasL -> forkL = false, hasL=true;
+   //[dropRight] !s0 && s1 && hasR && !forkL && !hasL -> forkR = true, hasR=false; 
+
+   //hungry -> eating
+   [eating] !s0 && s1 && hasL && hasR -> s1 = false, s0 = true; 
+
+   [thinking] s0 && !s1 -> s0 = false, forkL=true, forkR=true, hasR=false, hasL=false;
+
+
+   
+}
+
+
+
+Main(){
+ phil1:OddPhil;
+ phil2:EvenPhil;
+
+
+ run phil1(fork1, fork0);
+ run phil2(fork0, fork1);
+}

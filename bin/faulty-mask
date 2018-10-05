@@ -1,0 +1,2 @@
+# A simple script for running the faulty model checker
+java -Xss5m -jar $FAULTY/dCTL_checker.jar -m $1 $2

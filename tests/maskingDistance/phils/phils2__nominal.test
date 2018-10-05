@@ -1,0 +1,49 @@
+// This version of the faulty philosophers use only two bits to codify the state
+// of a philosopher, this reduces the state space of the examples
+// a enumeration type will be added in next versions of the tool
+// !s0!s1 : thinking
+// !s0 s1: hungry
+// s0!s1: eating
+// s0s1: faulty
+
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+Global lock0 : BOOL;
+
+
+Process Phil(forkL: BOOL, forkR:BOOL, lock:BOOL){
+   
+   s0,s1 : BOOL;
+   hasL, hasR , hasLock: BOOL;
+   Initial: !s0 && !s1 && !hasL && !hasR && forkR && forkL && lock && !hasLock;
+   Normative: !(s0 && s1); 
+
+   //thinking -> hungry
+   [hungry] !s0 && !s1 -> s1 = true;
+
+   //thinking -> thinking
+   [thinking] !s0 && !s1 -> s0 = false;
+
+   [getLeft] !s0 && s1 && forkL && !hasL && !hasR && lock && !hasLock -> forkL=false, hasL=true, lock=false, hasLock = true;
+
+   [getRight] !s0 && s1 && hasL && forkR && !hasR && hasLock -> forkR = false, hasR=true;
+
+   //hungry -> eating
+   [eating] !s0 && s1 && hasL && hasR && hasLock -> s1 = false, s0 = true; 
+
+   [thinking] s0 && !s1 && hasLock -> hasLock = false, lock = true, s0 = false, forkL=true, forkR=true, hasR=false, hasL=false;
+
+
+}
+
+
+
+
+Main(){
+ phil1:Phil;
+ phil2:Phil;
+
+
+ run phil1(fork1, fork0, lock0);
+ run phil2(fork0, fork1, lock0);
+}

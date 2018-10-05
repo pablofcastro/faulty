@@ -1,12 +1,22 @@
 # A simple script for running the faulty model checker
 echo "----------------------------Memory test----------------------------"
 echo "3 bits"
-time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell3normal.test ../tests/maskingDistance/memoryCell/memoryCell3.test
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell3nominal.test ../tests/maskingDistance/memoryCell/memoryCell3.test
 echo "5 bits"
-time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell5normal.test ../tests/maskingDistance/memoryCell/memoryCell5.test
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell5nominal.test ../tests/maskingDistance/memoryCell/memoryCell5.test
 echo "7 bits"
-time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell7normal.test ../tests/maskingDistance/memoryCell/memoryCell7.test
-echo "9 bits"
-time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell9normal.test ../tests/maskingDistance/memoryCell/memoryCell9.test
-echo "11 bits"
-time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell11normal.test ../tests/maskingDistance/memoryCell/memoryCell11.test
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/memoryCell7nominal.test ../tests/maskingDistance/memoryCell/memoryCell7.test
+
+echo "----------------------------Philosophers test (odd/even model)----------------------------"
+echo "2 phils"
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/phils/phils2nominal.test ../tests/maskingDistance/phils/phils2.test
+echo "3 phils"
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/phils/phils3nominal.test ../tests/maskingDistance/phils/phils3.test
+echo "4 phils"
+time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/phils/phils4nominal.test ../tests/maskingDistance/phils/phils4.test
+
+#echo "Triangular inequality memory 3bits and 5bits should be 3 - 2 = 1 --> 1/2"
+#time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/ti_memoryCell5normal.test ../tests/maskingDistance/memoryCell/ti_memoryCell5.test
+
+#echo "Triangular inequality memory 3bits and 7bits should be 4 - 2 = 2 --> 1/3"
+#time java -Xss5m -jar $FAULTY/dCTL_checker.jar -m ../tests/maskingDistance/memoryCell/ti_memoryCell7normal.test ../tests/maskingDistance/memoryCell/ti_memoryCell7.test
