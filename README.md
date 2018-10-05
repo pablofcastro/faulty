@@ -3,6 +3,10 @@ the model checker can be executed by running:
 
 faulty-check <program> <properties>
 
+To calculate masking distance between nominal model and faulty model run:
+
+faulty-mask <Nominalprogram> <FaultyProgram>
+
 you need to set the evironment variable 'FAULTY' with:
 
 export FAULTY = <path to jar files
