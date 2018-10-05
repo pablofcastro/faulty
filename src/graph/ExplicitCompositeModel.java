@@ -77,18 +77,21 @@ public class ExplicitCompositeModel {
 	}
 
 
-	public boolean hasEdge(CompositeNode from, CompositeNode to) {
+	public boolean hasEdge(CompositeNode from, CompositeNode to, String lbl) {
 
 		if (!hasNode(from) || !hasNode(to))
 			return false;
-		return succList.get(from).contains(to);
+		Pair transition = new Pair(from,to);
+		if (labels.get(transition) == null)
+			return false;
+		return succList.get(from).contains(to) && labels.get(transition).contains(lbl);
 	}
 
 
 	public void addEdge(CompositeNode from, CompositeNode to, String lbl, Boolean faulty) {
 		if (to != null){
-			//if (hasEdge(from, to))
-			//	return;
+			if (hasEdge(from, to, lbl))
+				return;
 			numEdges += 1;
 			succList.get(from).add(to);
 			preList.get(to).add(from);
@@ -99,6 +102,17 @@ public class ExplicitCompositeModel {
 			}
 			labels.get(transition).add(lbl);
 			faultyActions.get(transition).add(faulty);
+			//check if label already added
+			/*boolean addLabel = true;
+			for (String l : labels.get(transition)){
+				if (l.equals(lbl))
+					addLabel = false;
+			}
+			if (addLabel){
+				numEdges += 1;
+				labels.get(transition).add(lbl);
+				faultyActions.get(transition).add(faulty);
+			}*/
 		}
 	}
 

@@ -75,18 +75,23 @@ public class CompositeNode implements Comparable{
 		return res;
 	}
 
-	public boolean equals(CompositeNode n){
-		for (AuxiliarVar var: model.getSharedVars()){
-			if (state.get(var.getName()) != n.getState().get(var.getName()))
-				return false;
-		}
-		for (int i=0; i < model.getProcDecls().size(); i++){
-			for (AuxiliarVar v : model.getProcs().get(i).getVarBool()){
-				if (n.getState().get(model.getProcDecls().get(i)+v.getName()) != state.get(model.getProcDecls().get(i)+v.getName()))
+	@Override
+	public boolean equals(Object o){
+		if (o instanceof CompositeNode){
+			CompositeNode n = (CompositeNode)o;
+			for (AuxiliarVar var: model.getSharedVars()){
+				if (state.get(var.getName()) != n.getState().get(var.getName()))
 					return false;
 			}
+			for (int i=0; i < model.getProcDecls().size(); i++){
+				for (AuxiliarVar v : model.getProcs().get(i).getVarBool()){
+					if (n.getState().get(model.getProcDecls().get(i)+v.getName()) != state.get(model.getProcDecls().get(i)+v.getName()))
+						return false;
+				}
+			}
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	public CompositeNode clone(){

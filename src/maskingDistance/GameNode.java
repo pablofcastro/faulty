@@ -104,17 +104,22 @@ public class GameNode implements Comparable{
 		return symbol.equals("ERR");
 	}
 
-	public boolean equals(GameNode n){
-		if (this.isErrState()){
-			if (n.isErrState())
-				return true;
-			else
+	@Override
+	public boolean equals(Object o){
+		if (o instanceof GameNode){
+			GameNode n = (GameNode)o;
+			if (this.isErrState()){
+				if (n.isErrState())
+					return true;
+				else
+					return false;
+			}
+			if (n.isErrState()){
 				return false;
+			}
+			return specState == n.getSpecState() && impState == n.getImpState() && symbol.equals(n.getSymbol()) && player.equals(n.getPlayer()) && mask == n.getMask();
 		}
-		if (n.isErrState()){
-			return false;
-		}
-		return specState == n.getSpecState() && impState == n.getImpState() && symbol.equals(n.getSymbol()) && player.equals(n.getPlayer()) && mask == n.getMask();
+		return false;
 	}
 	
 }

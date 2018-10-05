@@ -20,7 +20,7 @@ public class MaskingDistance{
 	public void buildGraph(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
 		//This method builds a game graph for the Masking Distance Game, there are two players: the Refuter(R) and the Verifier(V)
 		//The refuter plays with the implementation(imp), this means choosing any action available (faulty or not)
-		//and the verifier plays with the specification, he tries to match the action played by the refuter, if he can't then an error state is reached.
+		//and the verifier plays with the specification(spec), he tries to match the action played by the refuter, if he can't then an error state is reached.
 		ExplicitCompositeModel spec,imp;
 		spec = specProgram.toGraph();
 		imp = impProgram.toGraph();
@@ -38,6 +38,9 @@ public class MaskingDistance{
         //build the game graph
         while(!iterSet.isEmpty()){
             GameNode curr = iterSet.pollFirst();
+            if (imp.getSuccessors(curr.getImpState()).isEmpty()){ // this is a special deadlock case
+            		g.addEdge(curr,g.getErrState(),"ERR", false);
+            }
             if (curr.getPlayer() == "R"){ //if player is refuter we add its possible moves from current state
             	for (CompositeNode succ : imp.getSuccessors(curr.getImpState())){
             		Pair p = new Pair(curr.getImpState(),succ);
@@ -61,6 +64,10 @@ public class MaskingDistance{
             	}
             }
             else{ //if player is verifier we add its matching move from current state or err transition if can't match
+            	/*if (spec.getSuccessors(curr.getSpecState()).size() == 1 && spec.getSuccessors(curr.getSpecState()).first() == curr.getSpecState()
+            		&& curr.getSpecState().getIsFaulty()){
+            		g.addEdge(curr,g.getErrState(),"ERR", false);
+            	}*/
             	if (curr.getMask()){ //this means the state has to mask a previous fault
             		GameNode curr_ = new GameNode(curr.getSpecState(),curr.getImpState(),"", "R");
             		GameNode toOld = g.search(curr_);
@@ -105,10 +112,10 @@ public class MaskingDistance{
         //System.out.println(g.createDot());
 	}
 
-	public void buildGraphOptimized(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
+	/*public void buildGraphOptimized(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
 		//This method builds a game graph for the Masking Distance Game, there are two players: the Refuter(R) and the Verifier(V)
 		//The refuter plays with the implementation(imp), this means choosing any action available (faulty or not)
-		//and the verifier plays with the specification, he tries to match the action played by the refuter, if he can't then an error state is reached.
+		//and the verifier plays with the specification(spec), he tries to match the action played by the refuter, if he can't then an error state is reached.
 		//This version has some optimizations, namely: Got rid of M transitions
 		ExplicitCompositeModel spec,imp;
 		spec = specProgram.toGraph();
@@ -181,7 +188,7 @@ public class MaskingDistance{
             }
         }
         //System.out.println(g.createDot());
-	}
+	}*/
 
     public double calculateDistance(AuxiliarProgram specProgram, AuxiliarProgram impProgram){
 		// We use dijsktra's algorithm to find the shortest path to an error state
@@ -232,7 +239,7 @@ public class MaskingDistance{
     }
 	
 	public void printTraceToError(){
-		System.out.println("PATH:");
+		System.out.println("\n·····ERROR PATH·····\n");
 		GameNode curr = g.getErrState();
 		int i = 0;
 		while (curr != null){
@@ -250,22 +257,38 @@ public class MaskingDistance{
 		GameNode curr = g.getInitial();
 		Scanner sc = new Scanner(System.in);
 		String c = "";
+		System.out.println("\n·····SIMULATION·····\n");
 		while (!c.equals("X") && !c.equals("x")){
 			System.out.println("STATE: ["+curr+"]");
 			Integer i = 0;
 			for (GameNode succ : g.getSuccessors(curr)){
-				System.out.println(i+". "+g.getLabels().get(new Pair(curr,succ))+": "+"["+succ+"]");
-				i++;
+				Pair p = new Pair(curr,succ);
+				if (g.getLabels().get(p) != null){
+	            	for (int j=0; j < g.getLabels().get(p).size(); j++){
+						System.out.println(i+". "+g.getLabels().get(p).get(j)+": "+"["+succ+"]");
+						i++;
+					}
+				}
 			}
 			System.out.println("X. EXIT");
 			c = sc.next();
 
 			i = 0;
 			for (GameNode succ : g.getSuccessors(curr)){
+				Pair p = new Pair(curr,succ);
+				if (g.getLabels().get(p) != null){
+	            	for (int j=0; j < g.getLabels().get(p).size(); j++){
+						if (c.equals(i.toString()))
+							curr = succ;
+						i++;
+					}
+				}
+			}
+			/*for (GameNode succ : g.getSuccessors(curr)){
 				if (c.equals(i.toString()))
 					curr = succ;
 				i++;
-			}
+			}*/
 		}
 	}
 }

@@ -362,12 +362,12 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         //build the whole model
         while(!iterSet.isEmpty()){
             CompositeNode curr = iterSet.pollFirst();
-            System.out.println(curr);
+            //System.out.println(curr);
             for (int i = 0; i < m.getProcDecls().size(); i++){ // for each process in current global state
                 for (AuxiliarBranch b : m.getProcs().get(i).getBranches()){
                     //System.out.println("    "+m.getProcDecls().get(i)+b.getLabel());
                     if (curr.satisfies(b.getGuard(),i)){
-                        System.out.println("    "+m.getProcDecls().get(i)+b.getLabel());
+                        //System.out.println("    "+m.getProcDecls().get(i)+b.getLabel());
                         //create global successor curr_
                         CompositeNode curr_ = curr.createSuccessor(b.getAssignList(),i);
                         curr_.checkNormCondition(m.getProcs().get(i).getNormativeCond(),i);
@@ -384,7 +384,7 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
                 }
             }
         }
-        System.out.println("hey");
+        //System.out.println("hey");
         //ExplicitModel res = m.flatten();
         m.createDot();
         return m;
