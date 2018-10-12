@@ -8,12 +8,22 @@ public class AuxiliarBranch extends AuxiliarProgramNode {
 	    LinkedList<AuxiliarCode> assignList;
 	    //Code code; // the code of the branch
 	    boolean isFaulty; // it says if the branch is a faulty one or not
+	    String label;
 	    
 	    public AuxiliarBranch(AuxiliarExpression guard,  LinkedList<AuxiliarCode> assignList, boolean isFaulty){
 	    	
 	    	this.guard=guard;
 	    	this.assignList = assignList;
 	    	this.isFaulty = isFaulty;
+	    	
+	    }
+
+	    public AuxiliarBranch(AuxiliarExpression guard,  LinkedList<AuxiliarCode> assignList, boolean isFaulty, String label){
+	    	
+	    	this.guard = guard;
+	    	this.assignList = assignList;
+	    	this.isFaulty = isFaulty;
+	    	this.label = label;
 	    	
 	    }
 	    
@@ -27,6 +37,10 @@ public class AuxiliarBranch extends AuxiliarProgramNode {
 	
 	    public boolean getIsFaulty(){
 	    	return this.isFaulty;
+	    }
+
+	    public String getLabel(){
+	    	return this.label;
 	    }
 	    
 		public void accept(AuxiliarFaultyVisitor v){

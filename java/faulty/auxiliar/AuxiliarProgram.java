@@ -1,6 +1,8 @@
 package faulty.auxiliar;
 
 import java.util.*;
+import java.io.*;
+import graph.*;
 
 
 /**
@@ -187,5 +189,205 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
 	public void accept(AuxiliarFaultyVisitor v){
 	     v.visit(this);			
 	}
+
+    /*Generates java code implementing the complete program*/
+    public String toJava(){
+        String imports,tEnums,prog,globals,params,procs,main;
+        imports = "import java.util.Random;"+ "\n\n";
+        prog = "";
+        tEnums = "";
+        for (int i = 0; i < enumTypes.size(); i++){
+            tEnums = "public enum " + enumTypes.get(i).getName() + "{";
+            for (int j = 0; j < enumTypes.get(i).cons.length; j++){
+                tEnums += enumTypes.get(i).getCons(j);
+                if (j == enumTypes.get(i).cons.length-1)
+                    tEnums += "}\n";
+                else
+                    tEnums += ",";
+            }
+
+            try{
+                File file = new File("../out/" + enumTypes.get(i).getName() +".java");
+                file.createNewFile();
+                FileWriter fw = new FileWriter(file);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write(tEnums);
+                bw.close();
+            }
+            catch(IOException e){
+                e.printStackTrace();
+            }   
+        }
+
+        procs = "";
+        for (int i = 0; i < process.getProcessList().size(); i++){
+            procs += process.getProcessList().get(i).toJava() + "\n\n";
+        }
+
+        globals = "    public static Random randomGenerator = new Random();\n";
+        params = "";
+        for (int i = 0; i < globalVars.getBoolVars().size(); i++){
+            AuxiliarVar v = globalVars.getBoolVars().get(i);
+            globals += "    public static "+"boolean" + " " + v.getName() + " = false;\n";
+            params += "     "+"Bool" + " " + v.getName() + " = new Bool(false);\n";
+        }
+        for (int i = 0; i < globalVars.getIntVars().size(); i++){
+            AuxiliarVar v = globalVars.getIntVars().get(i);
+            globals += " "+"Int" + " " + v.getName() + " = 0;\n";
+        }
+        for (int i = 0; i < globalVars.getEnumVars().size(); i++){
+            AuxiliarVar v = globalVars.getEnumVars().get(i);
+            globals += " "+v.getType() + " " + v.getName() + ";\n";
+        }
+
+        main = "  public static void main(String[] args){\n" + params;
+        for (int i = 0; i < mainProgram.getProcessDecl().size(); i++){
+            AuxiliarProcessDecl curr = mainProgram.getProcessDecl().get(i);
+            main += "    "+ curr.getType() + " " + curr.getName() + " = new "+curr.getType()+"(";
+            for (int j = 0; j < process.getProcessList().size(); j++){
+                if (process.getProcessList().get(j).getName().equals(curr.getType()))
+                    for (int k = 0; k < process.getProcessList().get(j).processInvkParameters.get(0).getInvkValues().size(); k++){
+                        if (process.getProcessList().get(j).processInvkParameters.get(0).getInvkValues().get(k) instanceof AuxiliarVar){
+                            main += ((AuxiliarVar)process.getProcessList().get(j).processInvkParameters.get(0).getInvkValues().get(k)).getName();
+                            if (k < process.getProcessList().get(j).processInvkParameters.get(0).getInvkValues().size()-1)
+                                main += ",";
+                        }
+                    }
+            }
+            main += ")"+";\n";
+        }
+        for (int i = 0; i < mainProgram.getProcessDecl().size(); i++){
+            AuxiliarProcessDecl curr = mainProgram.getProcessDecl().get(i);
+            main += "    "+ curr.getName() + ".start();\n";
+        }
+        main += "}\n\n";
+
+        prog += imports+"public class Program {\n\n" + globals + main + "}";
+
+        try{
+            File file = new File("../out/" + "Program" +".java");
+            file.createNewFile();
+            FileWriter fw = new FileWriter(file);
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(prog);
+            bw.close();
+        }
+        catch(IOException e){
+            e.printStackTrace();
+        }
+        toGraph();
+        return prog;
+    }
+
+    /*Generates a explicit model (Kripke structure) for the complete program*/
+   /* public ExplicitCompositeModel toGraph(){
+        ExplicitCompositeModel m = new ExplicitCompositeModel(globalVars.getBoolVars());
+        LinkedList<ExplicitModel> procs = new LinkedList<ExplicitModel>();
+
+        //states in m are lists of states (from processes)
+        //calculate initial state
+        CompositeNode init = new CompositeNode(new LinkedList<Node>(), m);
+        for (AuxiliarProcessDecl pDecl : mainProgram.getProcessDecl()){
+            for (int i = 0; i < process.getProcessList().size(); i++){
+                AuxiliarProcess proc = process.getProcessList().get(i);
+                if (pDecl.getType().equals(proc.getName())){
+                    ExplicitModel p = proc.toGraph(mainProgram.getProcessDecl().get(i).getName(), m);//,globalVars.getBoolVars());
+                    p.createDot();
+                    procs.add(p);
+                    init.getNodes().add(p.getInitial());
+                }
+            }
+        }
+        
+        m.addNode(init);
+        m.setInitial(init);
+
+        TreeSet<CompositeNode> iterSet = new TreeSet<CompositeNode>();
+        iterSet.add(m.getInitial());
+
+        //build the whole model
+        while(!iterSet.isEmpty()){
+            CompositeNode curr = iterSet.pollFirst();
+            for (int i = 0; i < curr.getNodes().size(); i++){ // for each process in current global state
+                Node n = curr.getNodes().get(i);
+                for(Node n_ : procs.get(i).getSuccessors(n)){ //for each successor of the process create a global successor
+                    Pair p = new Pair(n,n_);
+                    CompositeNode curr_ = curr.clone();
+                    curr_.getNodes().set(i,n_);
+                    curr_.updateGlobalState(n,n_); //if there are any modifications to shared vars on n_ then update global state
+                    CompositeNode toOld = m.search(curr_);
+                    if (toOld == null){
+                        m.addNode(curr_);
+                        iterSet.add(curr_);
+                        m.addEdge(curr, curr_, procs.get(i).getLabels().get(p), procs.get(i).getFaultyActions().get(p));
+                    }
+                    else{
+                        m.addEdge(curr, toOld, procs.get(i).getLabels().get(p), procs.get(i).getFaultyActions().get(p));
+                    }
+                }
+            }
+        }
+        //ExplicitModel res = m.flatten();
+        m.createDot();
+        return m;
+    }
+*/
+    /*TOTRY: Create the whole model on the fly*/
+    public ExplicitCompositeModel toGraph(){
+        ExplicitCompositeModel m = new ExplicitCompositeModel(globalVars.getBoolVars());
+
+        //states in m are lists of states (from processes)
+        //calculate initial state
+        CompositeNode init = new CompositeNode(m);
+        for (int j=0; j < mainProgram.getProcessDecl().size(); j++){
+            AuxiliarProcessDecl pDecl = mainProgram.getProcessDecl().get(j);
+            for (int i = 0; i < process.getProcessList().size(); i++){
+                AuxiliarProcess proc = process.getProcessList().get(i);
+                if (pDecl.getType().equals(proc.getName())){
+                    //Node pInit = new Node(proc,pDecl.getName(),init,proc.getInitialCond());
+                    //init.getNodes().add(pInit);
+                    init.getModel().getProcs().add(proc);
+                    init.getModel().getProcDecls().add(pDecl.getName());
+                    init.evalInit(proc.getInitialCond(),j);
+                }
+            }
+        }
+        
+        m.addNode(init);
+        m.setInitial(init);
+
+        TreeSet<CompositeNode> iterSet = new TreeSet<CompositeNode>();
+        iterSet.add(m.getInitial());
+
+        //build the whole model
+        while(!iterSet.isEmpty()){
+            CompositeNode curr = iterSet.pollFirst();
+            //System.out.println(curr);
+            for (int i = 0; i < m.getProcDecls().size(); i++){ // for each process in current global state
+                for (AuxiliarBranch b : m.getProcs().get(i).getBranches()){
+                    //System.out.println("    "+m.getProcDecls().get(i)+b.getLabel());
+                    if (curr.satisfies(b.getGuard(),i)){
+                        //System.out.println("    "+m.getProcDecls().get(i)+b.getLabel());
+                        //create global successor curr_
+                        CompositeNode curr_ = curr.createSuccessor(b.getAssignList(),i);
+                        curr_.checkNormCondition(m.getProcs().get(i).getNormativeCond(),i);
+                        CompositeNode toOld = m.search(curr_);
+                        if (toOld == null){
+                            m.addNode(curr_);
+                            iterSet.add(curr_);
+                            m.addEdge(curr, curr_, m.getProcDecls().get(i)+b.getLabel(),b.getIsFaulty());
+                        }
+                        else{
+                            m.addEdge(curr, toOld, m.getProcDecls().get(i)+b.getLabel(),b.getIsFaulty());
+                        }
+                    }
+                }
+            }
+        }
+        //System.out.println("hey");
+        //ExplicitModel res = m.flatten();
+        m.createDot();
+        return m;
+    }
 
 }

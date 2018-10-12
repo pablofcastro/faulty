@@ -34,4 +34,8 @@ public class AuxiliarConsBoolExp extends AuxiliarExpression{
 	public void accept(AuxiliarFaultyVisitor v){
 	     v.visit(this);			
 	}
+
+    public boolean getValue(){
+        return value;
+    }
 }

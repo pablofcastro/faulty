@@ -23,4 +23,8 @@ public class AuxiliarNegBoolExp extends AuxiliarExpression{
 	public void accept(AuxiliarFaultyVisitor v){
 	     v.visit(this);			
 	}
+
+    public AuxiliarExpression getExp(){
+        return exp;
+    }
 }

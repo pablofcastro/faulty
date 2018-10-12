@@ -44,7 +44,7 @@ public class ProgramParser {
                 }               
             }
             else{ // If not errors, build the concrete Faulty program    
-            	
+            	System.out.println(program.toJava());
                 faultyProg = buildProgram(program);
             }    
         } catch (Exception e) {        	
@@ -56,37 +56,61 @@ public class ProgramParser {
  		
  	}
 
-    
-    public Program parseFromString(String myProgram){
-        Program faultyProg=null;
+    public String parseJava(String NameFile){
         try {
-            //programFile = new FileReader(NameFile);
-          
-            // Read the string
- 			parser = new parserFaulty(new scannerFaulty(new java.io.StringReader(myProgram)));
- 			AuxiliarProgram program = (AuxiliarProgram) parser.parse().value;
+            programFile = new FileReader(NameFile);
+           
 
- 			 
- 			
- 			// Check Types
- 			Type result = checkTypes(program);
- 			if(result == Type.ERROR){
+            // Read file
+            parser = new parserFaulty(new scannerFaulty(programFile));
+            AuxiliarProgram program = (AuxiliarProgram)parser.parse().value;
+
+             
+            
+            // Check Types
+            Type result = checkTypes(program);
+            if(result == Type.ERROR){
                 for(int i=0; i<errorList.size(); i++){
                     System.out.println(errorList.get(i).getErrorMsg());
                 }               
             }
-            else{ // If not errors, build the concrete Faulty program    
-            	
-                faultyProg = buildProgram(program);
-            }    
-        } catch (Exception e) {        	
- 			System.out.println("Program Error." + e.getMessage());
+            else
+                return program.toJava(); 
+        } catch (Exception e) {         
+            System.out.println("Program Error." + e.getMessage());
             e.printStackTrace(System.out);
- 		}
+        }
         
-        return faultyProg;	
- 	}
-    
+        return null;
+        
+    }
+
+    public AuxiliarProgram parseAux(String NameFile){
+        try {
+            programFile = new FileReader(NameFile);
+        
+            // Read file
+            parser = new parserFaulty(new scannerFaulty(programFile));
+            AuxiliarProgram program = (AuxiliarProgram)parser.parse().value;
+            
+            // Check Types
+            Type result = checkTypes(program);
+            if(result == Type.ERROR){
+                for(int i=0; i<errorList.size(); i++){
+                    System.out.println(errorList.get(i).getErrorMsg());
+                }               
+            }
+            else
+                return program; 
+        } catch (Exception e) {         
+            System.out.println("Program Error." + e.getMessage());
+            e.printStackTrace(System.out);
+        }
+        
+        return null;
+        
+    }
+
     /**
      * 
      * @return Return the symbols table of the model.

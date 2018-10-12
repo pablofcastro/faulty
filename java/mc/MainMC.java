@@ -3,8 +3,10 @@ package mc;
 import java.io.*;
 
 import faulty.*;
+import faulty.auxiliar.*;
 import formula.*;
 import net.sf.javabdd.*;
+import maskingDistance.*;
 
 /**
  * This class represents the compiler.
@@ -24,6 +26,11 @@ public class MainMC {
        
       //  try{
         	if (args.length == 2){
+            if (args[0].equals("-j")){
+                String javaProgram = prog.parseJava(args[1]);
+                System.out.println("Java program created");
+            }
+            else{
                 model = prog.parse(args[0]);
                 
                 if(model!=null){
@@ -49,11 +56,21 @@ public class MainMC {
             	          System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n");
                           System.out.println("Property or Model have errors.");
                      }
-                     Program.myFactory.done(); // we reset the factory
                }
                       	           
             }
+          }
+
         	if (args.length == 3){
+
+            if (args[0].equals("-m")){
+                AuxiliarProgram spec = prog.parseAux(args[1]);
+                AuxiliarProgram imp = prog.parseAux(args[2]);
+                MaskingDistance md = new MaskingDistance();
+                //md.buildGraph(spec,imp);
+                //md.createDot();
+                System.out.println("Masking Distance: "+md.calculateDistance(spec,imp));
+            }
         		
         		if (args[0].equals("-eq")){
         			
@@ -71,14 +88,10 @@ public class MainMC {
                               if (DCTL_MC.mc_algorithm_eq(property, model)) {
                          	     //System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n");
      				    	     System.out.println("Property  is TRUE in the model.");
-     				    	     System.out.println(DCTL_MC.getWitness(property, model));
                               }
                               else{
                          	     //System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"); 
      					         System.out.println("Property  is FALSE in the model.");
-     					         // prints counterexample
-     					         System.out.println("Counterexample:");
-     					         System.out.println(DCTL_MC.getWitness(new Negation("!", property), model)); // remove in
                               }
                            
                           }
@@ -86,7 +99,6 @@ public class MainMC {
                  	           //System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n");
                                System.out.println("Property or Model have errors.");
                           }
-                         Program.myFactory.done(); // the BDDFactory is reset
                     }		
         		}
         		if (args[0].equals("-deq")){ // the case for disjoint early quantification

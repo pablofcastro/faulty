@@ -56,6 +56,13 @@ public String getEnumType(){
     return this.enumType;
 }
 
+public AuxiliarExpression getInt1(){
+    return int1;
+}
+
+public AuxiliarExpression getInt2(){
+    return int2;
+}
     
     
 @Override
