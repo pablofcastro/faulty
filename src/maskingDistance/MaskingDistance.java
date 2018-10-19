@@ -232,9 +232,6 @@ public class MaskingDistance{
         int minDistance = g.getErrState().getDistanceValue();
         
         double res= Math.round((double)1/(1+minDistance) * Math.pow(10, 3)) / Math.pow(10, 3);
-		createDot();
-		printTraceToError();
-		simulateGame();
 		return res;
     }
 	
@@ -259,7 +256,7 @@ public class MaskingDistance{
 		String c = "";
 		System.out.println("\n·····SIMULATION·····\n");
 		while (!c.equals("X") && !c.equals("x")){
-			System.out.println("STATE: ["+curr+"]");
+			System.out.println("CURRENT STATE: ["+curr+"] , choose an action... (action : [nextstate])");
 			Integer i = 0;
 			for (GameNode succ : g.getSuccessors(curr)){
 				Pair p = new Pair(curr,succ);

@@ -123,22 +123,22 @@ public class GameGraph{
 		res += "    node [style=filled];\n";
 		for (GameNode v : nodes){
 			if (v.getPlayer().equals("V"))
-				res += "    "+v.toString()+" [color=\"lightblue\"];\n";
+				res += "    "+v.toStringDot()+" [color=\"lightblue\"];\n";
 			if (v.getPlayer().equals("R"))
-				res += "    "+v.toString()+" [color=\"grey\"];\n";
+				res += "    "+v.toStringDot()+" [color=\"grey\"];\n";
 			if (v.getPlayer().equals(""))
-				res += "    "+v.toString()+" [color=\"red\"];\n";
+				res += "    "+v.toStringDot()+" [color=\"red\"];\n";
 			for (GameNode u : succList.get(v)){
 				Pair edge = new Pair(v,u);
 				if (labels.get(edge) != null)
 					for (int i=0; i < labels.get(edge).size(); i++)			
 						if (labels.get(edge).get(i).split("M")[0].equals(""))
-							res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"green\",label = \""+labels.get(edge).get(i)+"\"]"+";\n";
+							res += "    "+v.toStringDot()+" -> "+ u.toStringDot() +" [color=\"green\",label = \""+labels.get(edge).get(i)+"\"]"+";\n";
 						else
 							if (faultyActions.get(edge).get(i))
-								res += "    "+v.toString()+" -> "+ u.toString() +" [color=\"red\",label = \""+labels.get(edge).get(i)+"\"]"+";\n";
+								res += "    "+v.toStringDot()+" -> "+ u.toStringDot() +" [color=\"red\",label = \""+labels.get(edge).get(i)+"\"]"+";\n";
 							else
-								res += "    "+v.toString()+" -> "+ u.toString() +" [label = \""+labels.get(edge).get(i)+"\"]"+";\n";
+								res += "    "+v.toStringDot()+" -> "+ u.toStringDot() +" [label = \""+labels.get(edge).get(i)+"\"]"+";\n";
 			}
 		}
 		res += "\n}";

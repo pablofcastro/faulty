@@ -96,6 +96,15 @@ public class GameNode implements Comparable{
 		if (this.isErrState())
 			res = "ERR_STATE";
 		else
+			res = "SPEC: "+specState.toString()+", SYMBOL: "+symbol+", IMP:"+impState.toString()+", PLAYER: "+player;
+		return res;
+	}
+
+	public String toStringDot(){
+		String res;
+		if (this.isErrState())
+			res = "ERR_STATE";
+		else
 			res = "SPEC"+specState.toString()+"__"+symbol+"__"+"IMP"+impState.toString()+"___"+player;
 		return res;
 	}

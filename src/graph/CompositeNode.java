@@ -61,6 +61,21 @@ public class CompositeNode implements Comparable{
 	}
 
 	public String toString(){
+		String res = "<";
+		for (AuxiliarVar v : model.getSharedVars()){
+			if (state.get(v.getName()))
+				res += v.getName() + ",";
+		}
+		for (int i=0; i < model.getProcDecls().size(); i++){
+			for (AuxiliarVar v : model.getProcs().get(i).getVarBool()){
+				if (state.get(model.getProcDecls().get(i)+v.getName()))
+					res += model.getProcDecls().get(i)+v.getName() + ",";
+			}
+		}
+		return res+">";
+	}
+
+	public String toStringDot(){
 		String res = "";
 		for (AuxiliarVar v : model.getSharedVars()){
 			if (state.get(v.getName()))

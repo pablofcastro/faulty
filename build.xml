@@ -19,7 +19,7 @@
   <property name="java.graph"     location="java/graph"/>
   <property name="java.maskingDistance"     location="java/maskingDistance"/>
   <property name="jar.file"       location="${dist}/${ant.project.name}.jar"/>
-  <property name="jar.main.class" value="mc.MainMC"/>
+  <property name="jar.main.class" value="mc.MainMD"/>
   <property environment="env" />
 
   <!-- We rely on CUP-11a  JFlex 1.4.1  -->
@@ -127,7 +127,7 @@
   </target>
     
  <target name="compile" depends="copy_src">
-    <javac includeantruntime="false" srcdir="${java}" destdir="${classes}">
+    <javac includeantruntime="false" srcdir="${java}" destdir="${classes}" debug="true">
       <classpath refid="libraries" />
     </javac>
   </target>
