@@ -7,22 +7,25 @@ public class AuxiliarBranch extends AuxiliarProgramNode {
 	    AuxiliarExpression guard; // the guard of the branch
 	    LinkedList<AuxiliarCode> assignList;
 	    //Code code; // the code of the branch
-	    boolean isFaulty; // it says if the branch is a faulty one or not
+	    boolean isFaulty; // is the branch faulty?
+	    boolean isTau;  // is the branch internal?
 	    String label;
 	    
-	    public AuxiliarBranch(AuxiliarExpression guard,  LinkedList<AuxiliarCode> assignList, boolean isFaulty){
+	    public AuxiliarBranch(AuxiliarExpression guard,  LinkedList<AuxiliarCode> assignList, boolean isFaulty, boolean isTau){
 	    	
 	    	this.guard=guard;
 	    	this.assignList = assignList;
 	    	this.isFaulty = isFaulty;
+	    	this.isTau = isTau;
 	    	
 	    }
 
-	    public AuxiliarBranch(AuxiliarExpression guard,  LinkedList<AuxiliarCode> assignList, boolean isFaulty, String label){
+	    public AuxiliarBranch(AuxiliarExpression guard,  LinkedList<AuxiliarCode> assignList, boolean isFaulty, boolean isTau, String label){
 	    	
 	    	this.guard = guard;
 	    	this.assignList = assignList;
 	    	this.isFaulty = isFaulty;
+	    	this.isTau = isTau;
 	    	this.label = label;
 	    	
 	    }
@@ -37,6 +40,10 @@ public class AuxiliarBranch extends AuxiliarProgramNode {
 	
 	    public boolean getIsFaulty(){
 	    	return this.isFaulty;
+	    }
+
+	    public boolean getIsTau(){
+	    	return this.isTau;
 	    }
 
 	    public String getLabel(){

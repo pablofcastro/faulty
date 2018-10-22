@@ -196,6 +196,10 @@ white_space     = {end_of_line} | [ \t\f]
           
 "faulty"  {  //System.out.println("FAULTY :  "+ yytext());
          return new Symbol(symFaulty.FAULTY,yyline,yycolumn,yytext());
+      }
+
+"internal"  {  //System.out.println("INTERNAL :  "+ yytext());
+         return new Symbol(symFaulty.INTERNAL,yyline,yycolumn,yytext());
       } 
           
 {id}  {  //System.out.println("ID :  "+ yytext());
