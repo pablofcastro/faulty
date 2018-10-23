@@ -1,0 +1,20 @@
+
+
+Process Toy {
+        s0,s1,s2:BOOL;
+  
+       	Initial: s0 && !s1 && !s2;
+       	Normative: true;
+	
+	[tau0] internal s0 -> s0 = false, s1 = true;
+	[a] s1 -> s1 = false, s2 = true;
+	[tau1] internal s2 -> s2 = false, s0 = true;
+	   
+}
+
+Main(){
+	t1: Toy;
+	run t1();
+}
+
+

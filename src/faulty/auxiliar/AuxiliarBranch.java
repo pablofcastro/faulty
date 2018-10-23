@@ -17,6 +17,7 @@ public class AuxiliarBranch extends AuxiliarProgramNode {
 	    	this.assignList = assignList;
 	    	this.isFaulty = isFaulty;
 	    	this.isTau = isTau;
+	    	this.label = "";
 	    	
 	    }
 
