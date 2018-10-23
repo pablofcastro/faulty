@@ -32,7 +32,7 @@ public class MainMD {
             System.out.println("Options: \n -d : create dot file \n -t : print error trace \n -s : start simulation \n -l : treat deadlock as error state too");
        }
        else{
-           for (int i = 0; i < args.length - 2; i++){
+           for (int i = 0; i < args.length; i++){
               if (args[i].equals("-t")){
                 printTrace = true;
               }
