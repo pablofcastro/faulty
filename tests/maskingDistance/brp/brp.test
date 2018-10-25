@@ -21,19 +21,19 @@ Process Sender {
 
 	//wait ack
 	[aB] !s0 && s1 && !s2 -> s0 = true, s1 = false, sab = !sab; 
-	[TO_Msg] !s0 && s1 && !s2 -> s2 = true;
-	[TO_Ack] !s0 && s1 && !s2 -> s2 = true;
+	[TOMsg] faulty !s0 && s1 && !s2 -> s2 = true;
+	[TOAck] faulty !s0 && s1 && !s2 -> s2 = true;
 
 	// retransmit
 	[aF] !s0 && s1 && s2 && !rt0 && !rt1 -> s2 = false, fs = !i0, ls = i0, bs = sab, rt1 = true; //first retransmission
 	[aF] !s0 && s1 && s2 && !rt0 && rt1 -> s2 = false, fs = !i0, ls = i0, bs = sab, rt0 = true, rt1 = false; //second retransmission
 	[aF] !s0 && s1 && s2 && rt0 && !rt1 -> s2 = false, fs = !i0, ls = i0, bs = sab, rt1 = true; //third retransmission
-	[] !s0 && s1 && s2 && rt0 && rt1 && !i0 -> s0 = true, s1 = false, srep0 = false, srep1 = true;
-	[] !s0 && s1 && s2 && rt0 && rt1 && i0 -> s0 = true, s1 = false, srep0 = true, srep1 = false;
+	internal !s0 && s1 && s2 && rt0 && rt1 && !i0 -> s0 = true, s1 = false, srep0 = false, srep1 = true;
+	internal !s0 && s1 && s2 && rt0 && rt1 && i0 -> s0 = true, s1 = false, srep0 = true, srep1 = false;
 
 	// success
-	[] s0 && !s1 && !s2 && !i0 -> s0 = false, s2 = true, i0 = true;
-	[] s0 && !s1 && !s2 && i0 -> s0 = false, srep0 = true, srep1 = true;
+	internal s0 && !s1 && !s2 && !i0 -> s0 = false, s2 = true, i0 = true;
+	internal s0 && !s1 && !s2 && i0 -> s0 = false, srep0 = true, srep1 = true;
 
 	// error
 	[SyncWait] s0 && !s1 && s2 -> s1 = true, s2 = false; 
@@ -42,21 +42,11 @@ Process Sender {
 	[SyncWait] s0 && s1 && !s2 -> s0 = false, s1 = false, sab = false; 
 }
 
-Process Receiver {
-	
-}
 
-Process ChannelK {
-	
-}
-
-Process ChannelL {
-	
-}
 
 Main(){
-	m1: Memory;
-	run m1();
+	s1: Sender;
+	run s1();
 }
 
 
