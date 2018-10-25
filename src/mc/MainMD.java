@@ -4,7 +4,6 @@ import java.io.*;
 
 import faulty.*;
 import faulty.auxiliar.*;
-import formula.*;
 import net.sf.javabdd.*;
 import maskingDistance.*;
 
@@ -12,15 +11,10 @@ import maskingDistance.*;
  * This class represents the compiler.
  */
 public class MainMD {
-	
-	  private static Program model;	
-    private static FormulaElement property;
-   
     
     public static void main(String[] args)
     {
        ProgramParser prog = new ProgramParser();
-       FormulaParser formula;
        boolean printTrace = false;
        boolean toDot = false;
        boolean startSimulation = false;
@@ -28,7 +22,7 @@ public class MainMD {
        
        if (args.length < 2){
             System.out.println("Usage: ./faulty-mask <options> <nominal model path> <faulty model path>");
-            System.out.println("Output: lim n->infinity of 1/1+n, where n is the number of faults masked");
+            System.out.println("Output: 1/(1+n), where n is the number of faults masked");
             System.out.println("Options: \n -d : create dot file \n -t : print error trace \n -s : start simulation \n -l : treat deadlock as error state too");
        }
        else{

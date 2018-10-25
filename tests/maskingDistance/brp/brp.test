@@ -1,0 +1,62 @@
+
+//N=2 number of chunks
+//MAX=3 number of retransmissions
+
+Process Sender {
+    s0,s1,s2: BOOL; // state variables idle(000),nextframe(001),waitack(010),retransmit(011),success(100),error(101),waitsync(110)
+    srep0,srep1: BOOL; // srep variables bottom(00),nok(01),dk(10),ok(11)
+    bs,sab,fs,ls: BOOL; // other variables
+
+    i0: BOOL; // chunk1(0), chunk2(1)
+    rt0,rt1: BOOL; // firstattempt(00),retransmission1(01),retransmission2(10),retransmission3(11)
+
+   	Initial: !s0 && !s1 && !s2 && !srep0 && !srep1 && !bs && !sab && !fs && !ls && !i0 && !rt0 && !rt1;
+   	Normative: true;
+	
+	//idle
+	[NewFile] !s0 && !s1 && !s2 -> s2 = true, srep0 = false, srep1 = false; 
+
+	//next frame
+	[aF] !s0 && !s1 && s2 -> s1 = true, s2 = false, fs = !i0, ls = i0, bs = sab, rt0 = false, rt1 = false;
+
+	//wait ack
+	[aB] !s0 && s1 && !s2 -> s0 = true, s1 = false, sab = !sab; 
+	[TO_Msg] !s0 && s1 && !s2 -> s2 = true;
+	[TO_Ack] !s0 && s1 && !s2 -> s2 = true;
+
+	// retransmit
+	[aF] !s0 && s1 && s2 && !rt0 && !rt1 -> s2 = false, fs = !i0, ls = i0, bs = sab, rt1 = true; //first retransmission
+	[aF] !s0 && s1 && s2 && !rt0 && rt1 -> s2 = false, fs = !i0, ls = i0, bs = sab, rt0 = true, rt1 = false; //second retransmission
+	[aF] !s0 && s1 && s2 && rt0 && !rt1 -> s2 = false, fs = !i0, ls = i0, bs = sab, rt1 = true; //third retransmission
+	[] !s0 && s1 && s2 && rt0 && rt1 && !i0 -> s0 = true, s1 = false, srep0 = false, srep1 = true;
+	[] !s0 && s1 && s2 && rt0 && rt1 && i0 -> s0 = true, s1 = false, srep0 = true, srep1 = false;
+
+	// success
+	[] s0 && !s1 && !s2 && !i0 -> s0 = false, s2 = true, i0 = true;
+	[] s0 && !s1 && !s2 && i0 -> s0 = false, srep0 = true, srep1 = true;
+
+	// error
+	[SyncWait] s0 && !s1 && s2 -> s1 = true, s2 = false; 
+
+	// wait sync
+	[SyncWait] s0 && s1 && !s2 -> s0 = false, s1 = false, sab = false; 
+}
+
+Process Receiver {
+	
+}
+
+Process ChannelK {
+	
+}
+
+Process ChannelL {
+	
+}
+
+Main(){
+	m1: Memory;
+	run m1();
+}
+
+
