@@ -1,11 +1,12 @@
 
 //N=2 number of chunks
 //MAX=3 number of retransmissions
+Global fs,ls,bs: BOOL;
 
 Process Sender {
     s0,s1,s2: BOOL; // state variables idle(000),nextframe(001),waitack(010),retransmit(011),success(100),error(101),waitsync(110)
     srep0,srep1: BOOL; // srep variables bottom(00),nok(01),dk(10),ok(11)
-    bs,sab,fs,ls: BOOL; // other variables
+    sab: BOOL; // other variables
 
     i0: BOOL; // chunk1(0), chunk2(1)
     rt0,rt1: BOOL; // firstattempt(00),retransmission1(01),retransmission2(10),retransmission3(11)
@@ -28,12 +29,12 @@ Process Sender {
 	[aF] !s0 && s1 && s2 && !rt0 && !rt1 -> s2 = false, fs = !i0, ls = i0, bs = sab, rt1 = true; //first retransmission
 	[aF] !s0 && s1 && s2 && !rt0 && rt1 -> s2 = false, fs = !i0, ls = i0, bs = sab, rt0 = true, rt1 = false; //second retransmission
 	[aF] !s0 && s1 && s2 && rt0 && !rt1 -> s2 = false, fs = !i0, ls = i0, bs = sab, rt1 = true; //third retransmission
-	internal !s0 && s1 && s2 && rt0 && rt1 && !i0 -> s0 = true, s1 = false, srep0 = false, srep1 = true;
-	internal !s0 && s1 && s2 && rt0 && rt1 && i0 -> s0 = true, s1 = false, srep0 = true, srep1 = false;
+	!s0 && s1 && s2 && rt0 && rt1 && !i0 -> s0 = true, s1 = false, srep0 = false, srep1 = true;
+	!s0 && s1 && s2 && rt0 && rt1 && i0 -> s0 = true, s1 = false, srep0 = true, srep1 = false;
 
 	// success
-	internal s0 && !s1 && !s2 && !i0 -> s0 = false, s2 = true, i0 = true;
-	internal s0 && !s1 && !s2 && i0 -> s0 = false, srep0 = true, srep1 = true;
+	s0 && !s1 && !s2 && !i0 -> s0 = false, s2 = true, i0 = true;
+	s0 && !s1 && !s2 && i0 -> s0 = false, srep0 = true, srep1 = true;
 
 	// error
 	[SyncWait] s0 && !s1 && s2 -> s1 = true, s2 = false; 
@@ -42,11 +43,81 @@ Process Sender {
 	[SyncWait] s0 && s1 && !s2 -> s0 = false, s1 = false, sab = false; 
 }
 
+Process Receiver {
+	r0,r1,r2: BOOL; // newfile(000), fstsafe(001), framereceived(010), framereported(011), idle(100), resync(101)
+	rrep0,rrep1,rrep2: BOOL; // bottom(000), fst(001), inc(010), ok(011), nok(100)
+	fr,lr,br,rab,recv: BOOL;
+
+	Initial: !r0 && !r1 && !r2 && !rrep0 && !rrep1 && !rrep2 && !fr && !lr && !br && !rab && !recv && !fs && !ls && !bs;
+   	Normative: true;
+	
+	// new_file
+	[SyncWait] !r0 && !r1 && !r2 -> r0 = false, r1 = false, r2 = false;
+	[aG] !r0 && !r1 && !r2 -> r2 = true, fr = fs, lr = ls, br = bs, recv = true;
+
+	// fst_safe_frame
+	!r0 && !r1 && r2 -> r1 = true, r2 = false, rab = br;
+
+	// frame_received
+	!r0 && r1 && !r2 && rab==br && fr && !lr  -> r2 = true, rrep0 = false, rrep1 = false, rrep2 = true;
+	!r0 && r1 && !r2 && rab==br && !fr && !lr -> r2 = true, rrep0 = false, rrep1 = true, rrep2 = false;
+	!r0 && r1 && !r2 && rab==br && !fr && lr  -> r2 = true, rrep0 = false, rrep1 = true, rrep2 = true;
+	[aA] !r0 && r1 && !r2 && !(rab==br) -> r0 = true, r1 = false;  
+
+	// frame_reported
+	[aA] !r0 && r1 && r2 -> r0 = true, r1 = false, r2 = false, rab =rab;
+
+	// idle
+	[aG] r0 && !r1 && !r2  -> r0 = false, r1 = true, fr = fs, lr = ls, br = bs, recv = true;
+	[SyncWait] r0 && !r1 && !r2 && ls -> r2 = true;
+	[SyncWait] r0 && !r1 && !r2 && !ls -> r2 = true, rrep0 = true, rrep1 = false, rrep2 = false;
+
+	// resync
+	[SyncWait] r0 && !r1 && r2 -> r0 = false, r2 = false, rrep0 = false, rrep1 = false, rrep2 = false;
+}
+
+Process ChannelK {
+	k0,k1:BOOL; // idle(00), sending(01), lost(10)
+	Initial: !k0 && !k1 && !fs && !ls && !bs;
+	Normative: !(k0 && !k1);
+
+	//idle
+	[aF] !k0 && !k1 -> k1 = true;
+	[aF] faulty !k0 && !k1 -> k0 = true;
+
+	//sending
+	[aG] !k0 && k1 -> k1 = false;
+
+	//lost
+	[TOMsg] k0 && !k1 -> k0 = false;
+}
+
+Process ChannelL {
+	l0,l1:BOOL; // idle(00), sending(01), lost(10)
+	Initial: !l0 && !l1 && !fs && !ls && !bs;
+	Normative: !(l0 && !l1);
+
+	//idle
+	[aA] !l0 && !l1 -> l1 = true;
+	[aA] faulty !l0 && !l1 -> l0 = true;
+
+	//sending
+	[aB] !l0 && l1 -> l1 = false;
+
+	//lost
+	[TOAck] l0 && !l1 -> l0 = false;
+}
 
 
 Main(){
-	s1: Sender;
-	run s1();
+	s: Sender;
+	r: Receiver;
+	ck: ChannelK;
+	cl: ChannelL;
+	run s();
+	run r();
+	run ck();
+	run cl();
 }
 
 

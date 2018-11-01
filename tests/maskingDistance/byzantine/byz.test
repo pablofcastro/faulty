@@ -1,0 +1,18 @@
+Process General{
+	s0,s1: BOOL;
+	Initial: s0;
+	Normative: true;
+		[send] s0 -> s0 = false, s1 = true;
+}
+
+Process Lieutenant{
+	s0,s1: BOOL;
+	Initial: s0;
+	Normative: true;
+		[forward] s0 -> s0 = false, s1 = true;
+}
+
+Main(){
+    g1:General;
+    run g1();
+}

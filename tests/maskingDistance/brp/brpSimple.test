@@ -1,0 +1,78 @@
+
+//N=2 number of chunks
+//MAX=3 number of retransmissions
+
+Global k,l:BOOL;
+
+Process Sender {
+    s0,s1,s2: BOOL; // state variables idle(000),nextframe(001),waitack(010),retransmit(011),success(100),error(101),waitsync(110)
+    i0: BOOL; // chunk1(0), chunk2(1)
+    rt0,rt1: BOOL; // firstattempt(00),retransmission1(01),retransmission2(10),retransmission3(11)
+
+   	Initial: !s0 && !s1 && !s2 && !i0 && !rt0 && !rt1 && k && l;
+   	Normative: true;
+	
+	//idle
+	[NewFile] !s0 && !s1 && !s2 -> s2 = true; 
+
+	//next frame
+	[aF] !s0 && !s1 && s2 && k -> s1 = true, s2 = false, rt0 = false, rt1 = false, k = false;
+
+	//wait ack
+	[aB] !s0 && s1 && !s2 && !l -> s0 = true, s1 = false, l = true; 
+	[TOMsg] faulty !s0 && s1 && !s2 -> s2 = true;
+
+	// retransmit
+	[aF1] !s0 && s1 && s2 && !rt0 && !rt1 && k-> s2 = false, rt1 = true, k = false; //first retransmission
+	[aF2] !s0 && s1 && s2 && !rt0 && rt1 && k -> s2 = false, rt0 = true, rt1 = false, k = false; //second retransmission
+	[aF3] !s0 && s1 && s2 && rt0 && !rt1 && k -> s2 = false, rt1 = true, k = false; //third retransmission
+	[i0] internal !s0 && s1 && s2 && rt0 && rt1 -> s0 = true, s1 = false;
+
+	// success
+	[i1] internal s0 && !s1 && !s2 && !i0 -> s0 = false, s2 = true, i0 = true;
+	[i2] internal s0 && !s1 && !s2 && i0 -> s0 = false;
+
+	// error
+	[SyncWait] s0 && !s1 && s2 -> s1 = true, s2 = false; 
+
+	// wait sync
+	[SyncWait1] s0 && s1 && !s2 -> s0 = false, s1 = false; 
+}
+
+Process Receiver {
+	r0,r1,r2: BOOL; // newfile(000), fstsafe(001), framereceived(010), framereported(011), idle(100), resync(101)
+
+	Initial: !r0 && !r1 && !r2  && k && l;
+   	Normative: true;
+	
+	// new_file
+	[SyncWait] !r0 && !r1 && !r2 -> r0 = false, r1 = false, r2 = false;
+	[aG] !r0 && !r1 && !r2 -> r2 = true;
+
+	// fst_safe_frame
+	[i0]internal !r0 && !r1 && r2 && !k -> r1 = true, r2 = false, k = true;
+
+	// frame_received
+	[i1] internal !r0 && r1 && !r2 -> r2 = true;
+	[aA] !r0 && r1 && !r2 && l -> r0 = true, r1 = false, l = false;  
+
+	// frame_reported
+	[aA1] !r0 && r1 && r2 -> r0 = true, r1 = false, r2 = false;
+
+	// idle
+	[aG1] r0 && !r1 && !r2  -> r0 = false, r1 = true;
+	[SyncWait1] r0 && !r1 && !r2 -> r2 = true;
+
+	// resync
+	[SyncWait2] r0 && !r1 && r2 -> r0 = false, r2 = false;
+}
+
+
+Main(){
+	s1: Sender;
+	r1: Receiver;
+	run s1();
+	run r1();
+}
+
+

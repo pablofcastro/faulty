@@ -1,0 +1,58 @@
+// This version of the faulty philosophers use only two bits to codify the state
+// of a philosopher, this reduces the state space of the examples
+// a enumeration type will be added in next versions of the tool
+// !s0!s1 : thinking
+// !s0 s1: hungry
+// s0!s1: eating
+// s0s1: faulty
+
+Global fork0 : BOOL;
+Global fork1 : BOOL;
+Global fork2 : BOOL;
+Global lock20 : BOOL;
+Global lock01 : BOOL;
+Global lock12 : BOOL;
+
+
+
+Process Phil(forkL: BOOL, forkR:BOOL, myLock:BOOL, lefterLock:BOOL, righterLock:BOOL){
+   
+   s0,s1 : BOOL;
+   hasL, hasR : BOOL;
+   Initial: !s0 && !s1 && !hasL && !hasR && forkR && forkL && myLock && lefterLock && righterLock;
+   Normative: !(s0 && s1); 
+
+   //thinking -> hungry
+   [hungry] !s0 && !s1 -> s1 = true;
+
+   //thinking -> thinking
+   [thinking] !s0 && !s1 -> s0 = false;
+
+   [getLock] !s0 && s1 && myLock && lefterLock && righterLock -> myLock = false;
+
+   [getLeft] !myLock && !s0 && s1 && forkL && !hasL && !hasR  -> forkL=false, hasL=true;
+
+   [getRight] !s0 && s1 && hasL && forkR && !hasR -> forkR = false, hasR=true;
+
+   //hungry -> eating
+   [eating] !s0 && s1 && hasL && hasR -> s1 = false, s0 = true; 
+
+   [thinking] s0 && !s1 -> s0 = false, forkL=true, forkR=true, hasR=false, hasL=false, myLock = true;
+
+   //error
+   [getRight] faulty !myLock && !s0 && s1 && !hasL && forkR && !hasR -> forkR = false, hasR=true;
+   [getLeft] faulty !s0 && s1 && hasR && forkL && !hasL -> forkL = false, hasL=true;
+   //[dropLock] faulty !myLock -> myLock = true;
+}
+
+
+Main(){
+ phil1:Phil;
+ phil2:Phil;
+ phil3:Phil;
+
+
+ run phil1(fork2, fork0, lock20, lock12, lock01);
+ run phil2(fork0, fork1, lock01, lock20, lock12);
+ run phil3(fork1, fork2, lock12, lock01, lock20);
+}

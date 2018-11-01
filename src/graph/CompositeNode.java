@@ -230,4 +230,19 @@ public class CompositeNode implements Comparable{
 		return succ;
 	}
 
+	public void update(LinkedList<AuxiliarCode> assigns, int procIndex){
+		for (AuxiliarCode c : assigns){
+			if (c instanceof AuxiliarVarAssign){
+				AuxiliarVarAssign assign = (AuxiliarVarAssign)c;
+				AuxiliarVar var = instanciateIfParam(assign.getVar(),procIndex);
+				String name = var.getName();
+				Boolean value = evalBoolExpr(assign.getExp(),procIndex);
+				if (checkGlobalVar(var))
+					this.getState().put(name,value);
+				else
+					this.getState().put(model.getProcDecls().get(procIndex)+name,value);
+			}
+		}
+	}
+
 }

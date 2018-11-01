@@ -1,0 +1,46 @@
+Process Leader{
+	d,s0,s1,s2,s3,s4,s5,s6,s7: BOOL;
+	Initial: s0 && !d;
+	Normative: d == false;
+
+		[sendPrepare] s0 -> s0 = false, s1 = true;
+		[receivePromise] s1 -> s1 = false, s2 = true;
+		[majOK] s2 -> s2 = false, s3 = true;
+		[majNOK] (s2 || s5) -> s2 = false, s5 = false, s0 = true;
+		[sendValue] s3 -> s3 = false, s4 = true;
+		[timeout] s4 -> s4 = false, s0 = true;
+		[receiveAccept] s4 -> s4 = false, s5 = false;
+		[majOK] s5 -> s5 = false, s6 = true;
+		[sendChosen] s6 -> s6 = false, s7 = true;
+		[finish] s7 -> s7 = false, s0 = true;
+
+		
+}
+
+Process Acceptor{
+	d,s0,s1,s2,s3,s4,s5,s6: BOOL;
+	Initial: s0 && !d;
+	Normative: d == false;
+	
+		[receivePrepare] s0 -> s0 = false, s1 = true;
+		[sendNACK] s1 -> s1 = false, s2 = true;
+		[sendPromise] s1 -> s1 = false, s3 = true;
+		[receiveValue] s3 -> s3 = false, s4 = true;
+		[sendValue] s3 -> s3 = false, s4 = true;
+		[sendAccept] s4 -> s4 = false, s5 = true;
+		[receiveChosen] s5 -> s5 = false, s6 = true;
+		[finish] (s2 || s6) -> s2 = false, s6 = false, s0 = true;
+
+		
+}
+
+Main(){
+    l1:Leader;
+    a1:Acceptor;
+    a2:Acceptor;
+    a3:Acceptor;
+    run l1();
+    run a1();
+    run a2();
+    run a3();
+}

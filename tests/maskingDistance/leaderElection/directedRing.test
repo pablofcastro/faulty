@@ -1,0 +1,26 @@
+Global p1Top2, p2Top3, p3Top4, p4Top1 : BOOL;
+
+Process Proc (sending: BOOL){
+	d,active,s,leading: BOOL;
+	Initial: active && !s && !leading && !d && !p1Top2 && !p2Top3 && !p3Top4 && !p4Top1;
+	Normative: d == false;
+
+		[startSend] active && !sending && !leading -> sending = true;
+		[finishSend] sending && !leading -> sending = false;
+		[receiveAndPass] !active && !leading -> sending = true;
+		[receiveLesser] active && !leading -> active = true;
+		[receiveEqual] active && !leading -> leading = true;
+		[receiveBigger] active -> active = false;
+}
+
+
+Main(){
+    p1:Proc;
+    p2:Proc;
+    p3:Proc;
+    p4:Proc;
+    run p1(p1Top2);
+    run p2(p2Top3);
+    run p3(p3Top4);
+    run p4(p4Top1);
+}

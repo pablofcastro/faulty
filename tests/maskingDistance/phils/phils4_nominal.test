@@ -23,12 +23,12 @@ Process Phil(forkL: BOOL, forkR:BOOL){
    [hungry] !s0 && !s1 -> s1 = true;
 
    //thinking -> thinking
-   [thinking] !s0 && !s1 -> s0 = false;
+   //[thinking] !s0 && !s1 -> s0 = false;
 
    [getLeft] !s0 && s1 && forkL && !hasL && !hasR  -> forkL=false, hasL=true;
 
    //hungry -> hungry
-   [hungry] !s0 && s1 && !forkL && !hasL && !hasR -> s1 = true; 
+   //[hungry] !s0 && s1 && !forkL && !hasL && !hasR -> s1 = true; 
 
    [getRight] !s0 && s1 && hasL && forkR && !hasR -> forkR = false, hasR=true;
    //[dropLeft] !s0 && s1 && hasL && !forkR && !hasR -> forkL = true, hasL=false; 
@@ -51,8 +51,8 @@ Main(){
  phil4:Phil;
 
 
- run phil1(fork2, fork0);
+ run phil1(fork3, fork0);
  run phil2(fork0, fork1);
  run phil3(fork1, fork2);
- run phil4(fork1, fork2);
+ run phil4(fork2, fork3);
 }

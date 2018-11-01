@@ -17,6 +17,7 @@ public class ExplicitCompositeModel {
 	private int numEdges;
 	private LinkedList<AuxiliarProcess> procs;
 	private LinkedList<String> procDecls;
+	private boolean isWeak;
 
 	public ExplicitCompositeModel(LinkedList<AuxiliarVar> svs) {
 		sharedVars = svs;
@@ -29,6 +30,7 @@ public class ExplicitCompositeModel {
 		nodes = new LinkedList<CompositeNode>();
 		procs = new LinkedList<AuxiliarProcess>();
 		procDecls = new LinkedList<String>();
+		isWeak = false;
 	}
 
 	public void setInitial(CompositeNode v){
@@ -110,6 +112,8 @@ public class ExplicitCompositeModel {
 			labels.get(transition).add(lbl);
 			faultyActions.get(transition).add(faulty);
 			tauActions.get(transition).add(internal);
+			if (internal)
+				isWeak = true;
 			//check if label already added
 			/*boolean addLabel = true;
 			for (String l : labels.get(transition)){
@@ -184,6 +188,8 @@ public class ExplicitCompositeModel {
 
 
 	public void saturate(){
+		if (!isWeak)
+			return;
 
 		//Add tau self-loops
 		for (CompositeNode p : nodes){
@@ -253,7 +259,7 @@ public class ExplicitCompositeModel {
 		}
 
 		//Remove all taus
-		for (CompositeNode p : nodes){
+		/*for (CompositeNode p : nodes){
 			for (CompositeNode q : nodes){
 				Pair t = new Pair(p,q);
 				if (tauActions.get(t) != null){
@@ -264,7 +270,7 @@ public class ExplicitCompositeModel {
 					}
 				}
 			}
-		}
+		}*/
 	}
 	
 }

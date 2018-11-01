@@ -1,0 +1,40 @@
+Global canCommit,abort : BOOL;
+Global p1Yes, p2Yes : BOOL;
+
+Process Coordinator{
+	init,d: BOOL;
+	Initial: !d && init && !canCommit && !abort && !p1Yes && !p2Yes;
+	Normative: d == false;
+
+		[sendCanCommit] init -> canCommit = true;
+		[sendCommit] p1Yes && p2Yes -> init = true && abort = false && p1Yes = false && p2Yes = false;
+		[sendAbort] abort -> init = true && abort = false && p1Yes = false && p2Yes = false;
+		
+}
+
+Process Participant1{
+	d: BOOL;
+	Initial: !d && !canCommit && !abort && !p1Yes && !p2Yes;
+	Normative: d == false;
+
+		[voteYes] canCommit -> p1Yes = true;
+		[voteNo] canCommit -> abort = true;
+}
+
+Process Participant2{
+	d: BOOL;
+	Initial: !d && !canCommit && !abort && !p1Yes && !p2Yes;
+	Normative: d == false;
+
+		[voteYes] canCommit -> p2Yes = true;
+		[voteNo] canCommit -> abort = true;
+}
+
+Main(){
+    c1:Coordinator;
+    p1:Cohort1;
+    p2:Cohort2;
+    run c1();
+    run p1();
+    run p2();
+}

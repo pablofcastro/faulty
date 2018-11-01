@@ -23,11 +23,12 @@ Process OddPhil(forkL: BOOL, forkR:BOOL){
    [hungry] !s0 && !s1 -> s1 = true;
 
    //thinking -> thinking
-   [thinking] !s0 && !s1 -> s0 = false;
+   //[thinking] !s0 && !s1 -> s0 = false;
 
    [getLeft] !s0 && s1 && forkL && !hasL && !hasR  -> forkL=false, hasL=true;
 
-   
+   //hungry -> hungry
+   //[hungry] !s0 && s1 && !forkL && !hasL && !hasR -> s1 = true; 
 
    [getRight] !s0 && s1 && hasL && forkR && !hasR -> forkR = false, hasR=true;
    //[dropLeft] !s0 && s1 && hasL && !forkR && !hasR -> forkL = true, hasL=false; 
@@ -49,11 +50,12 @@ Process EvenPhil(forkL: BOOL, forkR:BOOL){
    [hungry] !s0 && !s1 -> s1 = true;
 
    //thinking -> thinking
-   [thinking] !s0 && !s1 -> s0 = false;
+   //[thinking] !s0 && !s1 -> s0 = false;
 
    [getRight] !s0 && s1 && forkR && !hasL && !hasR  -> forkR=false, hasR=true; 
 
-   
+   //hungry -> hungry
+   //[hungry] !s0 && s1 && !forkR && !hasL && !hasR -> s1 = true; 
 
    [getLeft] !s0 && s1 && hasR && forkL && !hasL -> forkL = false, hasL=true;
    //[dropRight] !s0 && s1 && hasR && !forkL && !hasL -> forkR = true, hasR=false; 

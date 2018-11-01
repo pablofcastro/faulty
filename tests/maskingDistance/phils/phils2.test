@@ -41,7 +41,7 @@ Process OddPhil(forkL: BOOL, forkR:BOOL){
    //[tryingGetRight] faulty !s0 && s1 && !forkR && !hasR && hasL -> s1 = true;
 
    //fault
-   [getRight] faulty !s0 && s1 && !hasL && forkR && !hasR -> forkR = false, hasR=true;
+   //[getRight] faulty !s0 && s1 && !hasL && forkR && !hasR -> forkR = false, hasR=true;
    //recovery
    //[dropRight] faulty !s0 && s1 && hasR && !hasL -> forkR = true, hasR=false;
 }

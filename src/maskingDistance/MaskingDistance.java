@@ -22,8 +22,8 @@ public class MaskingDistance{
 		//The refuter plays with the implementation(imp), this means choosing any action available (faulty or not)
 		//and the verifier plays with the specification(spec), he tries to match the action played by the refuter, if he can't then an error state is reached.
 		ExplicitCompositeModel spec,imp;
-		spec = specProgram.toGraph();
-		imp = impProgram.toGraph();
+		spec = specProgram.toGraph(true);
+		imp = impProgram.toGraph(true);
 		imp.saturate();
 		spec.saturate();
 

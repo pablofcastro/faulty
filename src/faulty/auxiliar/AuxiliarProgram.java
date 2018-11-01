@@ -275,7 +275,6 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         catch(IOException e){
             e.printStackTrace();
         }
-        toGraph();
         return prog;
     }
 
@@ -333,7 +332,7 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
     }
 */
     /*TOTRY: Create the whole model on the fly*/
-    public ExplicitCompositeModel toGraph(){
+    public ExplicitCompositeModel toGraph(boolean sync){
         ExplicitCompositeModel m = new ExplicitCompositeModel(globalVars.getBoolVars());
 
         //states in m are lists of states (from processes)
@@ -365,20 +364,49 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
             //System.out.println(curr);
             for (int i = 0; i < m.getProcDecls().size(); i++){ // for each process in current global state
                 for (AuxiliarBranch b : m.getProcs().get(i).getBranches()){
-                    //System.out.println("    "+m.getProcDecls().get(i)+b.getLabel());
+                    String label = m.getProcDecls().get(i)+b.getLabel();
+                    boolean isFaulty = b.getIsFaulty();
+                    boolean isTau = b.getIsTau();
+                    LinkedList<AuxiliarCode> assigns = b.getAssignList();
+                    //CompositeNode curr_ = curr.clone();
+                    boolean fail = false;
+                    //at last check i's guard, sync or not
                     if (curr.satisfies(b.getGuard(),i)){
-                        //System.out.println("    "+m.getProcDecls().get(i)+b.getLabel());
                         //create global successor curr_
                         CompositeNode curr_ = curr.createSuccessor(b.getAssignList(),i);
+                        //curr_.update(b.getAssignList(),i);
                         curr_.checkNormCondition(m.getProcs().get(i).getNormativeCond(),i);
-                        CompositeNode toOld = m.search(curr_);
-                        if (toOld == null){
-                            m.addNode(curr_);
-                            iterSet.add(curr_);
-                            m.addEdge(curr, curr_, m.getProcDecls().get(i)+b.getLabel(),b.getIsFaulty(),b.getIsTau());
+
+                        if (sync){ //synchronized actions with same label
+                            label = b.getLabel();
+                            for (int j = 0; j < m.getProcDecls().size(); j++){
+                                for (AuxiliarBranch b_ : m.getProcs().get(j).getBranches()){
+                                    if (j!=i && b.getLabel().equals(b_.getLabel())){
+                                        isFaulty = isFaulty || b_.getIsFaulty();
+                                        isTau = isTau && b_.getIsTau();
+                                        //check j's guard
+                                        if (curr.satisfies(b_.getGuard(),j)){
+                                            curr_ = curr_.createSuccessor(b_.getAssignList(),j);
+                                            //curr_.update(b_.getAssignList(),j);
+                                            curr_.checkNormCondition(m.getProcs().get(j).getNormativeCond(),j);
+                                        }
+                                        else{
+                                            fail = true;
+                                        }
+                                    }
+                                }
+                            }
                         }
-                        else{
-                            m.addEdge(curr, toOld, m.getProcDecls().get(i)+b.getLabel(),b.getIsFaulty(),b.getIsTau());
+                        if (!fail){
+                            CompositeNode toOld = m.search(curr_);
+                            if (toOld == null){
+                                m.addNode(curr_);
+                                iterSet.add(curr_);
+                                m.addEdge(curr, curr_, label, isFaulty, isTau);
+                            }
+                            else{
+                                m.addEdge(curr, toOld, label, isFaulty, isTau);
+                            }
                         }
                     }
                 }
