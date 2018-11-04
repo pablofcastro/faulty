@@ -22,11 +22,14 @@ public class MaskingDistance{
 		//The refuter plays with the implementation(imp), this means choosing any action available (faulty or not)
 		//and the verifier plays with the specification(spec), he tries to match the action played by the refuter, if he can't then an error state is reached.
 		ExplicitCompositeModel spec,imp;
-		spec = specProgram.toGraph(true);
-		imp = impProgram.toGraph(true);
+		spec = specProgram.toGraph(false);
+		imp = impProgram.toGraph(false);
+		System.out.println("* Models Generated");
+		//imp.createDot();
 		imp.saturate();
 		spec.saturate();
-
+		imp.createDot();
+		System.out.println("* Models Saturated");
 		g = new GameGraph();
 
         //calculate initial state
@@ -48,6 +51,8 @@ public class MaskingDistance{
             		Pair p = new Pair(curr.getImpState(),succ);
             		if (imp.getLabels().get(p) != null){
             			for (int i=0; i < imp.getLabels().get(p).size(); i++){
+            				if (imp.getTauActions().get(p) != null && imp.getTauActions().get(p).get(i))
+            					continue;
             				GameNode curr_ = new GameNode(curr.getSpecState(),succ,imp.getLabels().get(p).get(i), "V");
 		            		GameNode toOld = g.search(curr_);
 		            		boolean f = imp.getFaultyActions().get(p).get(i);

@@ -370,7 +370,7 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
                     LinkedList<AuxiliarCode> assigns = b.getAssignList();
                     //CompositeNode curr_ = curr.clone();
                     boolean fail = false;
-                    //at last check i's guard, sync or not
+                    //at first check i's guard, sync or not
                     if (curr.satisfies(b.getGuard(),i)){
                         //create global successor curr_
                         CompositeNode curr_ = curr.createSuccessor(b.getAssignList(),i);
@@ -380,18 +380,20 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
                         if (sync){ //synchronized actions with same label
                             label = b.getLabel();
                             for (int j = 0; j < m.getProcDecls().size(); j++){
-                                for (AuxiliarBranch b_ : m.getProcs().get(j).getBranches()){
-                                    if (j!=i && b.getLabel().equals(b_.getLabel())){
-                                        isFaulty = isFaulty || b_.getIsFaulty();
-                                        isTau = isTau && b_.getIsTau();
-                                        //check j's guard
-                                        if (curr.satisfies(b_.getGuard(),j)){
-                                            curr_ = curr_.createSuccessor(b_.getAssignList(),j);
-                                            //curr_.update(b_.getAssignList(),j);
-                                            curr_.checkNormCondition(m.getProcs().get(j).getNormativeCond(),j);
-                                        }
-                                        else{
-                                            fail = true;
+                                if (j!=i) { 
+                                    for (AuxiliarBranch b_ : m.getProcs().get(j).getBranches()){
+                                        if (b.getLabel().equals(b_.getLabel())){
+                                            isFaulty = isFaulty || b_.getIsFaulty();
+                                            isTau = isTau && b_.getIsTau();
+                                            //check j's guard
+                                            if (curr.satisfies(b_.getGuard(),j)){
+                                                curr_ = curr_.createSuccessor(b_.getAssignList(),j);
+                                                //curr_.update(b_.getAssignList(),j);
+                                                curr_.checkNormCondition(m.getProcs().get(j).getNormativeCond(),j);
+                                            }
+                                            else{
+                                                fail = true;
+                                            }
                                         }
                                     }
                                 }
@@ -414,7 +416,7 @@ public class AuxiliarProgram extends AuxiliarProgramNode{
         }
         //System.out.println("hey");
         //ExplicitModel res = m.flatten();
-        m.createDot();
+        //m.createDot();
         return m;
     }
 

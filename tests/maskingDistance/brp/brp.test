@@ -1,5 +1,5 @@
 
-//N=2 number of chunks
+//N=1 number of chunks
 //MAX=3 number of retransmissions
 Global fs,ls,bs: BOOL;
 
