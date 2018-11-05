@@ -51,9 +51,10 @@ public class MaskingDistance{
             		Pair p = new Pair(curr.getImpState(),succ);
             		if (imp.getLabels().get(p) != null){
             			for (int i=0; i < imp.getLabels().get(p).size(); i++){
+            				String lbl = imp.getLabels().get(p).get(i);
             				if (imp.getTauActions().get(p) != null && imp.getTauActions().get(p).get(i))
-            					continue;
-            				GameNode curr_ = new GameNode(curr.getSpecState(),succ,imp.getLabels().get(p).get(i), "V");
+            					lbl = "$";
+            				GameNode curr_ = new GameNode(curr.getSpecState(),succ,lbl, "V");
 		            		GameNode toOld = g.search(curr_);
 		            		boolean f = imp.getFaultyActions().get(p).get(i);
 		                    if (toOld == null){
@@ -93,16 +94,19 @@ public class MaskingDistance{
 		            	Pair p = new Pair(curr.getSpecState(),succ);
 		            	if (spec.getLabels().get(p) != null){
 	            			for (int i=0; i < spec.getLabels().get(p).size(); i++){
+	            				String lbl = spec.getLabels().get(p).get(i);
+	            				if (spec.getTauActions().get(p) != null && spec.getTauActions().get(p).get(i))
+	            					lbl = "$";
 	            				if (curr.getSymbol().equals(spec.getLabels().get(p).get(i))){
 				            		GameNode curr_ = new GameNode(succ,curr.getImpState(),"", "R");
 				            		GameNode toOld = g.search(curr_);
 				                    if (toOld == null){
 					            		g.addNode(curr_);
-					            		g.addEdge(curr,curr_,spec.getLabels().get(p).get(i), spec.getFaultyActions().get(p).get(i)); //add label may not be necessary
+					            		g.addEdge(curr,curr_,lbl, spec.getFaultyActions().get(p).get(i)); //add label may not be necessary
 					            		iterSet.add(curr_);
 					            	}
 					            	else{
-					            		g.addEdge(curr,toOld,spec.getLabels().get(p).get(i), spec.getFaultyActions().get(p).get(i));
+					            		g.addEdge(curr,toOld,lbl, spec.getFaultyActions().get(p).get(i));
 					            	}
 					            	foundSucc = true;
 					            	break;
