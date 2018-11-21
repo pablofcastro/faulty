@@ -332,56 +332,68 @@ public class Process {
      * the global vars and the channels
      * @returns a duplicate of the current process with a new name
      */
-    public Process duplicate(String instName){    	
-    	Process result = new Process(myProgram, name, instName, numberVar, numberBranch, numberChan, numberInst+1, model, disabledBlocking, fairness);
+    public Process duplicate(String instName){ 
+    	LinkedList<ParamEnum> epars = new LinkedList<ParamEnum>();
+    	LinkedList<ParamBool> bpars = new LinkedList<ParamBool>();
+    	LinkedList<ParamInt> ipars = new LinkedList<ParamInt>();
+    	return duplicate(instName, bpars, ipars, epars);
+    	//Process result = new Process(myProgram, name, instName, numberVar, numberBranch, numberChan, numberInst+1, model, disabledBlocking, fairness);
     	// we use hash mapping to record the duplicates of each one and to obtain the branches, expression
     	// and code
-    	HashMap<VarBool, VarBool> boolDups = new HashMap<VarBool,VarBool>();
-    	HashMap<VarInt, VarInt> intDups = new HashMap<VarInt, VarInt>();
+    	
+    	//HashMap<VarBool, VarBool> boolDups = new HashMap<VarBool,VarBool>();
+    	//HashMap<VarInt, VarInt> intDups = new HashMap<VarInt, VarInt>();
     	
     	
     	// we duplicate the local int vars
-    	for (int i = 0; i < intVars.size(); i++){
-    		VarInt dup = (VarInt) intVars.get(i).duplicate(instName, boolDups, intDups, this);
-    		result.addVarInt(dup);
-    		intDups.put(intVars.get(i), dup);
-    	}
+    	//for (int i = 0; i < intVars.size(); i++){
+    	//	VarInt dup = (VarInt) intVars.get(i).duplicate(instName, boolDups, intDups, this);
+    	//	result.addVarInt(dup);
+    	//	intDups.put(intVars.get(i), dup);
+    	//}
     	
     	// we duplicate the local bool vars
-    	for (int i = 0; i < boolVars.size(); i++){
-    		VarBool dup = (VarBool) boolVars.get(i).duplicate(instName, boolDups, intDups, this);
-    		result.addVarBool(dup);
-    		boolDups.put(boolVars.get(i), dup);
-    	}
+    	//for (int i = 0; i < boolVars.size(); i++){
+    	//	VarBool dup = (VarBool) boolVars.get(i).duplicate(instName, boolDups, intDups, this);
+    	//	result.addVarBool(dup);
+    	//	boolDups.put(boolVars.get(i), dup);
+    	//}
+    	
+    	// we duplicate the local enum vars
+    	//for (int i = 0; i < enumVars.size(); i++){
+    	//	VarEnum dup = (VarEnum) enumVars.get(i).duplicate(instName, dups, this);
+    	//	result.addVarEnum(dup);
+    	//	dups.put(enumVars.get(i), dup);
+    	//}
     	
     	// we add the global bool vars (we do not need to duplicate them since they are global!)
-    	for (int i = 0; i < globalBoolVars.size(); i++){
-    		result.addGlobalVarBool(globalBoolVars.get(i));
-    	}
+    	//for (int i = 0; i < globalBoolVars.size(); i++){
+    	//	result.addGlobalVarBool(globalBoolVars.get(i));
+    	//}
     	
     	// we add the global int vars (we do not need to duplicate them since they are global!)
-    	for (int i = 0; i < globalIntVars.size(); i++){
-    		result.addGlobalVarInt(globalIntVars.get(i));
-    	}
+    	//for (int i = 0; i < globalIntVars.size(); i++){
+    	//	result.addGlobalVarInt(globalIntVars.get(i));
+    	//}
     	
    	
     	// we duplicate the branches
-    	for (int i = 0; i < branches.size(); i++){
-    		result.addBranch(branches.get(i).duplicate(instName, boolDups, intDups, this));
-    	}
+    	//for (int i = 0; i < branches.size(); i++){
+    	//	result.addBranch(branches.get(i).duplicate(instName, boolDups, intDups, this));
+    	//}
     
     	// we add the channels 
-    	for (int i = 0; i < channels.size(); i++){
-    		result.addChannel(channels.get(i));
-    	}	
+    	//for (int i = 0; i < channels.size(); i++){
+    	//	result.addChannel(channels.get(i));
+    	//}	
 
     	// TO DO: fix these lines
-    	result.setInitialCond((BoolExp) initialCond.duplicate(instName, boolDups, intDups, this));
-    	result.setNormativeCond((BoolExp) normCondition.duplicate(instName, boolDups, intDups, this));
+    	//result.setInitialCond((BoolExp) initialCond.duplicate(instName, boolDups, intDups, this));
+    	//result.setNormativeCond((BoolExp) normCondition.duplicate(instName, boolDups, intDups, this));
     	
     	
-    	result.initPrimes();
-    	return result;
+    	//result.initPrimes();
+    	//return result;
     }
     
     /**
@@ -729,7 +741,6 @@ public class Process {
      */
     public void initPrimes(){
     	// create primes for int vars
-    	
     	for (int i = 0; i < intVars.size(); i++){
     		intVars.get(i).initPrimes();
     	}
@@ -739,11 +750,14 @@ public class Process {
     		boolVars.get(i).initPrimes();
     	}
     	
+    	
+    	
     	//create primes for enum vars
     	for (int i = 0; i < enumVars.size(); i++){
     		enumVars.get(i).initPrimes();
     	}
     	
+    	  	
     	// create primes for the branches
     	if (!disabledBlocking){
     		 for (int i = 0; i < branches.size(); i++){
@@ -760,6 +774,7 @@ public class Process {
     		Program.declaredVars_++;
     		model.addVar(instName+"."+"running"+"_", Type.BOOL);
     	}
+    	
     }
     
     /**

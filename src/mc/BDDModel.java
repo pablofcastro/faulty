@@ -301,5 +301,5 @@ public class BDDModel {
 	public int numberVars(){
 		return varInfo.size();
 	}
-
+	
 }

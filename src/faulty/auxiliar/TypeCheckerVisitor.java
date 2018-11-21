@@ -655,13 +655,13 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
        		
 		a.int1.accept(this);
 		Type typeExp1 = this.getType();
-		
+			
         String tEnum1 = null;
         String tEnum2 = null;
-        if(typeExp1.isEnumerated()){ //if is enumerated search in the first level of declarated types.        	
+        if(typeExp1.isEnumerated()){ //if is enumerated search in the first level of declarated types.   
         	tEnum1 = this.currentEnumeratedType.getName();
         }
-       
+        
 		a.int2.accept(this);
 		Type typeExp2 = this.getType();
         if(typeExp2.isEnumerated()){ //if is enumerated search in the first level of declarated types.
@@ -670,7 +670,6 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
        
         //System.out.println("operation type First Op " + typeExp1.toString() + "type second op " +  typeExp2.toString() );
 		
-        
 	    if(typeExp1.isINT() && typeExp2.isINT() ){
 	    	//System.out.println(" ------> INT first op" + typeExp1.toString() + "type second op " +  typeExp2.toString() );
     		
@@ -704,6 +703,9 @@ public class TypeCheckerVisitor implements AuxiliarFaultyVisitor{
 		    }	 
 	    }
 	}
+	
+	
+	
 	public void visit(AuxiliarConsBoolExp a){
         this.type = Type.BOOL;
 	}

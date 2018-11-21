@@ -56,6 +56,34 @@ public class FormulaParser {
         return formulaDCTL;
     }
     
+    public FormulaElement parseFromString(String myFormula){
+        FormulaElement formulaDCTL=null;
+        try {
+            //formulaFile = new FileReader(NameFile);
+   			// Read file
+            parserForm = new parserDCTL(new scannerDCTL(new java.io.StringReader(myFormula)));
+            
+ 			formulaDCTL = (FormulaElement)parserForm.parse().value;
+ 			
+ 			//checkTypes
+ 			if(formulaDCTL!=null){
+ 				Type result = checkTypes(formulaDCTL);			
+ 				if(result == Type.ERROR){
+                    for(int i=0;i<listError.size();i++){
+ 						System.out.println(listError.get(i).getErrorMsg()); 
+ 					}
+                    formulaDCTL=null; // set formula as null to stop the modelchecking due prescense of errors.
+ 				}
+ 			}
+ 			
+        }
+        catch (Exception e) {
+             System.out.println("Formula Error");
+        }
+    
+        return formulaDCTL;
+    }
+    
     /**
  	 * Check types
  	 */
