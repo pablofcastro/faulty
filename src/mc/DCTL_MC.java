@@ -6,7 +6,7 @@ import formula.*;
 import faulty.*;
 
 
-public class DCTL_MC {
+public class DCTL_MC{
 
 	/**
 	 * A method to calculate the model checking sat of a formula, wihtout fairness
@@ -186,6 +186,74 @@ public class DCTL_MC {
 		catch(NullPointerException e){
 			return false;
 		}
+	}
+	
+	/**
+	 * 
+	 * @param f	an input CTL formula
+	 * @return	the formula is translated to NNF, it is used for the model checking algorithm and the counterexample search
+	 */
+	public FormulaElement toNNF(FormulaElement f){
+		if ((f instanceof Constant) || (f instanceof Var)) // f constant or var
+			return f;
+		if (f instanceof Negation){ // negation case
+			FormulaElement subForm = ((Negation) f).getExpr1();
+			if ((subForm instanceof Constant) || (f instanceof Var)) // f negation of constant and var
+				return f;
+			if (subForm instanceof Negation) // f = !!g
+				return ((Negation) subForm).getExpr1();
+			if (subForm instanceof Conjunction){
+				FormulaElement conj1 = ((Conjunction) subForm).getExpr1();
+				FormulaElement conj2 = ((Conjunction) subForm).getExpr2();
+				Disjunction d = new Disjunction("|", toNNF(new Negation("!",conj1)), toNNF(new Negation("!", conj2)));
+				return d;
+			}
+			if (subForm instanceof Disjunction){
+				FormulaElement disj1 = ((Disjunction) subForm).getExpr1();
+				FormulaElement disj2 = ((Disjunction) subForm).getExpr2();
+				Conjunction c = new Conjunction("|", toNNF(new Negation("!",disj1)), toNNF(new Negation("!", disj2)));
+				return c;
+			}	
+			if (subForm instanceof EX){ // f = !EX g
+				FormulaElement g = ((EX) subForm).getExpr1();
+				return new AX("AX", toNNF(new Negation("!", g)));
+			}
+			if (subForm instanceof AX){ // f = !EX g
+				FormulaElement g = ((EX) subForm).getExpr1();
+				return new EX("EX", toNNF(new Negation("!", g)));
+			}
+			if (subForm instanceof AU){ // !A(p U q)
+				FormulaElement p = ((AU) subForm).getExpr1();
+				FormulaElement q = ((AU) subForm).getExpr2();
+				return new EW("EW", toNNF(new Negation("!",q)), toNNF(new Conjunction("&",new Negation("!",p), new Negation("!",q))));
+			}
+			if (subForm instanceof AW){ // !A(p U q)
+				FormulaElement p = ((AW) subForm).getExpr1();
+				FormulaElement q = ((AW) subForm).getExpr2();
+				return new EU("EU", toNNF(new Negation("!",q)), toNNF(new Conjunction("&",new Negation("!",p), new Negation("!",q))));
+			}
+			if (subForm instanceof EU){ // !A(p U q)
+				FormulaElement p = ((EU) subForm).getExpr1();
+				FormulaElement q = ((EU) subForm).getExpr2();
+				return new AW("AW", toNNF(new Negation("!",q)), toNNF(new Conjunction("&",new Negation("!",p), new Negation("!",q))));
+			}
+			if (subForm instanceof EW){ // !A(p U q)
+				FormulaElement p = ((EW) subForm).getExpr1();
+				FormulaElement q = ((EW) subForm).getExpr2();
+				return new AU("AU", toNNF(new Negation("!",q)), toNNF(new Conjunction("&",new Negation("!",p), new Negation("!",q))));
+			}
+		}
+		if (f instanceof Conjunction){ // f = p & q
+			FormulaElement p =  ((Conjunction) f).getExpr1();
+			FormulaElement q =  ((Conjunction) f).getExpr2();
+			return new Conjunction("&", toNNF(p), toNNF(q));
+		}
+		if (f instanceof Disjunction){ // f = p & q
+			FormulaElement p =  ((Disjunction) f).getExpr1();
+			FormulaElement q =  ((Disjunction) f).getExpr2();
+			return new Disjunction("&", toNNF(p), toNNF(q));
+		}
+		return f; // if we have deontic formulas then we just returnn the same formula
 	}
 
 
