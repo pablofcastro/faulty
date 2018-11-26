@@ -653,6 +653,7 @@ public class Program{
 		return result;
 	}
 	
+	
 	/**
 	 * 
 	 * @return a linked list with the models of all the processes
@@ -699,6 +700,7 @@ public class Program{
 	 */
 	public LinkedList<BDDModel> buildPartialModels(){
 		LinkedList<BDDModel> models = new LinkedList<BDDModel>();
+		//BDD guardsNeg = Program.myFactory.zero();
 		if (!generatedPrimes){
 			initPrimes();
 			generatedPrimes = true;
@@ -727,6 +729,10 @@ public class Program{
 			
 			models.add(model);
 		}
+		
+		// an additional process is added to capture the situation in which all the process are blocked
+		//BDDModel deadlockProcess = new BDDModel();
+			
 		return models;
 	}
 	

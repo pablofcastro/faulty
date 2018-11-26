@@ -45,6 +45,7 @@ public class Process {
     BDD skipLocalVarsBDD;	// it is used for efficiency reasons, to avoid recomputing the same BDD
     						// several times
     BDD skipAll; // it is used for efficiency reasons, to avoid computing this value twice
+    BDD guards; // it keeps a BDD representing the guards of the process
     boolean fairness; // to know whether we are computing fairness bdds
     BDD running; // is a BDD used for fairness, to know if the process is running
     BDD running_; // a primed BDD for running
@@ -860,7 +861,7 @@ public class Process {
     /**
      * It calculates the BDD of the process with a different approach to that of the above method,
      * the main idea is to push the conjunction as deep as possible
-     * @param program	teh program where the process lives
+     * @param program	the program where the process lives
      * @param index	 it is the index of the current process (this simplifies the algo) in the program,
      * @return the BDD representing the program
      */
@@ -883,9 +884,6 @@ public class Process {
     			process_bdd = process_bdd.or(branches.get(i).getBDD().and(skipLocalVarsNotIn(branches.get(i))).and(skipGlobalVarsInProcessNotIn(branches.get(i))).and(skipOthers));
     		}
     		    
-    		
-    		
-    		
     		// we calculate a bdd that is true when some guard is true
     		BDD guards = Program.myFactory.zero();
     		for (int i = 0; i < branches.size(); i++){
@@ -896,7 +894,10 @@ public class Process {
     		// gets true blocked.
     		//result = guards.and(process_bdd).or(guards.not().and(skipBDD()));  
     		// the version above is inefficient
-    		result = process_bdd.or(guards.not().and(skipBDD()));    	
+    		//result = process_bdd.or(guards.not().and(skipBDD()));    	
+    		result = process_bdd;
+    		
+    		this.guards = guards;
     		
     		// in the case of fairness we set running on
     		if (fairness){
@@ -906,7 +907,7 @@ public class Process {
     		return result;
     	}
     	else{
-    		// imporve treatment of channels, this only calls to the
+    		// improve treatment of channels, this only calls to the
     		// standard getBDD methods
     		return getBDD(); 
     	}
@@ -952,9 +953,11 @@ public class Process {
     		//result = guards.and(process_bdd).or(guards.not().and(skipBDD()));  
     		// the version above is inefficient
     		//result = process_bdd.or(guards.not().and(skipBDD()));
-    		if (!fairness)
-    			result.add(guards.not().and(skipBDD()));
-    		else
+    		
+    		//if (!fairness)
+    		//	result.add(guards.not().and(skipBDD()));
+    		//else
+    		if (fairness)
     			result.add(guards.not().and(skipBDD()).and(running_.and(myProgram.otherProcessesNotRunning(this))));
     		
     		return result;
@@ -1244,17 +1247,19 @@ public class Process {
  
     
     /**
-     * A BDD respresentation of the guards
+     * A BDD representation of the guards
      */
     public BDD getGuards(){
-    	BDD guards = Program.myFactory.zero();
-    	for (int i = 0; i < branches.size(); i++){
-    		guards = guards.or(branches.get(i).getGuard().getBDD());
+    	if (this.guards==null){
+    		BDD guards = Program.myFactory.zero();
+    		for (int i = 0; i < branches.size(); i++){
+    			guards = guards.or(branches.get(i).getGuard().getBDD());
+    		}
+    		return guards; 
     	}
-    
-    	return guards; 
+    	else
+    		return this.guards;
     }
-    
     
     /**
      * 
