@@ -1891,6 +1891,7 @@ public class SatVisitorEQ implements FormulaVisitor{
     
     /**
      * A simple method to generate counterexamples
+     * @pre 	the formula must be in NNF
      * @param 	f	the formula to which we generate the conuterexample
      * @param 	actualState	the actual state, at beginning it must be the initial state
      * @return	true if a trace was found, false othwerwise
@@ -1901,7 +1902,6 @@ public class SatVisitorEQ implements FormulaVisitor{
     		//f.accept(this);
     		//BDD p = this.sat;
     		BDD p = this.mem.get(f);
-    		//previous.addAll(c);
     		if (p.and(actualState).satCount()>0){
     			previous.addLast(p.and(actualState));
     			return true;
@@ -1909,13 +1909,23 @@ public class SatVisitorEQ implements FormulaVisitor{
     		return false;
     	}
     	if (f instanceof Conjunction){
-    		
+    		FormulaElement f1 = ((Conjunction) f).getExpr1();
+			FormulaElement f2 = ((Conjunction) f).getExpr2();
+			BDD p = this.mem.get(f1);
+			BDD q = this.mem.get(f2);
+			if (p.and(actualState).satCount()>0 && q.and(actualState).satCount()>0){
+				// in this case we just return the actual state, since  p and 1 could be witnessed by differents traces
+				previous.addLast(actualState);
+				return true;
+			}
+			return false;
     	}
     	if (f instanceof Disjunction){
     		FormulaElement p = ((Disjunction) f).getExpr1();
 			FormulaElement q = ((Disjunction) f).getExpr2();
 			LinkedList<BDD> previousQ = new LinkedList<BDD>();
 			LinkedList<BDD> previousP = new LinkedList<BDD>();
+			// in this case we return some of them
 			if (generateWitness(p, actualState, previousP)){
 				previous.addAll(previousP);
 				return true;
@@ -1927,76 +1937,40 @@ public class SatVisitorEQ implements FormulaVisitor{
 			return false;
     	}
     	if (f instanceof Negation){
-    		// hte idea is to push negations inside
-    		FormulaElement f1 = ((Negation) f).getExpr1();
-    		if (f1 instanceof Variable){
-    			//f.accept(this);
-        		//BDD p = this.sat;
-    			BDD p = this.mem.get(f);
-        		previous.addLast(p.and(actualState));
-        		return true;
-    		}
-    		if (f1 instanceof Conjunction){
-    			return generateWitness(new Disjunction("|",new Negation("!", ((Conjunction) f1).getExpr1()), new Negation("!", ((Conjunction) f1).getExpr2())), actualState, previous);
-    		}
-    		if (f1 instanceof Disjunction){
-    			return generateWitness(new Conjunction("&",new Negation("!", ((Disjunction) f1).getExpr1()), new Negation("!", ((Disjunction) f1).getExpr2())), actualState, previous);
-    		}
-    		if (f1 instanceof Negation){
-    			// if negation of a negation, we remove the two
-    			return generateWitness(((Negation) f1).getExpr1(), actualState, previous);
-    		}
-    		if (f1 instanceof EX){
-    			return generateWitness(new AX("AX",new Negation("!",((EX) f).getExpr1())), actualState, previous);
-    		}
-    		if (f1 instanceof AX){
-    			return generateWitness(new EX("EX",new Negation("!",((EX) f).getExpr1())), actualState, previous);
-    		}
-    		if (f1 instanceof AU){
-    			// assume f = A(p U q)
-    			FormulaElement p = ((AU) f1).getExpr1();
-    			FormulaElement q = ((AU) f1).getExpr2();
-    			return generateWitness(new EW("EW",new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous);
-    		}
-    		if (f1 instanceof EU){
-    			// assume f = A(p U q)
-    			FormulaElement p = ((EU) f1).getExpr1();
-    			FormulaElement q = ((EU) f1).getExpr2();
-    			return generateWitness(new AW("AW", new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous);
-    		}
-    		if (f1 instanceof EW){
-    			// assume f = A(p U q)
-    			FormulaElement p = ((EW) f1).getExpr1();
-    			FormulaElement q = ((EW) f1).getExpr2();
-    			return generateWitness(new AU("AU",new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous);
-    		}
-    		if (f1 instanceof AW){
-    			// assume f = A(p U q)
-    			FormulaElement p = ((AW) f1).getExpr1();
-    			FormulaElement q = ((AW) f1).getExpr2();
-    			return generateWitness(new EU("EU",new Negation("!",q), new Conjunction("&",new Negation("!",p), new Negation("!",q))), actualState, previous);
-    		}	
+    		// the formula must be in NNF then the unique case is given by the negation of a var
+    		BDD p = this.mem.get(f);
+        	previous.addLast(p.and(actualState));
+        	return true;	
     	}
     	if (f instanceof AX){
     		//((AX) f).getExpr1().accept(this);
     		//BDD next = this.sat;
+    		
+    		// we obtain the states satisfying p where AXp is the actual formula
     		BDD next = this.mem.get(((AX) f).getExpr1());
-    		//LinkedList<BDD> succ = generateCounterExamples(f.expr1());
+    		
+    		// we inspect all the processes
     		for (int i=0; i<this.models.size();i++){
     			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
     			BDDModel bddmodel = models.get(i);
+    			
+    			// and the branches of each process
     			for (int j=0; j<branches.size();j++){
-    				// we remove the non-primed variables
+    				
+    				// we remove the primed variables
     				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);				
-    				if (guard.and(actualState).satCount()>0){
+    				if (guard.and(actualState).satCount()>0){ // for those states satisfying the guard
+    					
+    					// the following lines obtain the command corresponding to the actual branch
     					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
     					command = addExists(bddmodel.getInternalVarsIds(), command);
     					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
     					command = command.replaceWith(internalSubs);
     					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    					// if the actual state satisfies the guard and the nest hte command then we return the cex
     					if (guard.and(actualState).satCount()>0 && command.and(next).satCount()>0){
     						previous.addLast(actualState);	
-    						previous.addLast(next);
+    						previous.addLast(command.and(next));
     						return true;
     					}
     				}
@@ -2005,8 +1979,7 @@ public class SatVisitorEQ implements FormulaVisitor{
     		return false;	
     	}
     	if (f instanceof EX){
-    		//((EX) f).getExpr1().accept(this);
-    		//BDD next = this.sat;
+    		// it is similar to the above case
     		BDD next = this.mem.get(((EX) f).getExpr1());
     		
     		//LinkedList<BDD> succ = generateCounterExamples(f.expr1());
@@ -2014,17 +1987,18 @@ public class SatVisitorEQ implements FormulaVisitor{
     			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
     			BDDModel bddmodel = models.get(i);
     			for (int j=0; j<branches.size();j++){
-    				// we remove the non-primed variables
+    				// we remove the primed variables
     				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);				
     				if (guard.and(actualState).satCount()>0){
-    					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
-    					command = addExists(bddmodel.getInternalVarsIds(), command);
-    					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
-    					command = command.replaceWith(internalSubs);
-    					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+        					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
+        					command = addExists(bddmodel.getInternalVarsIds(), command);
+        					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
+        					command = command.replaceWith(internalSubs);
+        					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
+    					
     					if (guard.and(actualState).satCount()>0 && command.and(next).satCount()>0){
     						previous.addLast(actualState);	
-    						previous.addLast(next);
+    						previous.addLast(command.and(next));
     						return true;
     					}
     				}
@@ -2033,23 +2007,20 @@ public class SatVisitorEQ implements FormulaVisitor{
     		return false;
     	}
     	if (f instanceof AU){
-    		//BDD p = this.accept(f.getExpr1());
-    		//((AU) f).getExpr2().accept(this);
-    		//BDD q = this.sat;
-    		//((AU) f).accept(this);
-    		//BDD puq = this.sat;
     		BDD p = this.mem.get(((AU) f).getExpr1());
     		BDD q = this.mem.get(((AU) f).getExpr2());
     		BDD puq = this.mem.get(f);
-    		
     		
     		for (int i=0; i<this.models.size();i++){
     			BDDModel bddmodel = models.get(i);
     			LinkedList<BDD> branches = this.models.get(i).getDisjuncts();
     			for (int j=0; j<branches.size();j++){
+    				// we obtain the guard
     				BDD guard = addExists(Program.myFactory.varNum()/2, Program.myFactory.varNum(), branches.get(j), Program.myFactory);
-    				
+    				// if the actual state satisfies the guard
     				if (guard.and(actualState).satCount()>0){
+    					
+    					// we obtain the command
     					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
     					command = addExists(bddmodel.getInternalVarsIds(), command);
     					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
@@ -2057,7 +2028,7 @@ public class SatVisitorEQ implements FormulaVisitor{
     					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
     			    
     					if (actualState.and(q).satCount()>0){
-    						previous.addLast(actualState);
+    						previous.addLast(actualState.and(q));
     						return true;
     					}
     					// otherwise, first we have to avoid cycles
@@ -2069,7 +2040,7 @@ public class SatVisitorEQ implements FormulaVisitor{
     					}
     					// if no cycle it is a candidate   				
     					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
-    						previous.addLast(actualState);	
+    						previous.addLast(guard.and(actualState));	
     						boolean r = generateWitness(f, command, previous);
     						if (r)
     							return true;
@@ -2105,7 +2076,7 @@ public class SatVisitorEQ implements FormulaVisitor{
     			   	
     					// if q holds we are done
     					if (actualState.and(q).satCount()>0){
-    						previous.addLast(actualState);
+    						previous.addLast(actualState.and(q));
     						return true;
     					}
     					// otherwise, first we have to avoid cycles
@@ -2121,7 +2092,7 @@ public class SatVisitorEQ implements FormulaVisitor{
     					}
     					// if no cycle it is a candidate
     					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
-    						previous.addLast(actualState);	
+    						previous.addLast(guard.and(actualState));	
     						boolean r = generateWitness(f, command, previous);
     						if (r)
     							return true;
@@ -2155,7 +2126,7 @@ public class SatVisitorEQ implements FormulaVisitor{
     					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
     			    
     					if (actualState.and(q).satCount()>0){
-    						previous.addLast(actualState);
+    						previous.addLast(actualState.and(q));
     						return true;
     					}
     					// otherwise, first we have to avoid cycles
@@ -2169,7 +2140,7 @@ public class SatVisitorEQ implements FormulaVisitor{
     					}
     					// if no cycle it is a candidate   				
     					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
-    						previous.addLast(actualState);	
+    						previous.addLast(guard.and(actualState));	
     						boolean r = generateWitness(f, command, previous);
     						if (r)
     							return true;
@@ -2196,30 +2167,33 @@ public class SatVisitorEQ implements FormulaVisitor{
     				if (guard.and(actualState).satCount()>0){
     					BDD command = addExists(bddmodel.getExternalPrimedVarsIds(), branches.get(j).and(actualState));
     					command = addExists(bddmodel.getInternalVarsIds(), command);
+    								
     					BDDPairing internalSubs = makePairsToReplaceFromList(bddmodel.getInternalVarsIds(), true); 
     					command = command.replaceWith(internalSubs);
     					command = addExists(Program.myFactory.varNum()/2,Program.myFactory.varNum(), command, Program.myFactory);
-    			   	
     					// if q holds we are done
     					if (actualState.and(q).satCount()>0){
-    						previous.addLast(actualState);
+    						previous.addLast(actualState.and(q));
     						return true;
     					}
     					// otherwise, first we have to avoid cycles
     					boolean cycle = actualState.and(command).satCount() >0;
+    					BDD endOfCycle = Program.myFactory.zero();
     					int k = 0;
     					while ( k < previous.size() && !cycle){
     						cycle = previous.get(k).and(command).satCount() >0;
+    						if (cycle)
+    							endOfCycle = previous.get(k).and(command);
     						k++;
     					}
     					if (cycle){
-    						previous.addLast(actualState);
-    						previous.addLast(command); // in this case we obtain a cycle and the property holds in the cycle
+    						previous.addLast(actualState.and(guard));
+    						previous.addLast(endOfCycle); // in this case we obtain a cycle and the property holds in the cycle
     						return true;
     					}
     					// if no cycle it is a candidate
     					if (!cycle && guard.and(actualState).satCount()>0 && command.and(puq).satCount() > 0){
-    						previous.addLast(actualState);	
+    						previous.addLast(guard.and(actualState));	
     						boolean r = generateWitness(f, command, previous);
     						if (r)
     							return true;

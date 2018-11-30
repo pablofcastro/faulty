@@ -940,8 +940,9 @@ public class Process {
     			//process_bdd = process_bdd.or(branches.get(i).getBDD().and(skipLocalVarsNotIn(branches.get(i))).and(skipGlobalVarsInProcessNotIn(branches.get(i))).and(skipOthers));
     			Branch current = branches.get(i);
     			result.add(current.getBDD().and(skipLocalVarsNotIn(current)).and(skipGlobalVarsInProcessNotIn(current)));//.and(skipOthers));    			
-    			
     		}    		
+    		
+    		
     		// we calculate a bdd that is true when some guard is true
     		BDD guards = Program.myFactory.zero();
     		for (int i = 0; i < branches.size(); i++){
@@ -953,7 +954,6 @@ public class Process {
     		//result = guards.and(process_bdd).or(guards.not().and(skipBDD()));  
     		// the version above is inefficient
     		//result = process_bdd.or(guards.not().and(skipBDD()));
-    		
     		//if (!fairness)
     		//	result.add(guards.not().and(skipBDD()));
     		//else

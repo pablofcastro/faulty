@@ -55,6 +55,7 @@ public class MainMC {
             }
         	if (args.length == 3){
         		
+        		// This option uses the 
         		if (args[0].equals("-eq")){
         			
         			 model = prog.parse(args[1]);
@@ -65,20 +66,31 @@ public class MainMC {
                     	
                          formula = new FormulaParser(prog.getSymbolsTable(), model); //Creates the parser for the formula with the symbol table 
                          property = formula.parse(args[2]);
-                        
+                         
+                         // negated formula in NNF 
+                         FormulaElement NNFform = DCTL_MC.toNNF(new Negation("!", property));
+                         //PrettyPrintVisitor print = new PrettyPrintVisitor();
+                         //NNFform.accept(print);
+                         //print.printFormula();
                          //model.buildModel().getTransitions().printSet();
+                         //for (int i=0; i< model.buildPartialModels().size();i++){                     	 
+                         //	 System.out.println(model.buildPartialModels().get(i).getDisjuncts());
+                         //}
+                         
                          if(model!=null && property!=null){
-                              if (DCTL_MC.mc_algorithm_eq(property, model)) {
-                         	     //System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n");
-     				    	     System.out.println("Property  is TRUE in the model.");
-     				    	     System.out.println(DCTL_MC.getWitness(property, model));
+                              if (DCTL_MC.mc_algorithm_eq(NNFform, model)){ // the formula is false
+     				    	     System.out.println("Property  is FALSE in the model.");
+     				    	     System.out.println("Counterexample:");
+     				    	     System.out.println(DCTL_MC.getWitness(NNFform, model));
                               }
-                              else{
-                         	     //System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n\n"); 
-     					         System.out.println("Property  is FALSE in the model.");
+                              else{ // otherwise the property is true
+     					         System.out.println("Property  is TRUE in the model.");
+     					         DCTL_MC.mc_algorithm_eq(property, model);
+     					         System.out.println("Witness:");
+     					         System.out.println(DCTL_MC.getWitness(property, model));
      					         // prints counterexample
-     					         System.out.println("Counterexample:");
-     					         System.out.println(DCTL_MC.getWitness(new Negation("!", property), model)); // remove in
+     					         //System.out.println("Counterexample:");
+     					         //System.out.println(DCTL_MC.getWitness(new Negation("!", property), model)); // remove in
                               }
                            
                           }

@@ -193,12 +193,12 @@ public class DCTL_MC{
 	 * @param f	an input CTL formula
 	 * @return	the formula is translated to NNF, it is used for the model checking algorithm and the counterexample search
 	 */
-	public FormulaElement toNNF(FormulaElement f){
+	public static FormulaElement toNNF(FormulaElement f){
 		if ((f instanceof Constant) || (f instanceof Var)) // f constant or var
 			return f;
 		if (f instanceof Negation){ // negation case
 			FormulaElement subForm = ((Negation) f).getExpr1();
-			if ((subForm instanceof Constant) || (f instanceof Var)) // f negation of constant and var
+			if ((subForm instanceof Constant) || (subForm instanceof Var)) // f negation of constant and var
 				return f;
 			if (subForm instanceof Negation) // f = !!g
 				return ((Negation) subForm).getExpr1();
@@ -219,7 +219,7 @@ public class DCTL_MC{
 				return new AX("AX", toNNF(new Negation("!", g)));
 			}
 			if (subForm instanceof AX){ // f = !EX g
-				FormulaElement g = ((EX) subForm).getExpr1();
+				FormulaElement g = ((AX) subForm).getExpr1();
 				return new EX("EX", toNNF(new Negation("!", g)));
 			}
 			if (subForm instanceof AU){ // !A(p U q)

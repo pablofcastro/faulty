@@ -2,7 +2,7 @@ Global z:BOOL;
 
 Process P1{
 	x: BOOL;
-	Initial: x==true;
+	Initial: x==true && z==true;
 	Normative: true;
 		x==true -> x=!x;
 		x==false -> x=!x;
@@ -10,7 +10,7 @@ Process P1{
 
 Process P2{
   	y: BOOL;
-	Initial: y==true;
+	Initial: y==true && z==true;
 	Normative: true;
 		y==true -> y = !y, z = !z;
 		y==false -> y = !y; 
